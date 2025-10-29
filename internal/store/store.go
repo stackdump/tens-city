@@ -167,3 +167,51 @@ func (s *FSStore) ReadCanonical(cid string) ([]byte, error) {
 	path := filepath.Join(s.base, "o", "canonical", cid+".nq")
 	return os.ReadFile(path)
 }
+
+// SignatureMetadata holds information about a signature.
+type SignatureMetadata struct {
+	Signature       string `json:"signature"`
+	SignerAddress   string `json:"signerAddress"`
+	UsePersonalSign bool   `json:"usePersonalSign"`
+}
+
+// SignaturePath returns the path where the signature metadata for a CID is stored.
+func (s *FSStore) SignaturePath(cid string) string {
+	return filepath.Join(s.base, "o", "signatures", cid+".json")
+}
+
+// SaveSignature writes signature metadata to disk.
+func (s *FSStore) SaveSignature(cid, signature, signerAddr string, usePersonalSign bool) error {
+	sigDir := filepath.Join(s.base, "o", "signatures")
+	if err := os.MkdirAll(sigDir, 0o755); err != nil {
+		return err
+	}
+
+	meta := SignatureMetadata{
+		Signature:       signature,
+		SignerAddress:   signerAddr,
+		UsePersonalSign: usePersonalSign,
+	}
+
+	data, err := json.MarshalIndent(meta, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(s.SignaturePath(cid), data, 0o644)
+}
+
+// ReadSignature reads signature metadata for a CID.
+func (s *FSStore) ReadSignature(cid string) (*SignatureMetadata, error) {
+	data, err := os.ReadFile(s.SignaturePath(cid))
+	if err != nil {
+		return nil, err
+	}
+
+	var meta SignatureMetadata
+	if err := json.Unmarshal(data, &meta); err != nil {
+		return nil, err
+	}
+
+	return &meta, nil
+}
