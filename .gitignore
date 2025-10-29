@@ -1,5 +1,6 @@
 # Build artifacts
 /seal
+/keygen
 *.exe
 *.dll
 *.so
@@ -7,6 +8,10 @@
 
 # Test data
 /data/
+
+# Keystore files (security)
+*.keystore
+*.keystore.json
 
 # Go test cache
 *.test
