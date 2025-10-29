@@ -203,6 +203,68 @@ func TestSupabaseIntegration(t *testing.T) {
 		t.Errorf("View type mismatch: expected 'TestObject', got %s", viewType)
 	}
 
+	// Step 13: Test @id attribute indexing
+	// The @id field should be stored with the object and be searchable via JSONB index
+	t.Log("Testing @id attribute indexing...")
+	
+	// First, let's insert an object with an explicit @id
+	testDataWithID := map[string]interface{}{
+		"@context": map[string]interface{}{
+			"name": "http://schema.org/name",
+		},
+		"@id":   "https://example.org/objects/test123",
+		"@type": "NamedObject",
+		"name":  "Test Object with ID",
+	}
+	
+	rawWithID, err := json.Marshal(testDataWithID)
+	if err != nil {
+		t.Fatalf("Failed to marshal test data with @id: %v", err)
+	}
+	
+	cidWithID, canonicalWithID, err := seal.SealJSONLD(rawWithID)
+	if err != nil {
+		t.Fatalf("Failed to seal JSON-LD with @id: %v", err)
+	}
+	t.Logf("Generated CID for object with @id: %s", cidWithID)
+	
+	// Insert the object with @id
+	_, err = pool.Exec(ctx,
+		`INSERT INTO public.objects (cid, owner_uuid, raw, canonical, storage_path) 
+		 VALUES ($1, $2, $3, $4, $5)`,
+		cidWithID, ownerUUID, json.RawMessage(rawWithID), string(canonicalWithID), nil)
+	if err != nil {
+		t.Fatalf("Failed to insert object with @id: %v", err)
+	}
+	
+	// Now query by @id using JSONB index
+	var countByID int
+	err = pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM public.objects WHERE raw @> $1`,
+		json.RawMessage(`{"@id": "https://example.org/objects/test123"}`)).Scan(&countByID)
+	if err != nil {
+		t.Fatalf("Failed to query by @id: %v", err)
+	}
+	
+	if countByID != 1 {
+		t.Errorf("Expected 1 object with @id 'https://example.org/objects/test123', got %d", countByID)
+	}
+	
+	// Also test direct field extraction of @id
+	var extractedID string
+	err = pool.QueryRow(ctx,
+		`SELECT raw->>'@id' FROM public.objects WHERE cid = $1`,
+		cidWithID).Scan(&extractedID)
+	if err != nil {
+		t.Fatalf("Failed to extract @id field: %v", err)
+	}
+	
+	if extractedID != "https://example.org/objects/test123" {
+		t.Errorf("Expected @id to be 'https://example.org/objects/test123', got %s", extractedID)
+	}
+	
+	t.Log("Successfully verified @id attribute indexing and querying")
+
 	t.Log("Integration test completed successfully!")
 }
 
