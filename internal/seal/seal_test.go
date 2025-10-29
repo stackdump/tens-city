@@ -66,7 +66,9 @@ func TestSealJSONLD_UsesBase58BTC(t *testing.T) {
 	}
 
 	// For DagJSON codec with CIDv1, the prefix should be 'z4E'
-	if !strings.HasPrefix(cidStr, "z4E") {
+	if len(cidStr) < 4 {
+		t.Errorf("CID is too short: %s", cidStr)
+	} else if !strings.HasPrefix(cidStr, "z4E") {
 		t.Errorf("Expected CID to start with 'z4E' for DagJSON+base58btc, got: %s", cidStr[:4])
 	}
 }
