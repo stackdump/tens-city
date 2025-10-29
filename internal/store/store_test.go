@@ -168,3 +168,105 @@ func TestReadObject(t *testing.T) {
 		t.Errorf("Expected @id to be %q, got %q", expectedID, doc["@id"])
 	}
 }
+
+func TestSaveSignature(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "store-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	store := NewFSStore(tmpDir)
+
+	cid := "z4EBG9jTestCID123"
+	signature := "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12"
+	signerAddr := "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"
+	usePersonalSign := true
+
+	err = store.SaveSignature(cid, signature, signerAddr, usePersonalSign)
+	if err != nil {
+		t.Fatalf("SaveSignature failed: %v", err)
+	}
+
+	// Verify signature file was saved
+	sigPath := store.SignaturePath(cid)
+	if _, err := os.Stat(sigPath); os.IsNotExist(err) {
+		t.Fatal("Signature file was not created")
+	}
+
+	// Read and verify
+	savedData, err := os.ReadFile(sigPath)
+	if err != nil {
+		t.Fatalf("Failed to read signature file: %v", err)
+	}
+
+	var meta SignatureMetadata
+	if err := json.Unmarshal(savedData, &meta); err != nil {
+		t.Fatalf("Failed to parse signature metadata: %v", err)
+	}
+
+	if meta.Signature != signature {
+		t.Errorf("Signature mismatch: expected %s, got %s", signature, meta.Signature)
+	}
+
+	if meta.SignerAddress != signerAddr {
+		t.Errorf("SignerAddress mismatch: expected %s, got %s", signerAddr, meta.SignerAddress)
+	}
+
+	if meta.UsePersonalSign != usePersonalSign {
+		t.Errorf("UsePersonalSign mismatch: expected %v, got %v", usePersonalSign, meta.UsePersonalSign)
+	}
+}
+
+func TestReadSignature(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "store-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	store := NewFSStore(tmpDir)
+
+	cid := "z4EBG9jTestCID123"
+	signature := "0xabcdef1234567890"
+	signerAddr := "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"
+	usePersonalSign := false
+
+	// Save first
+	err = store.SaveSignature(cid, signature, signerAddr, usePersonalSign)
+	if err != nil {
+		t.Fatalf("SaveSignature failed: %v", err)
+	}
+
+	// Read back
+	meta, err := store.ReadSignature(cid)
+	if err != nil {
+		t.Fatalf("ReadSignature failed: %v", err)
+	}
+
+	if meta.Signature != signature {
+		t.Errorf("Signature mismatch: expected %s, got %s", signature, meta.Signature)
+	}
+
+	if meta.SignerAddress != signerAddr {
+		t.Errorf("SignerAddress mismatch: expected %s, got %s", signerAddr, meta.SignerAddress)
+	}
+
+	if meta.UsePersonalSign != usePersonalSign {
+		t.Errorf("UsePersonalSign mismatch: expected %v, got %v", usePersonalSign, meta.UsePersonalSign)
+	}
+}
+
+func TestSignaturePath(t *testing.T) {
+	tmpDir := "/tmp/test-store"
+	store := NewFSStore(tmpDir)
+
+	cid := "z4EBG9jTestCID123"
+	expectedPath := filepath.Join(tmpDir, "o", "signatures", cid+".json")
+
+	actualPath := store.SignaturePath(cid)
+
+	if actualPath != expectedPath {
+		t.Errorf("SignaturePath mismatch: expected %s, got %s", expectedPath, actualPath)
+	}
+}
