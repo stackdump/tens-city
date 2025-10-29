@@ -1,0 +1,13 @@
+# Build artifacts
+/seal
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test data
+/data/
+
+# Go test cache
+*.test
+*.out

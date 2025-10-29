@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -24,12 +23,12 @@ func main() {
 	var data []byte
 	var err error
 	if *inPath == "-" {
-		data, err = ioutil.ReadAll(os.Stdin)
+		data, err = io.ReadAll(os.Stdin)
 		if err != nil {
 			log.Fatalf("reading stdin: %v", err)
 		}
 	} else {
-		data, err = ioutil.ReadFile(*inPath)
+		data, err = os.ReadFile(*inPath)
 		if err != nil {
 			log.Fatalf("reading file %s: %v", *inPath, err)
 		}
@@ -68,7 +67,7 @@ func main() {
 		if err := os.MkdirAll(fmt.Sprintf("%s/canonical", *outDir), 0o755); err != nil {
 			log.Fatalf("mkdir canonical: %v", err)
 		}
-		if err := ioutil.WriteFile(hf, canonicalBytes, 0o644); err != nil {
+		if err := os.WriteFile(hf, canonicalBytes, 0o644); err != nil {
 			log.Fatalf("write canonical file: %v", err)
 		}
 		fmt.Printf("wrote canonical n-quads to %s\n", hf)
