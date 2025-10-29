@@ -7,14 +7,16 @@ import (
 	"github.com/piprate/json-gold/ld"
 	cid "github.com/ipfs/go-cid"
 	mh "github.com/multiformats/go-multihash"
+	"github.com/multiformats/go-multibase"
 )
 
 // SealJSONLD takes raw JSON-LD bytes, canonicalizes using URDNA2015
-// (via piprate/json-gold), computes a CIDv1 (raw codec) using SHA2-256,
+// (via piprate/json-gold), computes a CIDv1 (json-ld codec) using SHA2-256,
 // and returns (cidString, canonicalBytes, error).
 //
 // canonicalBytes are the N-Quads string returned by Normalize() encoded as UTF-8 bytes.
 // The canonicalization step uses the URDNA2015 algorithm and produces deterministic output.
+// The CID is encoded using base58btc (z prefix).
 func SealJSONLD(raw []byte) (string, []byte, error) {
 	// parse JSON-LD into a Go interface{}
 	var doc interface{}
@@ -48,7 +50,14 @@ func SealJSONLD(raw []byte) (string, []byte, error) {
 		return "", nil, err
 	}
 
-	// Create CIDv1 with raw codec
-	c := cid.NewCidV1(cid.Raw, multihash)
-	return c.String(), normalizedBytes, nil
+	// Create CIDv1 with json-ld codec (DagJSON = 0x0129)
+	c := cid.NewCidV1(cid.DagJSON, multihash)
+	
+	// Encode using base58btc (z prefix) for storage in filesystem
+	cidStr, err := c.StringOfBase(multibase.Base58BTC)
+	if err != nil {
+		return "", nil, err
+	}
+	
+	return cidStr, normalizedBytes, nil
 }

@@ -32,15 +32,33 @@ func (s *FSStore) ObjectPath(cid string) string {
 }
 
 // SaveObject writes the raw JSON-LD and canonical bytes to disk.
+// It injects the computed CID as the @id field into the stored JSON-LD.
 func (s *FSStore) SaveObject(cid string, raw []byte, canonical []byte) error {
 	objDir := filepath.Join(s.base, "o")
 	if err := os.MkdirAll(objDir, 0o755); err != nil {
 		return err
 	}
-	// raw
-	if err := os.WriteFile(filepath.Join(objDir, cid), raw, 0o644); err != nil {
+	
+	// Inject the @id field into the JSON-LD before saving
+	var doc map[string]interface{}
+	if err := json.Unmarshal(raw, &doc); err != nil {
 		return err
 	}
+	
+	// Add the @id field with ipfs:// prefix
+	doc["@id"] = "ipfs://" + cid
+	
+	// Marshal back to JSON with indentation for readability
+	modifiedRaw, err := json.MarshalIndent(doc, "", "  ")
+	if err != nil {
+		return err
+	}
+	
+	// Save the modified JSON-LD with injected @id
+	if err := os.WriteFile(filepath.Join(objDir, cid), modifiedRaw, 0o644); err != nil {
+		return err
+	}
+	
 	// canonical
 	canonDir := filepath.Join(objDir, "canonical")
 	if err := os.MkdirAll(canonDir, 0o755); err != nil {
