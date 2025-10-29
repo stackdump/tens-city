@@ -1,4 +1,4 @@
-# tens.city — Tent City Ethos
+# tens.city 
 
 ## 1. Ethos: tent city
 - Not skyscrapers; actual encampments.
