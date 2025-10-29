@@ -1,6 +1,7 @@
 # Build artifacts
 /seal
 /keygen
+/edge
 *.exe
 *.dll
 *.so
