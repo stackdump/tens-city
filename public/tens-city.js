@@ -645,13 +645,60 @@ class TensCity extends HTMLElement {
                 scriptTag.type = 'application/ld+json';
                 scriptTag.textContent = JSON.stringify(data, null, 2);
                 this.appendChild(scriptTag);
-                return JSON.stringify(data, null, 2);
+                return {
+                    jsonString: JSON.stringify(data, null, 2),
+                    data: data
+                };
             } catch (err) {
                 console.error('Failed to parse URL data:', err);
                 return null;
             }
         }
         return null;
+    }
+
+    async _autoSaveFromURL(data) {
+        // Auto-save feature: if user is authenticated and data has valid JSON-LD, save it
+        if (!this._user || !data || !data.data) {
+            return null;
+        }
+
+        // Validate it's valid JSON-LD (has @context)
+        if (!data.data['@context']) {
+            console.log('Not auto-saving: missing @context');
+            return null;
+        }
+
+        try {
+            // Use API endpoint to save
+            const response = await fetch('/api/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data.data)
+            });
+
+            if (!response.ok) {
+                console.error('Auto-save failed:', response.statusText);
+                return null;
+            }
+
+            const result = await response.json();
+            const cid = result.cid;
+            
+            console.log('Auto-saved with CID:', cid);
+            
+            // Redirect to ?cid= URL
+            const url = new URL(window.location.origin + window.location.pathname);
+            url.searchParams.set('cid', cid);
+            window.location.href = url.toString();
+            
+            return cid;
+        } catch (err) {
+            console.error('Auto-save exception:', err);
+            return null;
+        }
     }
 
     _updatePermalinkAnchor() {
@@ -675,12 +722,38 @@ class TensCity extends HTMLElement {
     }
 
     async _loadInitialData() {
+        // Check for CID parameter first
+        const urlParams = new URLSearchParams(window.location.search);
+        const cidParam = urlParams.get('cid');
+        
+        if (cidParam && this._aceEditor) {
+            // Load object by CID from API
+            try {
+                const response = await fetch(`/o/${cidParam}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    this._aceEditor.session.setValue(JSON.stringify(data, null, 2));
+                    this._updatePermalinkAnchor();
+                    return;
+                }
+            } catch (err) {
+                console.error('Failed to load object by CID:', err);
+            }
+        }
+
         // Check for permalink data in URL
         const urlData = this._loadFromURL();
-        if (urlData && this._aceEditor) {
-            this._aceEditor.session.setValue(urlData);
-            this._updatePermalinkAnchor();
-            return;
+        if (urlData) {
+            // Auto-save if user is authenticated
+            await this._autoSaveFromURL(urlData);
+            
+            // If auto-save redirected, we won't reach here
+            // Otherwise, just load the data into editor
+            if (urlData.jsonString && this._aceEditor) {
+                this._aceEditor.session.setValue(urlData.jsonString);
+                this._updatePermalinkAnchor();
+                return;
+            }
         }
 
         // Check for script tag data
