@@ -361,10 +361,12 @@ class TensCity extends HTMLElement {
         const loadBtn = makeButton('📋 Load Objects', 'Load objects from database', () => this._loadObjects());
         const postBtn = makeButton('📤 Post Object', 'Post current JSON as new object', () => this._postObject());
         const clearBtn = makeButton('🗑️ Clear', 'Clear editor', () => this._clearEditor());
+        const permalinkBtn = makeButton('🔗 Create Permalink', 'Create URL with current data', () => this._createPermalink());
 
         toolbar.appendChild(loadBtn);
         toolbar.appendChild(postBtn);
         toolbar.appendChild(clearBtn);
+        toolbar.appendChild(permalinkBtn);
 
         this._appContainer.appendChild(toolbar);
     }
@@ -433,6 +435,11 @@ class TensCity extends HTMLElement {
 
         editor.setOptions(opts);
         editor.session.setValue('{\n  "@context": "https://pflow.xyz/schema",\n  "@type": "Object"\n}');
+
+        // Add change listener to update script tag
+        editor.session.on('change', () => {
+            this._updateScriptTag();
+        });
 
         this._aceEditor = editor;
         this._aceEditorContainer = container;
@@ -536,8 +543,113 @@ class TensCity extends HTMLElement {
         this._aceEditor.session.setValue('{\n  "@context": "https://pflow.xyz/schema",\n  "@type": "Object"\n}');
     }
 
+    _loadFromScriptTag() {
+        // Look for script tag with type="application/ld+json" inside tens-city element
+        const scriptTag = this.querySelector('script[type="application/ld+json"]');
+        if (scriptTag && scriptTag.textContent) {
+            try {
+                // Parse and re-stringify to ensure it's valid JSON
+                const data = JSON.parse(scriptTag.textContent);
+                return JSON.stringify(data, null, 2);
+            } catch (err) {
+                console.error('Failed to parse script tag JSON:', err);
+                return null;
+            }
+        }
+        return null;
+    }
+
+    _updateScriptTag() {
+        if (!this._aceEditor) return;
+
+        try {
+            const editorContent = this._aceEditor.session.getValue();
+            // Validate it's valid JSON before updating
+            JSON.parse(editorContent);
+
+            // Remove existing script tag if present
+            const existingTag = this.querySelector('script[type="application/ld+json"]');
+            if (existingTag) {
+                existingTag.remove();
+            }
+
+            // Create new script tag with current editor content
+            const scriptTag = document.createElement('script');
+            scriptTag.type = 'application/ld+json';
+            scriptTag.textContent = editorContent;
+            this.appendChild(scriptTag);
+        } catch (err) {
+            // Silently ignore invalid JSON - don't update script tag
+        }
+    }
+
+    _loadFromURL() {
+        // Check for data in URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const encodedData = urlParams.get('data');
+        
+        if (encodedData) {
+            try {
+                const decodedData = decodeURIComponent(encodedData);
+                const data = JSON.parse(decodedData);
+                // Update script tag with loaded data
+                const scriptTag = document.createElement('script');
+                scriptTag.type = 'application/ld+json';
+                scriptTag.textContent = JSON.stringify(data, null, 2);
+                this.appendChild(scriptTag);
+                return JSON.stringify(data, null, 2);
+            } catch (err) {
+                console.error('Failed to parse URL data:', err);
+                return null;
+            }
+        }
+        return null;
+    }
+
+    _createPermalink() {
+        if (!this._aceEditor) return;
+
+        try {
+            const editorContent = this._aceEditor.session.getValue();
+            // Validate JSON
+            JSON.parse(editorContent);
+
+            // Create URL with data parameter
+            const url = new URL(window.location.href);
+            url.searchParams.set('data', encodeURIComponent(editorContent));
+            
+            // Copy to clipboard
+            navigator.clipboard.writeText(url.toString()).then(() => {
+                alert('Permalink copied to clipboard!\n\nURL: ' + url.toString());
+            }).catch(err => {
+                // Fallback: show the URL in a prompt
+                prompt('Permalink (copy this URL):', url.toString());
+            });
+        } catch (err) {
+            alert('Cannot create permalink: Invalid JSON\n' + err.message);
+        }
+    }
+
     async _loadInitialData() {
-        // Load some initial data to show the user
+        // Check for permalink data in URL
+        const urlData = this._loadFromURL();
+        if (urlData) {
+            if (this._aceEditor) {
+                this._aceEditor.session.setValue(urlData);
+            }
+            return;
+        }
+
+        // Check for script tag data
+        const scriptData = this._loadFromScriptTag();
+        if (scriptData) {
+            if (this._aceEditor) {
+                this._aceEditor.session.setValue(scriptData);
+            }
+            return;
+        }
+
+        // Load some initial data from database
         await this._loadObjects();
     }
 
