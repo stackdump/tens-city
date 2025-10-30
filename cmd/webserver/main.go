@@ -1,17 +1,14 @@
 package main
 
 import (
-"context"
 "encoding/json"
 "flag"
-"fmt"
 "log"
 "net/http"
 "os"
 "path/filepath"
 "strings"
 
-"github.com/jackc/pgx/v5/pgxpool"
 "github.com/stackdump/tens-city/internal/seal"
 "github.com/stackdump/tens-city/internal/store"
 )
@@ -59,66 +56,7 @@ func (fs *FSStorage) AppendHistory(user, slug, cid string) error {
 return fs.store.AppendHistory(user, slug, cid)
 }
 
-// DBStorage implements Storage using PostgreSQL
-type DBStorage struct {
-pool *pgxpool.Pool
-}
 
-func NewDBStorage(dbURL string) (*DBStorage, error) {
-cfg, err := pgxpool.ParseConfig(dbURL)
-if err != nil {
-return nil, fmt.Errorf("parse db url: %w", err)
-}
-pool, err := pgxpool.NewWithConfig(context.Background(), cfg)
-if err != nil {
-return nil, fmt.Errorf("connect db: %w", err)
-}
-return &DBStorage{pool: pool}, nil
-}
-
-func (db *DBStorage) Close() {
-db.pool.Close()
-}
-
-func (db *DBStorage) GetObject(cid string) ([]byte, error) {
-var raw json.RawMessage
-err := db.pool.QueryRow(context.Background(),
-`SELECT raw FROM public.objects WHERE cid = $1`, cid).Scan(&raw)
-if err != nil {
-return nil, err
-}
-return []byte(raw), nil
-}
-
-func (db *DBStorage) SaveObject(cid string, raw []byte, canonical []byte) error {
-// Default owner UUID (zero UUID for anonymous)
-ownerUUID := "00000000-0000-0000-0000-000000000000"
-
-_, err := db.pool.Exec(context.Background(),
-`INSERT INTO public.objects (cid, owner_uuid, raw, canonical, storage_path) 
- VALUES ($1, $2, $3, $4, $5)
- ON CONFLICT (cid) DO NOTHING`,
-cid, ownerUUID, json.RawMessage(raw), string(canonical), nil)
-return err
-}
-
-func (db *DBStorage) GetLatest(user, slug string) (string, error) {
-// For DB storage, we could store this in a separate table
-// For now, return empty as this is filesystem-specific
-return "", fmt.Errorf("not implemented for database storage")
-}
-
-func (db *DBStorage) GetHistory(user, slug string) ([]store.HistoryEntry, error) {
-return nil, fmt.Errorf("not implemented for database storage")
-}
-
-func (db *DBStorage) UpdateLatest(user, slug, cid string) error {
-return fmt.Errorf("not implemented for database storage")
-}
-
-func (db *DBStorage) AppendHistory(user, slug, cid string) error {
-return fmt.Errorf("not implemented for database storage")
-}
 
 type Server struct {
 storage    Storage
@@ -164,7 +102,7 @@ cid := parts[0]
 
 data, err := s.storage.GetObject(cid)
 if err != nil {
-if os.IsNotExist(err) || strings.Contains(err.Error(), "no rows") {
+if os.IsNotExist(err) {
 http.Error(w, "Object not found", http.StatusNotFound)
 return
 }
@@ -333,26 +271,13 @@ http.NotFound(w, r)
 
 func main() {
 addr := flag.String("addr", ":8080", "Server address")
-dbURL := flag.String("db", "", "PostgreSQL database URL (if not set, uses filesystem)")
-storeDir := flag.String("store", "data", "Filesystem store directory (used if -db not set)")
+storeDir := flag.String("store", "data", "Filesystem store directory")
 publicDir := flag.String("public", "public", "Public directory for static files")
 enableCORS := flag.Bool("cors", true, "Enable CORS headers")
 flag.Parse()
 
-var storage Storage
-
-if *dbURL != "" {
-log.Printf("Using PostgreSQL storage: %s", *dbURL)
-dbStorage, err := NewDBStorage(*dbURL)
-if err != nil {
-log.Fatalf("Failed to initialize database storage: %v", err)
-}
-defer dbStorage.Close()
-storage = dbStorage
-} else {
 log.Printf("Using filesystem storage: %s", *storeDir)
-storage = NewFSStorage(*storeDir)
-}
+storage := NewFSStorage(*storeDir)
 
 server := NewServer(storage, *publicDir, *enableCORS)
 
