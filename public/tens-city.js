@@ -1050,7 +1050,7 @@ class TensCity extends HTMLElement {
         // Load the petri-view script
         // Use attribute to allow custom petri-view URL, fallback to default
         const scriptUrl = this.getAttribute('petri-view-url') || 
-                         'https://cdn.jsdelivr.net/gh/pflow-xyz/pflow-xyz@latest/public/petri-view.js';
+                          'https://cdn.jsdelivr.net/gh/pflow-xyz/pflow-xyz@latest/public/petri-view.js';
         
         try {
             // Check if script already loaded
@@ -1072,7 +1072,9 @@ class TensCity extends HTMLElement {
 
         // Replace the entire page content with petri-view
         // Note: This intentionally clears all existing UI components and state
-        // as petri-view provides its own complete rendering and menu system
+        // as petri-view provides its own complete rendering and menu system.
+        // This happens during initial load, so no user data is lost - the PetriNet
+        // data is passed to the petri-view component via the script tag.
         this._root.innerHTML = '';
 
         // Create petri-view element
