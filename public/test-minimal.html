@@ -112,6 +112,32 @@
             addResult('Invalid JSON Handling', true, 'Correctly throws error for invalid JSON');
         }
 
+        // Helper function to decode recursively
+        function decodeRecursively(encodedData) {
+            let decodedData = encodedData;
+            
+            while (true) {
+                try {
+                    const nextDecoded = decodeURIComponent(decodedData);
+                    if (nextDecoded === decodedData) {
+                        break;
+                    }
+                    decodedData = nextDecoded;
+                    
+                    try {
+                        JSON.parse(decodedData);
+                        break;
+                    } catch (jsonErr) {
+                        // Not valid JSON yet, continue decoding
+                    }
+                } catch (e) {
+                    break;
+                }
+            }
+            
+            return decodedData;
+        }
+
         // Test 6: URL creation
         try {
             const testData = { "@context": "https://pflow.xyz/schema", "@type": "Test" };
@@ -135,32 +161,7 @@
             const jsonString = JSON.stringify(testData);
             const doubleEncoded = encodeURIComponent(encodeURIComponent(jsonString));
             
-            // Simulate the recursive decoding logic from _loadFromURL()
-            let decodedData = doubleEncoded;
-            let lastDecoded = doubleEncoded;
-            
-            while (true) {
-                try {
-                    const nextDecoded = decodeURIComponent(decodedData);
-                    if (nextDecoded === decodedData) {
-                        break;
-                    }
-                    lastDecoded = decodedData;
-                    decodedData = nextDecoded;
-                    
-                    try {
-                        JSON.parse(decodedData);
-                        break;
-                    } catch (jsonErr) {
-                        if (decodedData === lastDecoded) {
-                            break;
-                        }
-                    }
-                } catch (e) {
-                    break;
-                }
-            }
-            
+            const decodedData = decodeRecursively(doubleEncoded);
             const parsed = JSON.parse(decodedData);
             const match = JSON.stringify(testData) === JSON.stringify(parsed);
             addResult('Double-Encoded URL Decoding', match, 
@@ -175,32 +176,7 @@
             const jsonString = JSON.stringify(testData);
             const tripleEncoded = encodeURIComponent(encodeURIComponent(encodeURIComponent(jsonString)));
             
-            // Simulate the recursive decoding logic
-            let decodedData = tripleEncoded;
-            let lastDecoded = tripleEncoded;
-            
-            while (true) {
-                try {
-                    const nextDecoded = decodeURIComponent(decodedData);
-                    if (nextDecoded === decodedData) {
-                        break;
-                    }
-                    lastDecoded = decodedData;
-                    decodedData = nextDecoded;
-                    
-                    try {
-                        JSON.parse(decodedData);
-                        break;
-                    } catch (jsonErr) {
-                        if (decodedData === lastDecoded) {
-                            break;
-                        }
-                    }
-                } catch (e) {
-                    break;
-                }
-            }
-            
+            const decodedData = decodeRecursively(tripleEncoded);
             const parsed = JSON.parse(decodedData);
             const match = JSON.stringify(testData) === JSON.stringify(parsed);
             addResult('Triple-Encoded URL Decoding', match, 

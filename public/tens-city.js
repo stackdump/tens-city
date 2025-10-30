@@ -619,7 +619,6 @@ class TensCity extends HTMLElement {
             try {
                 // Decode recursively in case of double (or multiple) encoding
                 let decodedData = encodedData;
-                let lastDecoded = encodedData;
                 
                 // Keep decoding until we can't decode anymore or get valid JSON
                 while (true) {
@@ -629,7 +628,6 @@ class TensCity extends HTMLElement {
                         if (nextDecoded === decodedData) {
                             break;
                         }
-                        lastDecoded = decodedData;
                         decodedData = nextDecoded;
                         
                         // Try to parse as JSON - if successful, we're done
@@ -637,10 +635,7 @@ class TensCity extends HTMLElement {
                         break;
                     } catch (jsonErr) {
                         // Not valid JSON yet, continue decoding if possible
-                        if (decodedData === lastDecoded) {
-                            // Can't decode anymore but still not valid JSON
-                            break;
-                        }
+                        // The loop will continue and nextDecoded === decodedData will eventually be true
                     }
                 }
                 
