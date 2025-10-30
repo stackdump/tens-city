@@ -1,5 +1,3 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
 // Canonical JSON stringification with sorted keys
 // This ensures consistent JSON encoding across frontend and backend
 function canonicalJSON(obj) {
@@ -39,11 +37,27 @@ class TensCity extends HTMLElement {
         this._menuOpen = false;
     }
 
-    connectedCallback() {
+    async connectedCallback() {
         if (this._root) return;
+        
+        // Check for PetriNet data early - before authentication
+        const scriptData = this._loadFromScriptTag();
+        if (scriptData) {
+            try {
+                const data = JSON.parse(scriptData);
+                if (this._isPetriNet(data)) {
+                    this._buildRoot();
+                    await this._showPetriView(data);
+                    return; // Skip authentication flow for PetriNet
+                }
+            } catch (err) {
+                // If parsing fails, continue with normal flow
+            }
+        }
+        
         this._buildRoot();
-        this._initSupabase();
-        this._checkAuth();
+        await this._initSupabase();
+        await this._checkAuth();
     }
 
     _buildRoot() {
@@ -83,12 +97,14 @@ class TensCity extends HTMLElement {
         this._root.appendChild(this._appContainer);
     }
 
-    _initSupabase() {
+    async _initSupabase() {
         // Get Supabase URL and anon key from attributes or use defaults for local development
         const supabaseUrl = this.getAttribute('supabase-url') || 'http://localhost:54321';
         const supabaseKey = this.getAttribute('supabase-key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
         
         try {
+            // Dynamically import Supabase
+            const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
             this._supabase = createClient(supabaseUrl, supabaseKey);
 
             // Listen for auth state changes
@@ -967,6 +983,11 @@ class TensCity extends HTMLElement {
                 const response = await fetch(`/o/${cidParam}`);
                 if (response.ok) {
                     const data = await response.json();
+                    // Check if this is a PetriNet
+                    if (this._isPetriNet(data)) {
+                        await this._showPetriView(data);
+                        return;
+                    }
                     this._aceEditor.session.setValue(JSON.stringify(data, null, 2));
                     this._updatePermalinkAnchor();
                     return;
@@ -985,6 +1006,11 @@ class TensCity extends HTMLElement {
             // If auto-save redirected, we won't reach here
             // Otherwise, just load the data into editor
             if (urlData.jsonString && this._aceEditor) {
+                // Check if this is a PetriNet
+                if (this._isPetriNet(urlData.data)) {
+                    await this._showPetriView(urlData.data);
+                    return;
+                }
                 this._aceEditor.session.setValue(urlData.jsonString);
                 this._updatePermalinkAnchor();
                 return;
@@ -994,6 +1020,16 @@ class TensCity extends HTMLElement {
         // Check for script tag data
         const scriptData = this._loadFromScriptTag();
         if (scriptData && this._aceEditor) {
+            try {
+                const data = JSON.parse(scriptData);
+                // Check if this is a PetriNet
+                if (this._isPetriNet(data)) {
+                    await this._showPetriView(data);
+                    return;
+                }
+            } catch (err) {
+                // If parsing fails, just load as normal
+            }
             this._aceEditor.session.setValue(scriptData);
             this._updatePermalinkAnchor();
             return;
@@ -1003,6 +1039,62 @@ class TensCity extends HTMLElement {
         if (this._aceEditor) {
             this._updatePermalinkAnchor();
         }
+    }
+
+    _isPetriNet(data) {
+        // Check if the data has @type equal to "PetriNet"
+        return data && data['@type'] === 'PetriNet';
+    }
+
+    async _showPetriView(data) {
+        // Load the petri-view script
+        // Use attribute to allow custom petri-view URL, fallback to default
+        const scriptUrl = this.getAttribute('petri-view-url') || 
+                          'https://cdn.jsdelivr.net/gh/pflow-xyz/pflow-xyz@latest/public/petri-view.js';
+        
+        try {
+            // Check if script already loaded
+            if (!document.querySelector(`script[src="${scriptUrl}"]`)) {
+                await new Promise((resolve, reject) => {
+                    const s = document.createElement('script');
+                    s.src = scriptUrl;
+                    s.onload = () => resolve();
+                    s.onerror = (e) => reject(e);
+                    document.head.appendChild(s);
+                });
+            }
+        } catch (err) {
+            console.error('Failed to load petri-view script:', err);
+            // Fallback: show error message instead of trying to use uninitialized editor
+            this._showError('Failed to load petri-view component. Please check your network connection.');
+            return;
+        }
+
+        // Replace the entire page content with petri-view
+        // Note: This intentionally clears all existing UI components and state
+        // as petri-view provides its own complete rendering and menu system.
+        // This happens during initial load, so no user data is lost - the PetriNet
+        // data is passed to the petri-view component via the script tag.
+        this._root.innerHTML = '';
+
+        // Create petri-view element
+        const petriView = document.createElement('petri-view');
+        
+        // Add the data as a script tag inside petri-view
+        const scriptTag = document.createElement('script');
+        scriptTag.type = 'application/ld+json';
+        scriptTag.textContent = JSON.stringify(data, null, 2);
+        petriView.appendChild(scriptTag);
+
+        // Apply full-screen styles to petri-view
+        this._applyStyles(petriView, {
+            width: '100%',
+            height: '100vh',
+            display: 'block'
+        });
+
+        // Replace root content with petri-view
+        this._root.appendChild(petriView);
     }
 
     _applyStyles(el, styles = {}) {
