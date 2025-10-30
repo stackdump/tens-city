@@ -61,29 +61,101 @@ class TensCity extends HTMLElement {
         const supabaseUrl = this.getAttribute('supabase-url') || 'http://localhost:54321';
         const supabaseKey = this.getAttribute('supabase-key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
         
-        this._supabase = createClient(supabaseUrl, supabaseKey);
+        try {
+            this._supabase = createClient(supabaseUrl, supabaseKey);
 
-        // Listen for auth state changes
-        this._supabase.auth.onAuthStateChange((event, session) => {
-            console.log('Auth state changed:', event, session);
+            // Listen for auth state changes
+            this._supabase.auth.onAuthStateChange((event, session) => {
+                console.log('Auth state changed:', event, session);
+                if (session?.user) {
+                    this._user = session.user;
+                    this._showApp();
+                } else {
+                    this._user = null;
+                    this._showLogin();
+                }
+            });
+        } catch (err) {
+            console.error('Failed to initialize Supabase:', err);
+            this._showError('Failed to initialize Supabase. Please check your configuration.');
+        }
+    }
+
+    async _checkAuth() {
+        if (!this._supabase) {
+            this._showError('Supabase client not initialized. Please configure supabase-url and supabase-key attributes.');
+            return;
+        }
+        try {
+            const { data: { session } } = await this._supabase.auth.getSession();
             if (session?.user) {
                 this._user = session.user;
                 this._showApp();
             } else {
-                this._user = null;
                 this._showLogin();
             }
-        });
+        } catch (err) {
+            console.error('Auth check failed:', err);
+            this._showError('Failed to check authentication. Please check your Supabase configuration.');
+        }
     }
 
-    async _checkAuth() {
-        const { data: { session } } = await this._supabase.auth.getSession();
-        if (session?.user) {
-            this._user = session.user;
-            this._showApp();
-        } else {
-            this._showLogin();
-        }
+    _showError(message) {
+        this._loginContainer.style.display = 'none';
+        this._appContainer.style.display = 'flex';
+        this._appContainer.innerHTML = '';
+        
+        const errorContainer = document.createElement('div');
+        this._applyStyles(errorContainer, {
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            padding: '24px',
+            gap: '16px'
+        });
+
+        const errorIcon = document.createElement('div');
+        errorIcon.textContent = '⚠️';
+        this._applyStyles(errorIcon, {
+            fontSize: '64px'
+        });
+        errorContainer.appendChild(errorIcon);
+
+        const errorTitle = document.createElement('h2');
+        errorTitle.textContent = 'Configuration Error';
+        this._applyStyles(errorTitle, {
+            fontSize: '24px',
+            fontWeight: 'bold',
+            margin: '0',
+            color: '#d73a49'
+        });
+        errorContainer.appendChild(errorTitle);
+
+        const errorMessage = document.createElement('p');
+        errorMessage.textContent = message;
+        this._applyStyles(errorMessage, {
+            fontSize: '16px',
+            color: '#586069',
+            textAlign: 'center',
+            maxWidth: '600px',
+            margin: '0'
+        });
+        errorContainer.appendChild(errorMessage);
+
+        const helpText = document.createElement('p');
+        helpText.innerHTML = 'Please configure the <code>supabase-url</code> and <code>supabase-key</code> attributes on the &lt;tens-city&gt; element.<br>See <a href="README.md" target="_blank">README.md</a> for setup instructions.';
+        this._applyStyles(helpText, {
+            fontSize: '14px',
+            color: '#586069',
+            textAlign: 'center',
+            maxWidth: '600px',
+            margin: '16px 0 0 0'
+        });
+        errorContainer.appendChild(helpText);
+
+        this._appContainer.appendChild(errorContainer);
     }
 
     _showLogin() {
