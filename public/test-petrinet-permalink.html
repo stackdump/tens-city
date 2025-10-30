@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
+    <title>PetriNet Permalink Test - Tens City</title>
+    <script src="tens-city.js" type="module"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+        }
+        .test-info {
+            background: white;
+            border: 2px solid #0366d6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-info h2 {
+            margin: 0 0 16px 0;
+            color: #0366d6;
+        }
+        .test-info h3 {
+            margin: 16px 0 8px 0;
+            font-size: 16px;
+            color: #333;
+        }
+        .test-info ol, .test-info ul {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        .test-info li {
+            margin: 4px 0;
+        }
+        .test-info code {
+            background: #f6f8fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+        .component-container {
+            height: 600px;
+            border: 2px solid #e1e4e8;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .warning {
+            color: #e36209;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-info">
+        <h2>🔗 PetriNet Permalink Test</h2>
+        
+        <h3>Purpose:</h3>
+        <p>This test verifies that the permalink feature works correctly with complex PetriNet data from the issue report.</p>
+        
+        <h3>Test Instructions:</h3>
+        <ol>
+            <li><strong>Login:</strong> Click "Login with GitHub" (or continue if already logged in)</li>
+            <li><strong>Verify Data Loaded:</strong> The PetriNet JSON should appear in the editor</li>
+            <li><strong>Check Permalink:</strong> Look at the "🔗 Permalink" link in the toolbar</li>
+            <li><strong>Edit JSON:</strong> Make a small change to the JSON (e.g., change a coordinate value)</li>
+            <li><strong>Click Permalink:</strong> Click the permalink link - it should open a new tab</li>
+            <li><strong>Verify New Tab:</strong> The new tab should show your <span class="success">EDITED</span> data, not the default template</li>
+            <li><strong>Test Again:</strong> In the new tab, make another edit and click permalink again</li>
+            <li><strong>Verify Chain:</strong> Each new tab should show the data from the previous tab</li>
+        </ol>
+
+        <h3>Expected Behavior:</h3>
+        <ul>
+            <li><span class="success">✓</span> Permalink URL contains the current editor content</li>
+            <li><span class="success">✓</span> Clicking permalink opens a new tab with that data</li>
+            <li><span class="success">✓</span> The new tab loads the data from the URL, not default text</li>
+            <li><span class="success">✓</span> Can create permalinks from permalinks (chaining works)</li>
+        </ul>
+
+        <h3>What Was Fixed:</h3>
+        <p>The permalink URL construction was using <code>window.location.href</code> which included existing query parameters. This has been fixed to use <code>window.location.origin + window.location.pathname</code> to create a clean URL.</p>
+    </div>
+
+    <div class="component-container">
+        <tens-city>
+            <script type="application/ld+json">
+{
+  "@context": "https://pflow.xyz/schema",
+  "@id": "ipfs://z2xFpT8KDD7FU8tiWSMcB8n6dxJriy2PtZJrcyCwHkn9fmug732",
+  "@type": "PetriNet",
+  "@version": "1.1",
+  "arcs": [
+    {
+      "@type": "Arrow",
+      "inhibitTransition": false,
+      "source": "txn0",
+      "target": "place0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arrow",
+      "inhibitTransition": false,
+      "source": "place0",
+      "target": "txn1",
+      "weight": [
+        3
+      ]
+    },
+    {
+      "@type": "Arrow",
+      "inhibitTransition": true,
+      "source": "txn2",
+      "target": "place0",
+      "weight": [
+        3
+      ]
+    },
+    {
+      "@type": "Arrow",
+      "inhibitTransition": true,
+      "source": "place0",
+      "target": "txn3",
+      "weight": [
+        1
+      ]
+    }
+  ],
+  "places": {
+    "place0": {
+      "@type": "Place",
+      "capacity": [
+        3
+      ],
+      "initial": [
+        1
+      ],
+      "offset": 0,
+      "x": 130,
+      "y": 207
+    }
+  },
+  "token": [
+    "https://pflow.xyz/tokens/black"
+  ],
+  "transitions": {
+    "txn0": {
+      "@type": "Transition",
+      "x": 46,
+      "y": 116
+    },
+    "txn1": {
+      "@type": "Transition",
+      "x": 227,
+      "y": 112
+    },
+    "txn2": {
+      "@type": "Transition",
+      "x": 43,
+      "y": 307
+    },
+    "txn3": {
+      "@type": "Transition",
+      "x": 235,
+      "y": 306
+    }
+  }
+}
+            </script>
+        </tens-city>
+    </div>
+</body>
+</html>
