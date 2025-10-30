@@ -216,18 +216,24 @@
                 const parsed = JSON.parse(decodedData);
                 statusDiv.innerHTML = `
                     <strong style="color: #28a745;">✓ SUCCESS</strong><br>
-                    <strong>Decoding iterations:</strong> ${decodeCount}<br>
-                    <strong>Data type:</strong> ${parsed['@type']}<br>
-                    <strong>Context:</strong> ${parsed['@context']}<br>
+                    <strong>Decoding iterations:</strong> <span id="decode-count"></span><br>
+                    <strong>Data type:</strong> <span id="data-type"></span><br>
+                    <strong>Context:</strong> <span id="data-context"></span><br>
                     <strong>Data loaded successfully!</strong>
                 `;
+                document.getElementById('decode-count').textContent = decodeCount;
+                document.getElementById('data-type').textContent = parsed['@type'];
+                document.getElementById('data-context').textContent = parsed['@context'];
             } catch (err) {
                 statusDiv.innerHTML = `
                     <strong style="color: #d73a49;">✗ FAILED</strong><br>
-                    <strong>Error:</strong> ${err.message}<br>
-                    <strong>Decoding iterations:</strong> ${decodeCount}<br>
-                    <strong>Partial decode:</strong> ${decodedData.substring(0, 50)}...
+                    <strong>Error:</strong> <span id="error-msg"></span><br>
+                    <strong>Decoding iterations:</strong> <span id="decode-count-fail"></span><br>
+                    <strong>Partial decode:</strong> <span id="partial-decode"></span>
                 `;
+                document.getElementById('error-msg').textContent = err.message;
+                document.getElementById('decode-count-fail').textContent = decodeCount;
+                document.getElementById('partial-decode').textContent = decodedData.substring(0, 50) + '...';
             }
         } else {
             statusDiv.innerHTML = `
