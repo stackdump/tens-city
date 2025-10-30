@@ -2,6 +2,7 @@
 /seal
 /keygen
 /edge
+/webserver
 *.exe
 *.dll
 *.so
