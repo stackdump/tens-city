@@ -100,7 +100,8 @@
     <div class="demo-section">
         <h2>The Problem</h2>
         <p>When clicking on the permalink from a page that already has a <code>?data=...</code> parameter in the URL, 
-        the permalink would be constructed based on the current URL, which already contains query parameters.</p>
+        the permalink would be constructed based on the current URL, which already contains query parameters. This causes
+        the new permalink to potentially include stale data or malformed query strings.</p>
         
         <h3>Scenario:</h3>
         <ol>
@@ -189,7 +190,7 @@ const url = new URL(window.location.origin + window.location.pathname);</pre>
             // Result
             const result = document.createElement('p');
             result.className = 'error';
-            result.innerHTML = '❌ Result: URL still based on old URL structure (might have issues with some edge cases)';
+            result.innerHTML = '❌ Result: While this works in simple cases, the URL is constructed from the old URL which could lead to issues with parameter conflicts or double-encoding in complex scenarios';
             container.appendChild(result);
         }
 
