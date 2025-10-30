@@ -1,5 +1,24 @@
 # tens.city 
 
+## Web Application
+
+The web application is a single-page app for managing JSON-LD objects with GitHub authentication.
+
+### Features
+- GitHub OAuth login via Supabase Auth
+- Query and view objects from the database
+- Post new JSON-LD objects with ownership tracking
+- ACE editor for JSON editing with syntax highlighting
+
+### Quick Start
+```bash
+# Serve the public directory
+cd public
+python3 -m http.server 8080
+```
+
+Then configure your Supabase credentials in `index.html` (see `public/README.md` for details).
+
 ## 1. Ethos: tent city
 - Not skyscrapers; actual encampments.
 - Anyone can stake a corner — no permission required.
