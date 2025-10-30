@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Simple Permalink Anchor Test</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .pass { background: #d4edda; color: #155724; }
+        .fail { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Permalink Anchor Test (No Auth Required)</h1>
+    
+    <div id="results"></div>
+
+    <script type="module">
+        const results = document.getElementById('results');
+        
+        function addResult(name, passed, details) {
+            const div = document.createElement('div');
+            div.className = 'test-result ' + (passed ? 'pass' : 'fail');
+            div.innerHTML = `<strong>${passed ? '✓' : '✗'} ${name}</strong>`;
+            if (details) {
+                const pre = document.createElement('pre');
+                pre.textContent = details;
+                div.appendChild(pre);
+            }
+            results.appendChild(div);
+        }
+
+        function addInfo(message) {
+            const div = document.createElement('div');
+            div.className = 'test-result info';
+            div.innerHTML = `<strong>ℹ ${message}</strong>`;
+            results.appendChild(div);
+        }
+
+        // Test 1: Module import
+        addInfo('Testing tens-city module...');
+        
+        let TensCity;
+        try {
+            const module = await import('./tens-city.js');
+            TensCity = module.TensCity;
+            addResult('Module Import', true, 'Successfully imported tens-city.js');
+        } catch (err) {
+            addResult('Module Import', false, err.message);
+        }
+
+        // Test 2: Component registration
+        if (TensCity) {
+            try {
+                const registered = customElements.get('tens-city');
+                addResult('Component Registration', registered === TensCity, 
+                    'TensCity custom element is registered');
+            } catch (err) {
+                addResult('Component Registration', false, err.message);
+            }
+
+            // Test 3: Create instance
+            let component;
+            try {
+                component = new TensCity();
+                const hasPermalinkProp = '_permalinkAnchor' in component;
+                addResult('Permalink Anchor Property', hasPermalinkProp, 
+                    'Component has _permalinkAnchor property');
+            } catch (err) {
+                addResult('Permalink Anchor Property', false, err.message);
+            }
+
+            // Test 4: Check method exists
+            if (component) {
+                try {
+                    const hasMethod = typeof component._updatePermalinkAnchor === 'function';
+                    addResult('Update Permalink Method', hasMethod, 
+                        '_updatePermalinkAnchor method exists');
+                } catch (err) {
+                    addResult('Update Permalink Method', false, err.message);
+                }
+
+                // Test 5: Check old method removed
+                try {
+                    const oldMethodGone = typeof component._createPermalink !== 'function';
+                    addResult('Old Method Removed', oldMethodGone, 
+                        '_createPermalink method has been removed');
+                } catch (err) {
+                    addResult('Old Method Removed', false, err.message);
+                }
+            }
+        }
+
+        // Test 6: URL parameter test
+        addInfo('Testing URL parameter handling...');
+        try {
+            const testData = {
+                "@context": "https://pflow.xyz/schema",
+                "@type": "TestObject",
+                "name": "Test"
+            };
+            const url = new URL(window.location.href);
+            url.searchParams.set('data', encodeURIComponent(JSON.stringify(testData)));
+            const hasDataParam = url.searchParams.has('data');
+            addResult('URL Parameter Creation', hasDataParam, 
+                `URL with data parameter created:\n${url.toString().substring(0, 100)}...`);
+        } catch (err) {
+            addResult('URL Parameter Creation', false, err.message);
+        }
+
+        // Test 7: Check current URL for data
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const hasData = urlParams.has('data');
+            if (hasData) {
+                const data = JSON.parse(decodeURIComponent(urlParams.get('data')));
+                addResult('URL Data Loading', true, 
+                    `Found data in URL:\n${JSON.stringify(data, null, 2)}`);
+            } else {
+                addResult('URL Data Loading', false, 
+                    'No data parameter in current URL (this is expected for a fresh load)');
+            }
+        } catch (err) {
+            addResult('URL Data Loading', false, err.message);
+        }
+
+        // Summary
+        addInfo('Test Summary');
+        const passedCount = document.querySelectorAll('.pass').length;
+        const totalTests = document.querySelectorAll('.test-result:not(.info)').length;
+        const summary = document.createElement('div');
+        summary.className = 'test-result ' + (passedCount >= totalTests - 1 ? 'pass' : 'fail');
+        summary.innerHTML = `<strong>Results: ${passedCount}/${totalTests} tests passed</strong>`;
+        results.appendChild(summary);
+
+        // Instructions
+        const instructions = document.createElement('div');
+        instructions.className = 'test-result info';
+        instructions.innerHTML = `
+            <strong>Manual Testing Instructions:</strong>
+            <ol>
+                <li>Open <code>index.html</code> in a browser with Supabase configured</li>
+                <li>Login with GitHub</li>
+                <li>Observe the "🔗 Permalink" link in the toolbar (should be an anchor, not a button)</li>
+                <li>Edit the JSON in the editor</li>
+                <li>Right-click the permalink and select "Copy link address" - the URL should contain the current editor data</li>
+                <li>Click the permalink link - it should open a new tab with the data in the URL</li>
+                <li>Verify the new tab loads the data from URL into the editor</li>
+            </ol>
+        `;
+        results.appendChild(instructions);
+    </script>
+</body>
+</html>

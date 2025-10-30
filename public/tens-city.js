@@ -10,6 +10,7 @@ class TensCity extends HTMLElement {
         this._aceEditorContainer = null;
         this._loginContainer = null;
         this._appContainer = null;
+        this._permalinkAnchor = null;
     }
 
     connectedCallback() {
@@ -361,12 +362,37 @@ class TensCity extends HTMLElement {
         const loadBtn = makeButton('📋 Load Objects', 'Load objects from database', () => this._loadObjects());
         const postBtn = makeButton('📤 Post Object', 'Post current JSON as new object', () => this._postObject());
         const clearBtn = makeButton('🗑️ Clear', 'Clear editor', () => this._clearEditor());
-        const permalinkBtn = makeButton('🔗 Create Permalink', 'Create URL with current data', () => this._createPermalink());
+
+        // Create permalink anchor styled as a button
+        this._permalinkAnchor = document.createElement('a');
+        this._permalinkAnchor.textContent = '🔗 Permalink';
+        this._permalinkAnchor.title = 'Link to current data';
+        this._permalinkAnchor.href = '#';
+        this._permalinkAnchor.target = '_blank';
+        this._applyStyles(this._permalinkAnchor, {
+            padding: '8px 16px',
+            fontSize: '14px',
+            fontWeight: '500',
+            background: '#fafbfc',
+            border: '1px solid #e1e4e8',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            transition: 'background 0.2s',
+            textDecoration: 'none',
+            color: 'inherit',
+            display: 'inline-block'
+        });
+        this._permalinkAnchor.addEventListener('mouseenter', () => {
+            this._permalinkAnchor.style.background = '#f3f4f6';
+        });
+        this._permalinkAnchor.addEventListener('mouseleave', () => {
+            this._permalinkAnchor.style.background = '#fafbfc';
+        });
 
         toolbar.appendChild(loadBtn);
         toolbar.appendChild(postBtn);
         toolbar.appendChild(clearBtn);
-        toolbar.appendChild(permalinkBtn);
+        toolbar.appendChild(this._permalinkAnchor);
 
         this._appContainer.appendChild(toolbar);
     }
@@ -436,9 +462,10 @@ class TensCity extends HTMLElement {
         editor.setOptions(opts);
         editor.session.setValue('{\n  "@context": "https://pflow.xyz/schema",\n  "@type": "Object"\n}');
 
-        // Add change listener to update script tag
+        // Add change listener to update script tag and permalink anchor
         editor.session.on('change', () => {
             this._updateScriptTag();
+            this._updatePermalinkAnchor();
         });
 
         this._aceEditor = editor;
@@ -606,8 +633,8 @@ class TensCity extends HTMLElement {
         return null;
     }
 
-    _createPermalink() {
-        if (!this._aceEditor) return;
+    _updatePermalinkAnchor() {
+        if (!this._aceEditor || !this._permalinkAnchor) return;
 
         try {
             const editorContent = this._aceEditor.session.getValue();
@@ -618,39 +645,36 @@ class TensCity extends HTMLElement {
             const url = new URL(window.location.href);
             url.searchParams.set('data', encodeURIComponent(editorContent));
             
-            // Copy to clipboard
-            navigator.clipboard.writeText(url.toString()).then(() => {
-                alert('Permalink copied to clipboard!\n\nURL: ' + url.toString());
-            }).catch(err => {
-                // Fallback: show the URL in a prompt
-                prompt('Permalink (copy this URL):', url.toString());
-            });
+            // Update anchor href
+            this._permalinkAnchor.href = url.toString();
         } catch (err) {
-            alert('Cannot create permalink: Invalid JSON\n' + err.message);
+            // If JSON is invalid, set href to # to prevent navigation
+            this._permalinkAnchor.href = '#';
         }
     }
 
     async _loadInitialData() {
         // Check for permalink data in URL
         const urlData = this._loadFromURL();
-        if (urlData) {
-            if (this._aceEditor) {
-                this._aceEditor.session.setValue(urlData);
-            }
+        if (urlData && this._aceEditor) {
+            this._aceEditor.session.setValue(urlData);
+            this._updatePermalinkAnchor();
             return;
         }
 
         // Check for script tag data
         const scriptData = this._loadFromScriptTag();
-        if (scriptData) {
-            if (this._aceEditor) {
-                this._aceEditor.session.setValue(scriptData);
-            }
+        if (scriptData && this._aceEditor) {
+            this._aceEditor.session.setValue(scriptData);
+            this._updatePermalinkAnchor();
             return;
         }
 
         // Load some initial data from database
-        await this._loadObjects();
+        if (this._aceEditor) {
+            await this._loadObjects();
+            this._updatePermalinkAnchor();
+        }
     }
 
     // CID computation helpers (simplified from petri-view.js)
