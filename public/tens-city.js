@@ -617,7 +617,33 @@ class TensCity extends HTMLElement {
         
         if (encodedData) {
             try {
-                const decodedData = decodeURIComponent(encodedData);
+                // Decode recursively in case of double (or multiple) encoding
+                let decodedData = encodedData;
+                let lastDecoded = encodedData;
+                
+                // Keep decoding until we can't decode anymore or get valid JSON
+                while (true) {
+                    try {
+                        const nextDecoded = decodeURIComponent(decodedData);
+                        // If decoding doesn't change the string, we're done
+                        if (nextDecoded === decodedData) {
+                            break;
+                        }
+                        lastDecoded = decodedData;
+                        decodedData = nextDecoded;
+                        
+                        // Try to parse as JSON - if successful, we're done
+                        JSON.parse(decodedData);
+                        break;
+                    } catch (jsonErr) {
+                        // Not valid JSON yet, continue decoding if possible
+                        if (decodedData === lastDecoded) {
+                            // Can't decode anymore but still not valid JSON
+                            break;
+                        }
+                    }
+                }
+                
                 const data = JSON.parse(decodedData);
                 // Update script tag with loaded data
                 const scriptTag = document.createElement('script');
