@@ -170,7 +170,7 @@ func getRepoRoot() string {
 }
 
 func startDockerCompose(t *testing.T) error {
-	cmd := exec.Command("docker-compose", "up", "-d")
+	cmd := exec.Command("docker", "compose", "up", "-d")
 	cmd.Dir = getRepoRoot()
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -181,7 +181,7 @@ func startDockerCompose(t *testing.T) error {
 }
 
 func cleanupDockerCompose(t *testing.T) {
-	cmd := exec.Command("docker-compose", "down", "-v")
+	cmd := exec.Command("docker", "compose", "down", "-v")
 	cmd.Dir = getRepoRoot()
 	output, _ := cmd.CombinedOutput()
 	t.Logf("Docker-compose cleanup output: %s", output)
