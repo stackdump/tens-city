@@ -118,18 +118,24 @@
             const url = new URL(window.location.href);
             url.searchParams.set('data', encodeURIComponent(JSON.stringify(testData)));
             const urlString = url.toString();
+            const MAX_URL_DISPLAY_LENGTH = 100;
+            const displayUrl = urlString.length > MAX_URL_DISPLAY_LENGTH 
+                ? urlString.substring(0, MAX_URL_DISPLAY_LENGTH) + '...' 
+                : urlString;
             
             addResult('URL Creation', urlString.includes('?data='), 
-                `Generated URL:\n${urlString.substring(0, 100)}...`);
+                `Generated URL:\n${displayUrl}`);
         } catch (err) {
             addResult('URL Creation', false, err.message);
         }
 
         // Summary
-        const allPassed = document.querySelectorAll('.pass').length === 6;
+        const passedCount = document.querySelectorAll('.pass').length;
+        const totalTests = document.querySelectorAll('.status').length;
+        const allPassed = passedCount === totalTests;
         const summary = document.createElement('div');
         summary.className = 'status ' + (allPassed ? 'pass' : 'fail');
-        summary.innerHTML = `<strong>Summary: ${document.querySelectorAll('.pass').length}/6 tests passed</strong>`;
+        summary.innerHTML = `<strong>Summary: ${passedCount}/${totalTests} tests passed</strong>`;
         results.appendChild(summary);
     </script>
 </body>

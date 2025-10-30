@@ -103,7 +103,7 @@
             "url": "https://tens.city"
         };
         
-        const baseUrl = window.location.origin + window.location.pathname.replace('test-permalink.html', 'index.html');
+        const baseUrl = new URL('index.html', window.location.href).href;
         const encodedData = encodeURIComponent(JSON.stringify(sampleData));
         const permalinkUrl = `${baseUrl}?data=${encodedData}`;
         
