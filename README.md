@@ -64,6 +64,35 @@ For detailed information about JSON-LD validation, see [docs/JSONLD_VALIDATION.m
 
 ## 5. CLI Tools
 
+### webserver - HTTP server for JSON-LD objects
+Runs a web server that provides API access to JSON-LD objects and serves the web application. Supports both filesystem and PostgreSQL/Supabase storage backends.
+
+```bash
+# Start with filesystem storage
+./webserver -addr :8080 -store data -public public
+
+# Start with PostgreSQL/Supabase storage
+./webserver -addr :8080 -db <DATABASE_URL> -public public
+```
+
+**Features:**
+- **Storage backends**: Filesystem or PostgreSQL/Supabase database
+- **API routes**:
+  - `GET /o/{cid}` - Retrieve object by CID
+  - `POST /api/save` - Save JSON-LD and get CID
+  - `GET /u/{user}/g/{slug}/latest` - Get latest CID for user's gist
+  - `GET /u/{user}/g/{slug}/_history` - Get history for user's gist
+- **Autosave**: When a logged-in user visits `?data=<json>`, valid JSON-LD is automatically saved and redirected to `?cid=<CID>`
+- **Static file serving**: Serves the web application from the public directory
+- **CORS support**: Enable with `-cors` flag for cross-origin requests
+
+**Options:**
+- `-addr` - Server address (default: `:8080`)
+- `-db` - PostgreSQL database URL (if not set, uses filesystem)
+- `-store` - Filesystem store directory (default: `data`)
+- `-public` - Public directory for static files (default: `public`)
+- `-cors` - Enable CORS headers (default: `true`)
+
 ### seal - Create sealed JSON-LD objects
 Seals JSON-LD documents using URDNA2015 canonicalization and computes CIDv1 identifiers.
 
@@ -101,11 +130,33 @@ Generate or import Ethereum keystore files for signing.
 
 ## 6. Quick Start
 
+### Option 1: Web Server with Filesystem Storage
+
+1. Build the tools:
+   ```bash
+   go build -o seal ./cmd/seal
+   go build -o webserver ./cmd/webserver
+   ```
+
+2. Create and seal a JSON-LD document:
+   ```bash
+   ./seal -in examples/petrinet.jsonld -store data
+   ```
+
+3. Start the web server:
+   ```bash
+   ./webserver -addr :8080 -store data -public public
+   ```
+
+4. Open your browser to `http://localhost:8080`
+
+### Option 2: Web Server with Database Storage
+
 1. Build the tools:
    ```bash
    go build -o seal ./cmd/seal
    go build -o edge ./cmd/edge
-   go build -o keygen ./cmd/keygen
+   go build -o webserver ./cmd/webserver
    ```
 
 2. Start the database:
@@ -125,5 +176,12 @@ Generate or import Ethereum keystore files for signing.
    ./seal -in examples/petrinet.jsonld -store data
    ./edge import-fs -db <DATABASE_URL> -cid <CID> -store data
    ```
+
+5. Start the web server with database:
+   ```bash
+   ./webserver -addr :8080 -db <DATABASE_URL> -public public
+   ```
+
+6. Open your browser to `http://localhost:8080`
 
 See [examples/workflow.sh](examples/workflow.sh) for a complete workflow example.
