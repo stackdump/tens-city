@@ -643,8 +643,6 @@ class TensCity extends HTMLElement {
 
             // Create URL with data parameter
             const url = new URL(window.location.href);
-            // Remove any existing data parameter first
-            url.searchParams.delete('data');
             url.searchParams.set('data', encodeURIComponent(editorContent));
             
             // Update anchor href
@@ -661,8 +659,8 @@ class TensCity extends HTMLElement {
         if (urlData) {
             if (this._aceEditor) {
                 this._aceEditor.session.setValue(urlData);
-                this._updatePermalinkAnchor();
             }
+            this._updatePermalinkAnchor();
             return;
         }
 
@@ -671,8 +669,8 @@ class TensCity extends HTMLElement {
         if (scriptData) {
             if (this._aceEditor) {
                 this._aceEditor.session.setValue(scriptData);
-                this._updatePermalinkAnchor();
             }
+            this._updatePermalinkAnchor();
             return;
         }
 
