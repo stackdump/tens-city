@@ -1068,7 +1068,11 @@ class TensCity extends HTMLElement {
             }
             
             // Check if script already loaded
-            if (!document.querySelector(`script[src="${scriptUrl}"]`)) {
+            // Check by iterating through existing script elements to avoid injection issues
+            const existingScript = Array.from(document.querySelectorAll('script[type="module"]'))
+                .find(script => script.src === scriptUrl);
+            
+            if (!existingScript) {
                 await new Promise((resolve, reject) => {
                     const s = document.createElement('script');
                     s.type = 'module';
