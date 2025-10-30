@@ -656,27 +656,25 @@ class TensCity extends HTMLElement {
     async _loadInitialData() {
         // Check for permalink data in URL
         const urlData = this._loadFromURL();
-        if (urlData) {
-            if (this._aceEditor) {
-                this._aceEditor.session.setValue(urlData);
-            }
+        if (urlData && this._aceEditor) {
+            this._aceEditor.session.setValue(urlData);
             this._updatePermalinkAnchor();
             return;
         }
 
         // Check for script tag data
         const scriptData = this._loadFromScriptTag();
-        if (scriptData) {
-            if (this._aceEditor) {
-                this._aceEditor.session.setValue(scriptData);
-            }
+        if (scriptData && this._aceEditor) {
+            this._aceEditor.session.setValue(scriptData);
             this._updatePermalinkAnchor();
             return;
         }
 
         // Load some initial data from database
-        await this._loadObjects();
-        this._updatePermalinkAnchor();
+        if (this._aceEditor) {
+            await this._loadObjects();
+            this._updatePermalinkAnchor();
+        }
     }
 
     // CID computation helpers (simplified from petri-view.js)
