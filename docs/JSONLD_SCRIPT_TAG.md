@@ -37,19 +37,20 @@ Benefits:
 - External scripts can access the current data via `document.querySelector('script[type="application/ld+json"]')`
 - Data persists in the page structure
 
-### 3. Create Permalink
+### 3. Permalink Anchor
 
-Click the "🔗 Create Permalink" button in the toolbar to:
-- Encode the current editor content as a URL parameter
-- Copy the permalink to your clipboard
-- Share the URL with others to load the exact same data
+The "🔗 Permalink" link in the toolbar is automatically updated as you edit:
+- The anchor's href is updated in real-time with the current editor content
+- Click the link to open a new tab/window with the current data encoded in the URL
+- The permalink anchor always reflects the latest valid JSON in the editor
+- Share the URL to allow others to load the exact same data
 
 Example permalink:
 ```
 http://localhost:8080/index.html?data=%7B%22%40context%22%3A...
 ```
 
-When someone visits this URL, the data is automatically loaded into the editor.
+When someone visits this URL, the data is automatically loaded into the editor and added as a script tag.
 
 ## Priority Loading
 
@@ -112,7 +113,7 @@ See `test-jsonld.html` for a complete example with embedded data and testing ins
 - `_loadFromScriptTag()`: Reads JSON-LD from embedded script tag
 - `_updateScriptTag()`: Updates/creates script tag with current editor content
 - `_loadFromURL()`: Decodes data from URL parameter
-- `_createPermalink()`: Generates shareable URL with encoded data
+- `_updatePermalinkAnchor()`: Updates permalink anchor href with current editor content
 
 ### Security Considerations
 
