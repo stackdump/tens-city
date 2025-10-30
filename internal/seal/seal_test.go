@@ -130,3 +130,48 @@ func TestSealJSONLD_ProducesCanonicalNQuads(t *testing.T) {
 		t.Errorf("Expected N-Quads to end with a period")
 	}
 }
+
+func TestSealJSONLD_DeterministicWithRemoteContext(t *testing.T) {
+	// This tests the HTML default value which uses a remote context URL
+	input := []byte(`{
+		"@context": "https://pflow.xyz/schema",
+		"@type": "PetriNet",
+		"@version": "1.1",
+		"arcs": [],
+		"places": {},
+		"token": ["https://pflow.xyz/tokens/black"],
+		"transitions": {}
+	}`)
+
+	// Seal the same input multiple times
+	cid1, canonical1, err := SealJSONLD(input)
+	if err != nil {
+		t.Fatalf("First SealJSONLD failed: %v", err)
+	}
+
+	cid2, canonical2, err := SealJSONLD(input)
+	if err != nil {
+		t.Fatalf("Second SealJSONLD failed: %v", err)
+	}
+
+	cid3, canonical3, err := SealJSONLD(input)
+	if err != nil {
+		t.Fatalf("Third SealJSONLD failed: %v", err)
+	}
+
+	// All CIDs should be identical
+	if cid1 != cid2 || cid2 != cid3 {
+		t.Errorf("Expected deterministic CID with remote context, got different results: %s, %s, %s", cid1, cid2, cid3)
+	}
+
+	// All canonical forms should be identical
+	if string(canonical1) != string(canonical2) || string(canonical2) != string(canonical3) {
+		t.Errorf("Expected deterministic canonical form with remote context")
+	}
+
+	// Verify the CID has the expected format
+	if !strings.HasPrefix(cid1, "z4E") {
+		t.Errorf("Expected CID to start with 'z4E', got: %s", cid1[:4])
+	}
+}
+
