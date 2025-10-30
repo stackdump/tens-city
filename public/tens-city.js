@@ -305,6 +305,10 @@ class TensCity extends HTMLElement {
         const logo = document.createElement('img');
         logo.src = 'logo.svg';
         logo.alt = 'Tens City';
+        logo.onerror = () => {
+            // If logo fails to load, hide it gracefully
+            logo.style.display = 'none';
+        };
         this._applyStyles(logo, {
             height: '40px',
             width: 'auto'
