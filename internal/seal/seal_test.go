@@ -119,12 +119,12 @@ func TestSealJSONLD_ProducesCanonicalNQuads(t *testing.T) {
 
 	// Canonical output should be N-Quads format
 	canonicalStr := string(canonical)
-	
+
 	// Should contain RDF triples
 	if !strings.Contains(canonicalStr, "http://schema.org/name") {
 		t.Errorf("Expected canonical form to contain the schema.org/name URI")
 	}
-	
+
 	// Should end with a period and newline (N-Quads format)
 	if !strings.HasSuffix(strings.TrimSpace(canonicalStr), ".") {
 		t.Errorf("Expected N-Quads to end with a period")
@@ -174,4 +174,3 @@ func TestSealJSONLD_DeterministicWithRemoteContext(t *testing.T) {
 		t.Errorf("Expected CID to start with 'z4E', got: %s", cid1[:4])
 	}
 }
-

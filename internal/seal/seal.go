@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/piprate/json-gold/ld"
 	cid "github.com/ipfs/go-cid"
-	mh "github.com/multiformats/go-multihash"
 	"github.com/multiformats/go-multibase"
+	mh "github.com/multiformats/go-multihash"
+	"github.com/piprate/json-gold/ld"
 )
 
 var (
@@ -24,10 +24,10 @@ func initCachingLoader() {
 	cachedLoaderOnce.Do(func() {
 		// Create a default HTTP-based document loader
 		httpLoader := ld.NewDefaultDocumentLoader(http.DefaultClient)
-		
+
 		// Wrap it with a caching loader
 		cachingLoader := ld.NewCachingDocumentLoader(httpLoader)
-		
+
 		// Preload the pflow.xyz schema context to ensure deterministic behavior
 		// This context is derived from the examples in the repository
 		pflowContext := map[string]interface{}{
@@ -63,9 +63,9 @@ func initCachingLoader() {
 				"y":      "https://pflow.xyz/schema#y",
 			},
 		}
-		
+
 		cachingLoader.AddDocument("https://pflow.xyz/schema", pflowContext)
-		
+
 		cachedLoader = cachingLoader
 	})
 }
@@ -80,7 +80,7 @@ func initCachingLoader() {
 func SealJSONLD(raw []byte) (string, []byte, error) {
 	// Initialize the caching document loader for deterministic behavior
 	initCachingLoader()
-	
+
 	// parse JSON-LD into a Go interface{}
 	var doc interface{}
 	if err := json.Unmarshal(raw, &doc); err != nil {
@@ -117,12 +117,12 @@ func SealJSONLD(raw []byte) (string, []byte, error) {
 
 	// Create CIDv1 with json-ld codec (DagJSON = 0x0129)
 	c := cid.NewCidV1(cid.DagJSON, multihash)
-	
+
 	// Encode using base58btc (z prefix) for storage in filesystem
 	cidStr, err := c.StringOfBase(multibase.Base58BTC)
 	if err != nil {
 		return "", nil, err
 	}
-	
+
 	return cidStr, normalizedBytes, nil
 }
