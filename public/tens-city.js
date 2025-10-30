@@ -1047,12 +1047,21 @@ class TensCity extends HTMLElement {
     }
 
     async _showPetriView(data) {
-        // Load the petri-view script
+        // Load the petri-view script and CSS
         // Use attribute to allow custom petri-view URL, fallback to default
         const scriptUrl = this.getAttribute('petri-view-url') || 
                           'https://cdn.jsdelivr.net/gh/pflow-xyz/pflow-xyz@latest/public/petri-view.js';
+        const cssUrl = 'https://cdn.jsdelivr.net/gh/pflow-xyz/pflow-xyz@latest/public/petri-view.css';
         
         try {
+            // Load CSS if not already loaded
+            if (!document.querySelector(`link[href="${cssUrl}"]`)) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = cssUrl;
+                document.head.appendChild(link);
+            }
+            
             // Check if script already loaded
             if (!document.querySelector(`script[src="${scriptUrl}"]`)) {
                 await new Promise((resolve, reject) => {
@@ -1080,6 +1089,9 @@ class TensCity extends HTMLElement {
 
         // Create petri-view element
         const petriView = document.createElement('petri-view');
+        
+        // Add data-json-editor attribute to show JSON
+        petriView.setAttribute('data-json-editor', '');
         
         // Add the data as a script tag inside petri-view
         const scriptTag = document.createElement('script');
