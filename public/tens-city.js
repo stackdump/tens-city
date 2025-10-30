@@ -1048,14 +1048,19 @@ class TensCity extends HTMLElement {
 
     async _showPetriView(data) {
         // Load the petri-view script and CSS
-        // Use attribute to allow custom petri-view URL, fallback to default
+        // Use attributes to allow custom URLs, fallback to defaults
         const scriptUrl = this.getAttribute('petri-view-url') || 
                           'https://cdn.jsdelivr.net/gh/pflow-xyz/pflow-xyz@latest/public/petri-view.js';
-        const cssUrl = 'https://cdn.jsdelivr.net/gh/pflow-xyz/pflow-xyz@latest/public/petri-view.css';
+        const cssUrl = this.getAttribute('petri-view-css-url') || 
+                       'https://cdn.jsdelivr.net/gh/pflow-xyz/pflow-xyz@latest/public/petri-view.css';
         
         try {
             // Load CSS if not already loaded
-            if (!document.querySelector(`link[href="${cssUrl}"]`)) {
+            // Check by iterating through existing link elements to avoid CSS.escape compatibility issues
+            const existingCssLink = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+                .find(link => link.href === cssUrl);
+            
+            if (!existingCssLink) {
                 const link = document.createElement('link');
                 link.rel = 'stylesheet';
                 link.href = cssUrl;
