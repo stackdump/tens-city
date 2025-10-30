@@ -9,6 +9,7 @@ import (
 "path/filepath"
 "strings"
 
+"github.com/stackdump/tens-city/internal/canonical"
 "github.com/stackdump/tens-city/internal/seal"
 "github.com/stackdump/tens-city/internal/store"
 )
@@ -196,8 +197,8 @@ http.Error(w, "Invalid JSON-LD: missing @context", http.StatusBadRequest)
 return
 }
 
-// Serialize back to JSON
-raw, err := json.Marshal(doc)
+// Serialize back to JSON using canonical encoding (sorted keys)
+raw, err := canonical.MarshalJSON(doc)
 if err != nil {
 http.Error(w, "Failed to serialize JSON", http.StatusInternalServerError)
 return

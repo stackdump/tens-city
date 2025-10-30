@@ -1,5 +1,29 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
+// Canonical JSON stringification with sorted keys
+// This ensures consistent JSON encoding across frontend and backend
+function canonicalJSON(obj) {
+    if (obj === null) {
+        return 'null';
+    }
+    
+    if (typeof obj !== 'object') {
+        return JSON.stringify(obj);
+    }
+    
+    if (Array.isArray(obj)) {
+        const items = obj.map(item => canonicalJSON(item));
+        return '[' + items.join(',') + ']';
+    }
+    
+    // Object: sort keys alphabetically
+    const keys = Object.keys(obj).sort();
+    const pairs = keys.map(key => {
+        return JSON.stringify(key) + ':' + canonicalJSON(obj[key]);
+    });
+    return '{' + pairs.join(',') + '}';
+}
+
 class TensCity extends HTMLElement {
     constructor() {
         super();
@@ -877,13 +901,16 @@ class TensCity extends HTMLElement {
         }
 
         try {
+            // Use canonical JSON encoding to ensure consistent CID calculation
+            const canonicalData = canonicalJSON(data.data);
+            
             // Use API endpoint to save
             const response = await fetch('/api/save', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(data.data)
+                body: canonicalData
             });
 
             if (!response.ok) {
@@ -913,12 +940,13 @@ class TensCity extends HTMLElement {
 
         try {
             const editorContent = this._aceEditor.session.getValue();
-            // Validate JSON
-            JSON.parse(editorContent);
+            // Parse and canonicalize JSON to ensure consistent encoding
+            const parsed = JSON.parse(editorContent);
+            const canonical = canonicalJSON(parsed);
 
             // Create URL with data parameter - use clean URL without existing query params
             const url = new URL(window.location.origin + window.location.pathname);
-            url.searchParams.set('data', encodeURIComponent(editorContent));
+            url.searchParams.set('data', encodeURIComponent(canonical));
             
             // Update anchor href
             this._permalinkAnchor.href = url.toString();
