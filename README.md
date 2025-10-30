@@ -9,6 +9,12 @@ The web application is a single-page app for managing JSON-LD objects with GitHu
 - Query and view objects from the database
 - Post new JSON-LD objects with ownership tracking
 - ACE editor for JSON editing with syntax highlighting
+- Load data from embedded `<script type="application/ld+json">` tags
+- Auto-update script tags when editor content changes
+- Create permalinks with data encoded in URL
+- Share and load JSON-LD via URL parameters
+
+For details on the JSON-LD script tag and permalink features, see [docs/JSONLD_SCRIPT_TAG.md](docs/JSONLD_SCRIPT_TAG.md).
 
 ### Quick Start
 ```bash
