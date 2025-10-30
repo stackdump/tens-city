@@ -22,7 +22,7 @@ You need a Supabase project with:
 
 ### 2. Add Supabase Configuration
 
-Update `index.html` to include your Supabase credentials:
+Update `index.html` to include your Supabase credentials as HTML attributes:
 
 ```html
 <tens-city 
@@ -31,12 +31,9 @@ Update `index.html` to include your Supabase credentials:
 </tens-city>
 ```
 
-Or edit the default values in `tens-city.js`:
+You can also copy `index.example.html` as a starting template.
 
-```javascript
-const supabaseUrl = this.getAttribute('supabase-url') || 'YOUR_SUPABASE_URL';
-const supabaseKey = this.getAttribute('supabase-key') || 'YOUR_SUPABASE_ANON_KEY';
-```
+**Note**: The default configuration in the code uses local Supabase development server settings. For production, always configure via HTML attributes.
 
 ### 3. Configure GitHub OAuth
 

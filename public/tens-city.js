@@ -145,7 +145,6 @@ class TensCity extends HTMLElement {
         errorContainer.appendChild(errorMessage);
 
         const helpText = document.createElement('p');
-        helpText.innerHTML = 'Please configure the <code>supabase-url</code> and <code>supabase-key</code> attributes on the &lt;tens-city&gt; element.<br>See <a href="README.md" target="_blank">README.md</a> for setup instructions.';
         this._applyStyles(helpText, {
             fontSize: '14px',
             color: '#586069',
@@ -153,6 +152,25 @@ class TensCity extends HTMLElement {
             maxWidth: '600px',
             margin: '16px 0 0 0'
         });
+        
+        // Build help text safely without innerHTML
+        helpText.textContent = 'Please configure the ';
+        const code1 = document.createElement('code');
+        code1.textContent = 'supabase-url';
+        helpText.appendChild(code1);
+        helpText.appendChild(document.createTextNode(' and '));
+        const code2 = document.createElement('code');
+        code2.textContent = 'supabase-key';
+        helpText.appendChild(code2);
+        helpText.appendChild(document.createTextNode(' attributes on the <tens-city> element.'));
+        helpText.appendChild(document.createElement('br'));
+        helpText.appendChild(document.createTextNode('See '));
+        const link = document.createElement('a');
+        link.href = 'README.md';
+        link.target = '_blank';
+        link.textContent = 'README.md';
+        helpText.appendChild(link);
+        helpText.appendChild(document.createTextNode(' for setup instructions.'));
         errorContainer.appendChild(helpText);
 
         this._appContainer.appendChild(errorContainer);
