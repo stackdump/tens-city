@@ -25,7 +25,17 @@ Maps to:
 - Keep the runtime minimal and non-opinionated.
 - Serve static files directly from disk with a generic viewer.
 
-## CLI Tools
+## 4. JSON-LD Validation
+
+The database uses the `pg_jsonschema` PostgreSQL extension to enforce JSON-LD correctness guarantees at the database layer. This ensures that all stored objects meet basic JSON-LD requirements:
+
+- **Required `@context` field**: All JSON-LD documents must have a `@context` field (can be string, object, array, or null)
+- **Schema validation**: Objects are validated against a JSON Schema before insertion
+- **Database-level enforcement**: Invalid JSON-LD documents are rejected at the database level
+
+This provides a safety net ensuring data integrity without requiring application-level validation.
+
+## 5. CLI Tools
 
 ### seal - Create sealed JSON-LD objects
 Seals JSON-LD documents using URDNA2015 canonicalization and computes CIDv1 identifiers.
@@ -62,7 +72,7 @@ Generate or import Ethereum keystore files for signing.
 ./keygen -out my-key.keystore -pass mypassword
 ```
 
-## Quick Start
+## 6. Quick Start
 
 1. Build the tools:
    ```bash
@@ -79,6 +89,7 @@ Generate or import Ethereum keystore files for signing.
 3. Run migrations:
    ```bash
    psql <DATABASE_URL> -f migrations/migrations_20251029_create_tens_city_tables.sql
+   psql <DATABASE_URL> -f migrations/migrations_20251030_add_jsonld_validation.sql
    psql <DATABASE_URL> -f migrations/policies_enable_rls_and_policies.sql
    ```
 
