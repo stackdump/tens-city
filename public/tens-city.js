@@ -1048,7 +1048,9 @@ class TensCity extends HTMLElement {
 
     async _showPetriView(data) {
         // Load the petri-view script
-        const scriptUrl = 'https://cdn.jsdelivr.net/gh/pflow-xyz/pflow-xyz@latest/public/petri-view.js';
+        // Use attribute to allow custom petri-view URL, fallback to default
+        const scriptUrl = this.getAttribute('petri-view-url') || 
+                         'https://cdn.jsdelivr.net/gh/pflow-xyz/pflow-xyz@latest/public/petri-view.js';
         
         try {
             // Check if script already loaded
@@ -1063,16 +1065,14 @@ class TensCity extends HTMLElement {
             }
         } catch (err) {
             console.error('Failed to load petri-view script:', err);
-            // Fallback to normal editor if script fails to load
-            if (this._aceEditor) {
-                this._aceEditor.session.setValue(JSON.stringify(data, null, 2));
-                this._updatePermalinkAnchor();
-            }
+            // Fallback: show error message instead of trying to use uninitialized editor
+            this._showError('Failed to load petri-view component. Please check your network connection.');
             return;
         }
 
         // Replace the entire page content with petri-view
-        // Clear the root
+        // Note: This intentionally clears all existing UI components and state
+        // as petri-view provides its own complete rendering and menu system
         this._root.innerHTML = '';
 
         // Create petri-view element
