@@ -66,11 +66,11 @@ class TensCity extends HTMLElement {
             this._supabase = createClient(supabaseUrl, supabaseKey);
 
             // Listen for auth state changes
-            this._supabase.auth.onAuthStateChange((event, session) => {
+            this._supabase.auth.onAuthStateChange(async (event, session) => {
                 console.log('Auth state changed:', event, session);
                 if (session?.user) {
                     this._user = session.user;
-                    this._showApp();
+                    await this._showApp();
                 } else {
                     this._user = null;
                     this._showLogin();
@@ -91,7 +91,7 @@ class TensCity extends HTMLElement {
             const { data: { session } } = await this._supabase.auth.getSession();
             if (session?.user) {
                 this._user = session.user;
-                this._showApp();
+                await this._showApp();
             } else {
                 this._showLogin();
             }
@@ -251,15 +251,15 @@ class TensCity extends HTMLElement {
         }
     }
 
-    _showApp() {
+    async _showApp() {
         this._loginContainer.style.display = 'none';
         this._appContainer.style.display = 'flex';
         this._appContainer.innerHTML = '';
         
         this._createHeader();
         this._createToolbar();
-        this._createEditor();
-        this._loadInitialData();
+        await this._createEditor();
+        await this._loadInitialData();
     }
 
     _createHeader() {
@@ -397,7 +397,7 @@ class TensCity extends HTMLElement {
         this._appContainer.appendChild(toolbar);
     }
 
-    _createEditor() {
+    async _createEditor() {
         const editorContainer = document.createElement('div');
         editorContainer.className = 'tc-editor-container';
         this._applyStyles(editorContainer, {
@@ -435,7 +435,7 @@ class TensCity extends HTMLElement {
         this._appContainer.appendChild(editorContainer);
 
         // Initialize ACE editor
-        this._initAceEditor(editorDiv);
+        await this._initAceEditor(editorDiv);
     }
 
     async _initAceEditor(container) {
