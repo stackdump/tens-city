@@ -1057,6 +1057,7 @@ class TensCity extends HTMLElement {
             if (!document.querySelector(`script[src="${scriptUrl}"]`)) {
                 await new Promise((resolve, reject) => {
                     const s = document.createElement('script');
+                    s.type = 'module';
                     s.src = scriptUrl;
                     s.onload = () => resolve();
                     s.onerror = (e) => reject(e);
