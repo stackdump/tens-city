@@ -112,6 +112,32 @@
             addResult('Invalid JSON Handling', true, 'Correctly throws error for invalid JSON');
         }
 
+        // Helper function to decode recursively
+        function decodeRecursively(encodedData) {
+            let decodedData = encodedData;
+            
+            while (true) {
+                try {
+                    const nextDecoded = decodeURIComponent(decodedData);
+                    if (nextDecoded === decodedData) {
+                        break;
+                    }
+                    decodedData = nextDecoded;
+                    
+                    try {
+                        JSON.parse(decodedData);
+                        break;
+                    } catch (jsonErr) {
+                        // Not valid JSON yet, continue decoding
+                    }
+                } catch (e) {
+                    break;
+                }
+            }
+            
+            return decodedData;
+        }
+
         // Test 6: URL creation
         try {
             const testData = { "@context": "https://pflow.xyz/schema", "@type": "Test" };
@@ -127,6 +153,36 @@
                 `Generated URL:\n${displayUrl}`);
         } catch (err) {
             addResult('URL Creation', false, err.message);
+        }
+
+        // Test 7: Double-encoded URL decoding (issue fix)
+        try {
+            const testData = { "@context": "https://pflow.xyz/schema", "@type": "Test" };
+            const jsonString = JSON.stringify(testData);
+            const doubleEncoded = encodeURIComponent(encodeURIComponent(jsonString));
+            
+            const decodedData = decodeRecursively(doubleEncoded);
+            const parsed = JSON.parse(decodedData);
+            const match = JSON.stringify(testData) === JSON.stringify(parsed);
+            addResult('Double-Encoded URL Decoding', match, 
+                `Successfully decoded double-encoded data:\n${JSON.stringify(parsed, null, 2)}`);
+        } catch (err) {
+            addResult('Double-Encoded URL Decoding', false, err.message);
+        }
+
+        // Test 8: Triple-encoded URL decoding (edge case)
+        try {
+            const testData = { "@context": "https://pflow.xyz/schema", "@type": "EdgeCase" };
+            const jsonString = JSON.stringify(testData);
+            const tripleEncoded = encodeURIComponent(encodeURIComponent(encodeURIComponent(jsonString)));
+            
+            const decodedData = decodeRecursively(tripleEncoded);
+            const parsed = JSON.parse(decodedData);
+            const match = JSON.stringify(testData) === JSON.stringify(parsed);
+            addResult('Triple-Encoded URL Decoding', match, 
+                `Successfully decoded triple-encoded data:\n${JSON.stringify(parsed, null, 2)}`);
+        } catch (err) {
+            addResult('Triple-Encoded URL Decoding', false, err.message);
         }
 
         // Summary
