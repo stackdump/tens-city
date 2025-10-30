@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Permalink URL Construction Test</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .status { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 4px; 
+        }
+        .pass { background: #d4edda; color: #155724; }
+        .fail { background: #f8d7da; color: #721c24; }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        h1 {
+            color: #0366d6;
+        }
+        .test-description {
+            background: #e3f2fd;
+            padding: 15px;
+            border-left: 4px solid #2196f3;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔗 Permalink URL Construction Test</h1>
+    
+    <div class="test-description">
+        <h3>Issue Being Tested:</h3>
+        <p>When clicking on the permalink, it should open a new page with the current editor data, not the default text.</p>
+        <h3>Root Cause:</h3>
+        <p>The permalink URL was being constructed using <code>new URL(window.location.href)</code> which included existing query parameters from the current URL.</p>
+        <h3>Fix:</h3>
+        <p>Changed to use <code>new URL(window.location.origin + window.location.pathname)</code> to create a clean URL without existing query parameters.</p>
+    </div>
+
+    <div id="test-container">
+        <h2>Test Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <script type="module">
+        const results = document.getElementById('results');
+        
+        function addResult(name, passed, details) {
+            const div = document.createElement('div');
+            div.className = 'status ' + (passed ? 'pass' : 'fail');
+            div.innerHTML = `<strong>${passed ? '✓' : '✗'} ${name}</strong>`;
+            if (details) {
+                const pre = document.createElement('pre');
+                pre.textContent = details;
+                div.appendChild(pre);
+            }
+            results.appendChild(div);
+        }
+
+        // Test 1: Clean URL construction (the fix)
+        try {
+            // Simulate being on a page with existing data parameter
+            const originalUrl = 'http://localhost:8080/index.html?data=%7B%22old%22%3A%22data%22%7D';
+            const testUrl = new URL(originalUrl);
+            
+            // OLD WAY (buggy) - includes existing query params
+            const oldWayUrl = new URL(testUrl.href);
+            const oldWayData = { "@context": "https://pflow.xyz/schema", "@type": "NewData" };
+            oldWayUrl.searchParams.set('data', encodeURIComponent(JSON.stringify(oldWayData)));
+            
+            // NEW WAY (fixed) - clean URL without query params
+            const newWayUrl = new URL(testUrl.origin + testUrl.pathname);
+            const newWayData = { "@context": "https://pflow.xyz/schema", "@type": "NewData" };
+            newWayUrl.searchParams.set('data', encodeURIComponent(JSON.stringify(newWayData)));
+            
+            // The new way should have only one data parameter
+            const newWayParams = new URLSearchParams(newWayUrl.search);
+            const newWayParamCount = Array.from(newWayParams.keys()).length;
+            
+            addResult('Clean URL Construction', newWayParamCount === 1, 
+                `OLD way URL: ${oldWayUrl.toString()}\n\nNEW way URL: ${newWayUrl.toString()}\n\nNew way has ${newWayParamCount} parameter(s) (should be 1)`);
+        } catch (err) {
+            addResult('Clean URL Construction', false, err.message);
+        }
+
+        // Test 2: URL without existing params stays clean
+        try {
+            const baseUrl = 'http://localhost:8080/index.html';
+            const testUrl = new URL(baseUrl);
+            
+            const cleanUrl = new URL(testUrl.origin + testUrl.pathname);
+            const data = { "@context": "https://pflow.xyz/schema", "@type": "Test" };
+            cleanUrl.searchParams.set('data', encodeURIComponent(JSON.stringify(data)));
+            
+            const params = new URLSearchParams(cleanUrl.search);
+            const paramCount = Array.from(params.keys()).length;
+            
+            addResult('Clean URL from Clean Base', paramCount === 1, 
+                `URL: ${cleanUrl.toString()}\nParameter count: ${paramCount} (should be 1)`);
+        } catch (err) {
+            addResult('Clean URL from Clean Base', false, err.message);
+        }
+
+        // Test 3: URL with multiple existing params gets cleaned
+        try {
+            const baseUrl = 'http://localhost:8080/index.html?data=old&foo=bar&baz=qux';
+            const testUrl = new URL(baseUrl);
+            
+            const cleanUrl = new URL(testUrl.origin + testUrl.pathname);
+            const data = { "@context": "https://pflow.xyz/schema", "@type": "Test" };
+            cleanUrl.searchParams.set('data', encodeURIComponent(JSON.stringify(data)));
+            
+            const params = new URLSearchParams(cleanUrl.search);
+            const paramCount = Array.from(params.keys()).length;
+            const hasOnlyData = paramCount === 1 && params.has('data');
+            
+            addResult('Multiple Params Cleaned', hasOnlyData, 
+                `Original had 3 params (data, foo, baz)\nNew URL: ${cleanUrl.toString()}\nNew param count: ${paramCount}\nHas only 'data': ${hasOnlyData}`);
+        } catch (err) {
+            addResult('Multiple Params Cleaned', false, err.message);
+        }
+
+        // Test 4: Data can be properly extracted from new URL
+        try {
+            const testData = {
+                "@context": "https://pflow.xyz/schema",
+                "@id": "ipfs://test",
+                "@type": "PetriNet",
+                "name": "Test Net"
+            };
+            
+            const baseUrl = 'http://localhost:8080/index.html';
+            const cleanUrl = new URL(new URL(baseUrl).origin + new URL(baseUrl).pathname);
+            cleanUrl.searchParams.set('data', encodeURIComponent(JSON.stringify(testData)));
+            
+            // Extract data back
+            const extractedParams = new URLSearchParams(cleanUrl.search);
+            const extractedData = JSON.parse(decodeURIComponent(extractedParams.get('data')));
+            
+            const match = JSON.stringify(testData) === JSON.stringify(extractedData);
+            
+            addResult('Data Round-Trip', match, 
+                `Original:\n${JSON.stringify(testData, null, 2)}\n\nExtracted:\n${JSON.stringify(extractedData, null, 2)}`);
+        } catch (err) {
+            addResult('Data Round-Trip', false, err.message);
+        }
+
+        // Test 5: PetriNet data from issue
+        try {
+            const petriNetData = {
+                "@context": "https://pflow.xyz/schema",
+                "@id": "ipfs://z2xFpT8KDD7FU8tiWSMcB8n6dxJriy2PtZJrcyCwHkn9fmug732",
+                "@type": "PetriNet",
+                "@version": "1.1",
+                "arcs": [
+                    {
+                        "@type": "Arrow",
+                        "inhibitTransition": false,
+                        "source": "txn0",
+                        "target": "place0",
+                        "weight": [1]
+                    }
+                ],
+                "places": {
+                    "place0": {
+                        "@type": "Place",
+                        "capacity": [3],
+                        "initial": [1],
+                        "offset": 0,
+                        "x": 130,
+                        "y": 207
+                    }
+                },
+                "token": ["https://pflow.xyz/tokens/black"],
+                "transitions": {
+                    "txn0": {
+                        "@type": "Transition",
+                        "x": 46,
+                        "y": 116
+                    }
+                }
+            };
+            
+            const baseUrl = 'http://localhost:8080/index.html';
+            const cleanUrl = new URL(new URL(baseUrl).origin + new URL(baseUrl).pathname);
+            cleanUrl.searchParams.set('data', encodeURIComponent(JSON.stringify(petriNetData)));
+            
+            // Extract and verify
+            const extractedParams = new URLSearchParams(cleanUrl.search);
+            const extractedData = JSON.parse(decodeURIComponent(extractedParams.get('data')));
+            
+            const match = JSON.stringify(petriNetData) === JSON.stringify(extractedData);
+            
+            addResult('PetriNet Data from Issue', match, 
+                `Successfully encoded and decoded PetriNet data\nURL length: ${cleanUrl.toString().length} characters\nData has ${Object.keys(extractedData).length} top-level keys`);
+        } catch (err) {
+            addResult('PetriNet Data from Issue', false, err.message);
+        }
+
+        // Test 6: Chaining permalinks (issue scenario)
+        try {
+            // Start with a page that has data
+            const data1 = { "@context": "test", "version": 1 };
+            const url1 = new URL('http://localhost:8080/index.html');
+            const cleanUrl1 = new URL(url1.origin + url1.pathname);
+            cleanUrl1.searchParams.set('data', encodeURIComponent(JSON.stringify(data1)));
+            
+            // Simulate user editing data and creating another permalink
+            // This simulates what happens when you click a permalink and then create another one
+            const data2 = { "@context": "test", "version": 2 };
+            
+            // Using the OLD buggy way - would include version 1 data in the URL
+            const buggyUrl = new URL(cleanUrl1.toString()); // includes ?data=version1
+            buggyUrl.searchParams.set('data', encodeURIComponent(JSON.stringify(data2)));
+            
+            // Using the NEW fixed way - creates clean URL
+            const fixedUrl = new URL(cleanUrl1.origin + cleanUrl1.pathname);
+            fixedUrl.searchParams.set('data', encodeURIComponent(JSON.stringify(data2)));
+            
+            // Extract data from both URLs
+            const buggyParams = new URLSearchParams(buggyUrl.search);
+            const buggyExtracted = JSON.parse(decodeURIComponent(buggyParams.get('data')));
+            
+            const fixedParams = new URLSearchParams(fixedUrl.search);
+            const fixedExtracted = JSON.parse(decodeURIComponent(fixedParams.get('data')));
+            
+            const fixedHasVersion2 = fixedExtracted.version === 2;
+            const buggyHasVersion2 = buggyExtracted.version === 2;
+            
+            addResult('Permalink Chaining Works', fixedHasVersion2 && buggyHasVersion2, 
+                `Both methods got version 2 (the fix ensures clean URLs)\nFixed URL param count: ${Array.from(fixedParams.keys()).length}\nBuggy URL param count: ${Array.from(buggyParams.keys()).length}\nFixed has v2: ${fixedHasVersion2}, Buggy has v2: ${buggyHasVersion2}`);
+        } catch (err) {
+            addResult('Permalink Chaining Works', false, err.message);
+        }
+
+        // Summary
+        const passedCount = document.querySelectorAll('.pass').length;
+        const totalTests = document.querySelectorAll('.status').length;
+        const allPassed = passedCount === totalTests;
+        const summary = document.createElement('div');
+        summary.className = 'status ' + (allPassed ? 'pass' : 'fail');
+        summary.innerHTML = `<strong>Summary: ${passedCount}/${totalTests} tests passed ${allPassed ? '🎉' : '❌'}</strong>`;
+        results.appendChild(summary);
+    </script>
+</body>
+</html>

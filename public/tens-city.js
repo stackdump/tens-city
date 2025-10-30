@@ -641,8 +641,8 @@ class TensCity extends HTMLElement {
             // Validate JSON
             JSON.parse(editorContent);
 
-            // Create URL with data parameter
-            const url = new URL(window.location.href);
+            // Create URL with data parameter - use clean URL without existing query params
+            const url = new URL(window.location.origin + window.location.pathname);
             url.searchParams.set('data', encodeURIComponent(editorContent));
             
             // Update anchor href
