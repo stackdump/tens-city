@@ -11,6 +11,8 @@ class TensCity extends HTMLElement {
         this._loginContainer = null;
         this._appContainer = null;
         this._permalinkAnchor = null;
+        this._helpContainer = null;
+        this._menuOpen = false;
     }
 
     connectedCallback() {
@@ -275,15 +277,45 @@ class TensCity extends HTMLElement {
             boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
         });
 
-        const title = document.createElement('h2');
-        title.textContent = 'Tens City';
-        this._applyStyles(title, {
-            margin: '0',
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#24292e'
+        // Left section: hamburger menu + logo
+        const leftSection = document.createElement('div');
+        this._applyStyles(leftSection, {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px'
         });
-        header.appendChild(title);
+
+        // Hamburger menu button
+        const menuBtn = document.createElement('button');
+        menuBtn.innerHTML = '☰';
+        menuBtn.title = 'Menu';
+        this._applyStyles(menuBtn, {
+            padding: '8px 12px',
+            fontSize: '24px',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#24292e',
+            lineHeight: '1'
+        });
+        menuBtn.addEventListener('click', () => this._toggleMenu());
+        leftSection.appendChild(menuBtn);
+
+        // Logo
+        const logo = document.createElement('img');
+        logo.src = 'logo.svg';
+        logo.alt = 'Tens City';
+        logo.onerror = () => {
+            // If logo fails to load, hide it gracefully
+            logo.style.display = 'none';
+        };
+        this._applyStyles(logo, {
+            height: '40px',
+            width: 'auto'
+        });
+        leftSection.appendChild(logo);
+
+        header.appendChild(leftSection);
 
         const userInfo = document.createElement('div');
         this._applyStyles(userInfo, {
@@ -359,8 +391,6 @@ class TensCity extends HTMLElement {
             return btn;
         };
 
-        const loadBtn = makeButton('📋 Load Objects', 'Load objects from database', () => this._loadObjects());
-        const postBtn = makeButton('📤 Post Object', 'Post current JSON as new object', () => this._postObject());
         const clearBtn = makeButton('🗑️ Clear', 'Clear editor', () => this._clearEditor());
 
         // Create permalink anchor styled as a button
@@ -389,8 +419,6 @@ class TensCity extends HTMLElement {
             this._permalinkAnchor.style.background = '#fafbfc';
         });
 
-        toolbar.appendChild(loadBtn);
-        toolbar.appendChild(postBtn);
         toolbar.appendChild(clearBtn);
         toolbar.appendChild(this._permalinkAnchor);
 
@@ -487,81 +515,260 @@ class TensCity extends HTMLElement {
         });
     }
 
-    async _loadObjects() {
-        if (!this._aceEditor) return;
-
-        try {
-            const { data, error } = await this._supabase
-                .from('objects')
-                .select('cid, raw, created_at, owner_uuid')
-                .order('created_at', { ascending: false })
-                .limit(10);
-
-            if (error) {
-                console.error('Load error:', error);
-                alert('Failed to load objects: ' + error.message);
-                return;
-            }
-
-            const result = {
-                count: data?.length || 0,
-                objects: data || []
-            };
-
-            this._aceEditor.session.setValue(JSON.stringify(result, null, 2));
-        } catch (err) {
-            console.error('Load exception:', err);
-            alert('Failed to load objects: ' + err.message);
+    _toggleMenu() {
+        this._menuOpen = !this._menuOpen;
+        if (this._menuOpen) {
+            this._showMenu();
+        } else {
+            this._hideMenu();
         }
     }
 
-    async _postObject() {
-        if (!this._aceEditor || !this._user) return;
-
-        try {
-            const text = this._aceEditor.session.getValue();
-            let jsonData;
-            
-            try {
-                jsonData = JSON.parse(text);
-            } catch (parseErr) {
-                alert('Invalid JSON: ' + parseErr.message);
-                return;
+    _showMenu() {
+        // Create menu overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'tc-menu-overlay';
+        this._applyStyles(overlay, {
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            width: '100%',
+            height: '100%',
+            background: 'rgba(0, 0, 0, 0.5)',
+            zIndex: '999',
+            display: 'flex',
+            justifyContent: 'flex-start'
+        });
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                this._toggleMenu();
             }
+        });
 
-            // Validate basic JSON-LD structure
-            if (!jsonData['@context']) {
-                alert('JSON-LD must have @context field');
-                return;
+        // Create menu panel
+        const menu = document.createElement('div');
+        menu.className = 'tc-menu';
+        this._applyStyles(menu, {
+            background: '#fff',
+            width: '300px',
+            height: '100%',
+            boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '0'
+        });
+
+        // Menu header
+        const menuHeader = document.createElement('div');
+        this._applyStyles(menuHeader, {
+            padding: '16px 24px',
+            borderBottom: '1px solid #e1e4e8',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+        });
+
+        const menuTitle = document.createElement('h3');
+        menuTitle.textContent = 'Menu';
+        this._applyStyles(menuTitle, {
+            margin: '0',
+            fontSize: '18px',
+            fontWeight: 'bold'
+        });
+        menuHeader.appendChild(menuTitle);
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '×';
+        this._applyStyles(closeBtn, {
+            background: 'transparent',
+            border: 'none',
+            fontSize: '28px',
+            cursor: 'pointer',
+            padding: '0',
+            lineHeight: '1',
+            color: '#586069'
+        });
+        closeBtn.addEventListener('click', () => this._toggleMenu());
+        menuHeader.appendChild(closeBtn);
+
+        menu.appendChild(menuHeader);
+
+        // Menu items
+        const menuItems = document.createElement('div');
+        this._applyStyles(menuItems, {
+            padding: '8px 0'
+        });
+
+        const helpItem = document.createElement('button');
+        helpItem.textContent = '❓ Help';
+        this._applyStyles(helpItem, {
+            width: '100%',
+            padding: '12px 24px',
+            background: 'transparent',
+            border: 'none',
+            textAlign: 'left',
+            fontSize: '16px',
+            cursor: 'pointer',
+            transition: 'background 0.2s'
+        });
+        helpItem.addEventListener('mouseenter', () => {
+            helpItem.style.background = '#f6f8fa';
+        });
+        helpItem.addEventListener('mouseleave', () => {
+            helpItem.style.background = 'transparent';
+        });
+        helpItem.addEventListener('click', () => {
+            this._toggleMenu();
+            this._showHelp();
+        });
+        menuItems.appendChild(helpItem);
+
+        menu.appendChild(menuItems);
+        overlay.appendChild(menu);
+        this._root.appendChild(overlay);
+    }
+
+    _hideMenu() {
+        const overlay = this._root.querySelector('.tc-menu-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
+    }
+
+    _showHelp() {
+        // Create help overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'tc-help-overlay';
+        this._applyStyles(overlay, {
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            width: '100%',
+            height: '100%',
+            background: 'rgba(0, 0, 0, 0.5)',
+            zIndex: '1000',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '24px'
+        });
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                this._hideHelp();
             }
+        });
 
-            // Compute CID (simplified version - in production use proper canonicalization)
-            const canonical = this._canonicalizeJSON(jsonData);
-            const hash = await this._sha256(canonical);
-            const cid = 'z' + this._encodeBase58(this._createCIDv1Bytes(0x0129, hash));
+        // Create help panel
+        const helpPanel = document.createElement('div');
+        helpPanel.className = 'tc-help-panel';
+        this._applyStyles(helpPanel, {
+            background: '#fff',
+            maxWidth: '700px',
+            width: '100%',
+            maxHeight: '90vh',
+            borderRadius: '8px',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+        });
 
-            // Post to database
-            const { data, error } = await this._supabase
-                .from('objects')
-                .insert({
-                    cid: cid,
-                    owner_uuid: this._user.id,
-                    raw: jsonData,
-                    canonical: canonical
-                })
-                .select();
+        // Help header
+        const helpHeader = document.createElement('div');
+        this._applyStyles(helpHeader, {
+            padding: '20px 24px',
+            borderBottom: '1px solid #e1e4e8',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+        });
 
-            if (error) {
-                console.error('Post error:', error);
-                alert('Failed to post object: ' + error.message);
-                return;
+        const helpTitle = document.createElement('h2');
+        helpTitle.textContent = 'Help';
+        this._applyStyles(helpTitle, {
+            margin: '0',
+            fontSize: '24px',
+            fontWeight: 'bold'
+        });
+        helpHeader.appendChild(helpTitle);
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '×';
+        this._applyStyles(closeBtn, {
+            background: 'transparent',
+            border: 'none',
+            fontSize: '32px',
+            cursor: 'pointer',
+            padding: '0',
+            lineHeight: '1',
+            color: '#586069'
+        });
+        closeBtn.addEventListener('click', () => this._hideHelp());
+        helpHeader.appendChild(closeBtn);
+
+        helpPanel.appendChild(helpHeader);
+
+        // Help content
+        const helpContent = document.createElement('div');
+        this._applyStyles(helpContent, {
+            padding: '24px',
+            overflowY: 'auto',
+            flex: '1'
+        });
+
+        // Build help content
+        const sections = [
+            {
+                title: 'GitHub Authentication',
+                content: 'Tens City uses GitHub OAuth for authentication. When you click "Login with GitHub", you\'ll be redirected to GitHub to authorize the application. After authorization, you\'ll be redirected back to Tens City with your GitHub identity. This allows the application to associate your data with your GitHub username.'
+            },
+            {
+                title: 'User Namespaces and Slugs',
+                content: 'Each user has their own namespace based on their GitHub username. Within that namespace, you can create "slugs" - unique identifiers for your JSON-LD objects. For example, if your GitHub username is "alice" and you create a slug called "my-project", your objects will be accessible at /u/alice/g/my-project/latest. This provides a human-readable way to organize and access your data.'
+            },
+            {
+                title: 'Auto-Save with data=XXX',
+                content: 'When you visit a URL with the data parameter (e.g., ?data=...), Tens City automatically saves the JSON-LD object if:\n\n• You are logged in\n• The JSON is valid JSON-LD (has an @context field)\n\nAfter saving, the app redirects you to a ?cid=... URL that references the permanent, content-addressed version of your data. This makes it easy to share and preserve JSON-LD objects just by sharing a link.'
+            },
+            {
+                title: 'Using the Editor',
+                content: 'The editor allows you to create and edit JSON-LD documents. Use the Clear button to reset the editor. The Permalink button creates a shareable link with your current editor content. The editor automatically updates the embedded <script type="application/ld+json"> tag in the page as you type.'
             }
+        ];
 
-            alert('Object posted successfully! CID: ' + cid);
-            console.log('Posted object:', data);
-        } catch (err) {
-            console.error('Post exception:', err);
-            alert('Failed to post object: ' + err.message);
+        sections.forEach(section => {
+            const sectionTitle = document.createElement('h3');
+            sectionTitle.textContent = section.title;
+            this._applyStyles(sectionTitle, {
+                fontSize: '18px',
+                fontWeight: 'bold',
+                marginTop: '16px',
+                marginBottom: '8px',
+                color: '#24292e'
+            });
+            helpContent.appendChild(sectionTitle);
+
+            const sectionContent = document.createElement('p');
+            sectionContent.textContent = section.content;
+            this._applyStyles(sectionContent, {
+                fontSize: '14px',
+                lineHeight: '1.6',
+                color: '#586069',
+                marginBottom: '16px',
+                whiteSpace: 'pre-wrap'
+            });
+            helpContent.appendChild(sectionContent);
+        });
+
+        helpPanel.appendChild(helpContent);
+        overlay.appendChild(helpPanel);
+        this._root.appendChild(overlay);
+    }
+
+    _hideHelp() {
+        const overlay = this._root.querySelector('.tc-help-overlay');
+        if (overlay) {
+            overlay.remove();
         }
     }
 
@@ -764,85 +971,10 @@ class TensCity extends HTMLElement {
             return;
         }
 
-        // Load some initial data from database
+        // Use default template
         if (this._aceEditor) {
-            await this._loadObjects();
             this._updatePermalinkAnchor();
         }
-    }
-
-    // CID computation helpers (simplified from petri-view.js)
-    _base58Alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-
-    _encodeBase58(bytes) {
-        const alphabet = this._base58Alphabet;
-        let num = 0n;
-        
-        for (let i = 0; i < bytes.length; i++) {
-            num = num * 256n + BigInt(bytes[i]);
-        }
-        
-        let encoded = '';
-        while (num > 0n) {
-            const remainder = num % 58n;
-            num = num / 58n;
-            encoded = alphabet[Number(remainder)] + encoded;
-        }
-        
-        for (let i = 0; i < bytes.length && bytes[i] === 0; i++) {
-            encoded = '1' + encoded;
-        }
-        
-        return encoded;
-    }
-
-    async _sha256(data) {
-        const encoder = new TextEncoder();
-        const bytes = typeof data === 'string' ? encoder.encode(data) : data;
-        const hashBuffer = await crypto.subtle.digest('SHA-256', bytes);
-        return new Uint8Array(hashBuffer);
-    }
-
-    _createCIDv1Bytes(codec, hash) {
-        const version = 0x01;
-        const codecBytes = codec === 0x0129 ? [0x01, 0x29] : [codec];
-        const hashType = 0x12;
-        const hashLength = hash.length;
-        
-        const cidBytes = new Uint8Array(1 + codecBytes.length + 2 + hash.length);
-        let offset = 0;
-        
-        cidBytes[offset++] = version;
-        for (const b of codecBytes) {
-            cidBytes[offset++] = b;
-        }
-        cidBytes[offset++] = hashType;
-        cidBytes[offset++] = hashLength;
-        for (let i = 0; i < hash.length; i++) {
-            cidBytes[offset++] = hash[i];
-        }
-        
-        return cidBytes;
-    }
-
-    _canonicalizeJSON(doc) {
-        const canonicalize = (obj) => {
-            if (obj === null || typeof obj !== 'object') {
-                return JSON.stringify(obj);
-            }
-            
-            if (Array.isArray(obj)) {
-                return '[' + obj.map(item => canonicalize(item)).join(',') + ']';
-            }
-            
-            const keys = Object.keys(obj).sort();
-            const pairs = keys.map(key => {
-                return JSON.stringify(key) + ':' + canonicalize(obj[key]);
-            });
-            return '{' + pairs.join(',') + '}';
-        };
-        
-        return canonicalize(doc);
     }
 
     _applyStyles(el, styles = {}) {
