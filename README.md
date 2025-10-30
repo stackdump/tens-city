@@ -35,6 +35,8 @@ The database uses the `pg_jsonschema` PostgreSQL extension to enforce JSON-LD co
 
 This provides a safety net ensuring data integrity without requiring application-level validation.
 
+For detailed information about JSON-LD validation, see [docs/JSONLD_VALIDATION.md](docs/JSONLD_VALIDATION.md).
+
 ## 5. CLI Tools
 
 ### seal - Create sealed JSON-LD objects
