@@ -58,7 +58,7 @@ The system checks for data in this order:
 
 1. **URL Parameter**: If `?data=...` is present in URL, use that
 2. **Script Tag**: If a `<script type="application/ld+json">` tag exists, use that
-3. **Database**: Otherwise, load recent objects from the database
+3. **Default**: Otherwise, display empty editor
 
 ## Usage Examples
 

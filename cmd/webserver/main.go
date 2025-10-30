@@ -13,7 +13,7 @@ import (
 "github.com/stackdump/tens-city/internal/store"
 )
 
-// Storage interface abstracts filesystem and database backends
+// Storage interface abstracts filesystem backends
 type Storage interface {
 GetObject(cid string) ([]byte, error)
 SaveObject(cid string, raw []byte, canonical []byte) error
