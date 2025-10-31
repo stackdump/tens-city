@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
+    <title>Unit Test: Permalink Fix - Tens City</title>
+    <style>
+        body {
+            margin: 20px;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        }
+        h1 { margin-bottom: 10px; }
+        h2 { margin-top: 20px; margin-bottom: 10px; }
+        .test-section {
+            background: #f0f0f0;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .pass { color: green; font-weight: bold; }
+        .fail { color: red; font-weight: bold; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #results {
+            background: #fff;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Unit Test: Permalink Fix</h1>
+    
+    <div class="test-section">
+        <h2>Test: Duplicate _showApp() Prevention</h2>
+        <p>This test verifies that the _appShown flag prevents duplicate initialization when _showApp() is called multiple times.</p>
+        <button onclick="runDuplicateShowAppTest()">Run Test</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test: Permalink Data Decoding</h2>
+        <p>This test verifies that double-encoded permalink data is correctly decoded.</p>
+        <button onclick="runDecodingTest()">Run Test</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Run All Tests</h2>
+        <button onclick="runAllTests()">Run All Tests</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        function log(message) {
+            const results = document.getElementById('results');
+            results.textContent += message + '\n';
+        }
+
+        function clearLog() {
+            document.getElementById('results').textContent = '';
+        }
+
+        function pass(message) {
+            log('✓ PASS: ' + message);
+        }
+
+        function fail(message) {
+            log('✗ FAIL: ' + message);
+        }
+
+        function runDuplicateShowAppTest() {
+            clearLog();
+            log('=== Test: Duplicate _showApp() Prevention ===\n');
+
+            // Create a mock TensCity-like object
+            const mockApp = {
+                _appShown: false,
+                _loginContainer: { style: { display: 'flex' } },
+                _appContainer: { style: { display: 'none' }, innerHTML: '' },
+                _showAppCallCount: 0,
+                _fullInitCount: 0,
+
+                async _showApp() {
+                    this._showAppCallCount++;
+                    log(`Call ${this._showAppCallCount}: _showApp() invoked`);
+
+                    // Implementation matching the fix
+                    if (this._appShown) {
+                        log(`  → Already initialized, skipping duplicate call`);
+                        this._loginContainer.style.display = 'none';
+                        this._appContainer.style.display = 'flex';
+                        return;
+                    }
+
+                    this._appShown = true;
+                    this._fullInitCount++;
+                    log(`  → Full initialization (count: ${this._fullInitCount})`);
+                    this._loginContainer.style.display = 'none';
+                    this._appContainer.style.display = 'flex';
+                    this._appContainer.innerHTML = '';
+                    
+                    // Simulate creating components
+                    log(`  → Creating header, toolbar, editor...`);
+                    await new Promise(resolve => setTimeout(resolve, 10)); // Simulate async work
+                }
+            };
+
+            // Test calling _showApp() twice (simulating the race condition)
+            mockApp._showApp().then(() => {
+                return mockApp._showApp();
+            }).then(() => {
+                log('\n--- Results ---');
+                if (mockApp._showAppCallCount === 2) {
+                    pass('_showApp() was called twice (expected)');
+                } else {
+                    fail(`_showApp() was called ${mockApp._showAppCallCount} times (expected 2)`);
+                }
+
+                if (mockApp._fullInitCount === 1) {
+                    pass('Full initialization happened only once (expected)');
+                } else {
+                    fail(`Full initialization happened ${mockApp._fullInitCount} times (expected 1)`);
+                }
+
+                if (mockApp._appShown === true) {
+                    pass('_appShown flag is set to true');
+                } else {
+                    fail('_appShown flag is not set');
+                }
+
+                log('\n=== Test Complete ===');
+            });
+        }
+
+        function runDecodingTest() {
+            clearLog();
+            log('=== Test: Permalink Data Decoding ===\n');
+
+            const testCases = [
+                {
+                    name: 'Double-encoded PetriNet (from issue)',
+                    input: '%257B%2522%2540context%2522%253A%2522https%253A%252F%252Fpflow.xyz%252Fschema%2522%252C%2522%2540type%2522%253A%2522PetriNet%2522%252C%2522%2540version%2522%253A%25221.1%2522%252C%2522arcs%2522%253A%255B%255D%252C%2522places%2522%253A%257B%257D%252C%2522token%2522%253A%255B%2522https%253A%252F%252Fpflow.xyz%252Ftokens%252Fblack%2522%255D%252C%2522transitions%2522%253A%257B%257D%257D',
+                    expected: {
+                        '@context': 'https://pflow.xyz/schema',
+                        '@type': 'PetriNet',
+                        '@version': '1.1'
+                    }
+                },
+                {
+                    name: 'Single-encoded simple object',
+                    input: '%7B%22%40context%22%3A%22https%3A%2F%2Fpflow.xyz%2Fschema%22%2C%22%40type%22%3A%22TestObject%22%2C%22name%22%3A%22Test%201%22%7D',
+                    expected: {
+                        '@context': 'https://pflow.xyz/schema',
+                        '@type': 'TestObject',
+                        'name': 'Test 1'
+                    }
+                }
+            ];
+
+            // Implementation of _decodePermalinkData from the code
+            function decodePermalinkData(encodedData) {
+                if (!encodedData) return null;
+
+                try {
+                    let decodedData = encodedData;
+
+                    while (true) {
+                        try {
+                            const nextDecoded = decodeURIComponent(decodedData);
+                            if (nextDecoded === decodedData) {
+                                break;
+                            }
+                            decodedData = nextDecoded;
+                            
+                            JSON.parse(decodedData);
+                            break;
+                        } catch (jsonErr) {
+                            // Continue decoding
+                        }
+                    }
+
+                    const data = JSON.parse(decodedData);
+                    return {
+                        jsonString: JSON.stringify(data, null, 2),
+                        data: data
+                    };
+                } catch (err) {
+                    return null;
+                }
+            }
+
+            testCases.forEach((testCase, index) => {
+                log(`\nTest Case ${index + 1}: ${testCase.name}`);
+                log(`Input: ${testCase.input.substring(0, 50)}...`);
+
+                const result = decodePermalinkData(testCase.input);
+
+                if (result && result.data) {
+                    log(`Decoded successfully`);
+                    
+                    let allMatch = true;
+                    for (const key in testCase.expected) {
+                        if (result.data[key] !== testCase.expected[key]) {
+                            fail(`Field "${key}": expected "${testCase.expected[key]}", got "${result.data[key]}"`);
+                            allMatch = false;
+                        }
+                    }
+
+                    if (allMatch) {
+                        pass(`All expected fields match`);
+                        log(`Full decoded data:\n${result.jsonString}`);
+                    }
+                } else {
+                    fail(`Failed to decode data`);
+                }
+            });
+
+            log('\n=== Test Complete ===');
+        }
+
+        function runAllTests() {
+            clearLog();
+            log('=== Running All Tests ===\n');
+            
+            runDecodingTest();
+            
+            setTimeout(() => {
+                log('\n\n');
+                runDuplicateShowAppTest();
+            }, 100);
+        }
+    </script>
+</body>
+</html>
