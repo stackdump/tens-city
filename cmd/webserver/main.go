@@ -295,10 +295,12 @@ func (s *Server) handleCheckOwnership(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cid := parts[0]
+	log.Printf("Ownership check: CID=%s", cid)
 
 	// Extract and validate authentication token
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
+		log.Printf("Ownership check: No auth header for CID=%s", cid)
 		// Return not owned if not authenticated
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]bool{"owned": false})
@@ -307,16 +309,19 @@ func (s *Server) handleCheckOwnership(w http.ResponseWriter, r *http.Request) {
 
 	userInfo, err := auth.ExtractUserFromToken(authHeader)
 	if err != nil {
+		log.Printf("Ownership check: Auth extraction failed for CID=%s: %v", cid, err)
 		// Return not owned if authentication fails
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]bool{"owned": false})
 		return
 	}
+	log.Printf("Ownership check: Authenticated user - UserName=%s, GitHubID=%s", userInfo.UserName, userInfo.GitHubID)
 
 	// Get the object author
 	authorUser, authorID, err := s.storage.GetObjectAuthor(cid)
 	if err != nil {
 		if os.IsNotExist(err) {
+			log.Printf("Ownership check: Object not found for CID=%s", cid)
 			http.Error(w, "Object not found", http.StatusNotFound)
 			return
 		}
@@ -324,11 +329,17 @@ func (s *Server) handleCheckOwnership(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+	log.Printf("Ownership check: Object author - authorUser=%s, authorID=%s", authorUser, authorID)
 
 	// Check if the user is the author
 	// Priority: GitHub ID (most secure) > username (for backward compatibility)
 	isOwned := (authorID != "" && userInfo.GitHubID != "" && authorID == userInfo.GitHubID) ||
 		(authorUser != "" && userInfo.UserName != "" && authorUser == userInfo.UserName)
+	
+	log.Printf("Ownership check: Result for CID=%s, owned=%v (IDMatch=%v, UserMatch=%v)", 
+		cid, isOwned,
+		authorID != "" && userInfo.GitHubID != "" && authorID == userInfo.GitHubID,
+		authorUser != "" && userInfo.UserName != "" && authorUser == userInfo.UserName)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]bool{"owned": isOwned})

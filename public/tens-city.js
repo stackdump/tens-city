@@ -1154,18 +1154,23 @@ class TensCity extends HTMLElement {
     async _updateDeleteButtonVisibility() {
         // Show delete button only when viewing a CID, user is authenticated, and user owns the object
         const deleteBtn = this._root?.querySelector('#tc-delete-btn');
-        if (!deleteBtn) return;
+        if (!deleteBtn) {
+            console.log('Ownership check: Delete button element not found');
+            return;
+        }
 
         const urlParams = new URLSearchParams(window.location.search);
         const cidParam = urlParams.get('cid');
         
         if (!cidParam || !this._user) {
+            console.log('Ownership check: No CID or user not authenticated', { cidParam, user: this._user });
             deleteBtn.style.display = 'none';
             return;
         }
 
         // Check cache first to avoid redundant API calls
         if (this._ownershipCache.hasOwnProperty(cidParam)) {
+            console.log('Ownership check: Using cached result', { cid: cidParam, owned: this._ownershipCache[cidParam] });
             deleteBtn.style.display = this._ownershipCache[cidParam] ? 'inline-block' : 'none';
             return;
         }
@@ -1176,11 +1181,13 @@ class TensCity extends HTMLElement {
             const authToken = session?.access_token;
             
             if (!authToken) {
+                console.log('Ownership check: No auth token available');
                 this._ownershipCache[cidParam] = false;
                 deleteBtn.style.display = 'none';
                 return;
             }
 
+            console.log('Ownership check: Calling API for CID:', cidParam);
             const response = await fetch(`/api/ownership/${cidParam}`, {
                 method: 'GET',
                 headers: {
@@ -1190,14 +1197,16 @@ class TensCity extends HTMLElement {
 
             if (response.ok) {
                 const result = await response.json();
+                console.log('Ownership check: API response', { cid: cidParam, owned: result.owned });
                 this._ownershipCache[cidParam] = result.owned;
                 deleteBtn.style.display = result.owned ? 'inline-block' : 'none';
             } else {
+                console.log('Ownership check: API request failed', { status: response.status, statusText: response.statusText });
                 this._ownershipCache[cidParam] = false;
                 deleteBtn.style.display = 'none';
             }
         } catch (err) {
-            console.error('Failed to check ownership:', err);
+            console.error('Ownership check: Exception occurred', err);
             this._ownershipCache[cidParam] = false;
             deleteBtn.style.display = 'none';
         }
