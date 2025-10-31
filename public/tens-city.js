@@ -37,13 +37,94 @@ class TensCity extends HTMLElement {
         this._permalinkAnchor = null;
         this._helpContainer = null;
         this._menuOpen = false;
+        this._pendingPermalinkData = null; // Store permalink data before authentication
+        this._appShown = false; // Track whether app has been initialized to prevent race condition where _showApp() is called multiple times
     }
 
     connectedCallback() {
         if (this._root) return;
+        
+        // Capture permalink data before authentication to preserve it across login flow
+        this._capturePermalinkData();
+        
         this._buildRoot();
         this._initSupabase();
         this._checkAuth();
+    }
+
+    _capturePermalinkData() {
+        // Extract permalink data from URL before authentication
+        // This ensures we don't lose the data when redirecting to login
+        const urlParams = new URLSearchParams(window.location.search);
+        const encodedData = urlParams.get('data');
+        
+        if (encodedData) {
+            console.log('Permalink: Captured data from URL parameter');
+            const permalinkData = this._decodePermalinkData(encodedData);
+            
+            if (permalinkData) {
+                // Store in both instance variable and sessionStorage
+                // sessionStorage persists across OAuth redirects
+                this._pendingPermalinkData = permalinkData;
+                sessionStorage.setItem('pendingPermalinkData', JSON.stringify(permalinkData));
+                console.log('Permalink: Successfully parsed and stored permalink data (in memory and sessionStorage)');
+            } else {
+                this._pendingPermalinkData = null;
+                sessionStorage.removeItem('pendingPermalinkData');
+            }
+        } else {
+            // Check if we have pending data from sessionStorage (after OAuth redirect)
+            const storedData = sessionStorage.getItem('pendingPermalinkData');
+            if (storedData) {
+                console.log('Permalink: Restored data from sessionStorage (after OAuth redirect)');
+                try {
+                    this._pendingPermalinkData = JSON.parse(storedData);
+                } catch (err) {
+                    console.error('Permalink: Failed to parse stored data:', err);
+                    this._pendingPermalinkData = null;
+                    sessionStorage.removeItem('pendingPermalinkData');
+                }
+            }
+        }
+    }
+
+    _decodePermalinkData(encodedData) {
+        // Utility method to decode URL-encoded JSON data
+        // Handles multiple levels of encoding
+        if (!encodedData) return null;
+        
+        try {
+            // Decode recursively in case of double (or multiple) encoding
+            let decodedData = encodedData;
+            
+            // Keep decoding until we can't decode anymore or get valid JSON
+            while (true) {
+                try {
+                    const nextDecoded = decodeURIComponent(decodedData);
+                    // If decoding doesn't change the string, we're done
+                    if (nextDecoded === decodedData) {
+                        break;
+                    }
+                    decodedData = nextDecoded;
+                    
+                    // Try to parse as JSON - if successful, we're done
+                    JSON.parse(decodedData);
+                    break;
+                } catch (jsonErr) {
+                    // Not valid JSON yet, continue decoding if possible
+                    // The loop will continue and nextDecoded === decodedData will eventually be true
+                }
+            }
+            
+            const data = JSON.parse(decodedData);
+            return {
+                jsonString: JSON.stringify(data, null, 2),
+                data: data
+            };
+        } catch (err) {
+            console.error('Permalink: Failed to parse URL data:', err);
+            return null;
+        }
     }
 
     _buildRoot() {
@@ -204,51 +285,17 @@ class TensCity extends HTMLElement {
     }
 
     _showLogin() {
-        this._loginContainer.style.display = 'flex';
-        this._appContainer.style.display = 'none';
-        this._loginContainer.innerHTML = '';
-
-        const title = document.createElement('h1');
-        title.textContent = 'Tens City';
-        this._applyStyles(title, {
-            fontSize: '48px',
-            fontWeight: 'bold',
-            margin: '0',
-            color: '#333'
+        this._appShown = false; // Reset app shown flag when showing login
+        // Don't show full login screen - just show app with login button in header
+        this._loginContainer.style.display = 'none';
+        this._appContainer.style.display = 'flex';
+        this._appContainer.innerHTML = '';
+        
+        this._createHeaderWithLogin();
+        this._createToolbar();
+        this._createEditor().then(() => {
+            this._loadInitialData();
         });
-        this._loginContainer.appendChild(title);
-
-        const subtitle = document.createElement('p');
-        subtitle.textContent = 'A place for your JSON-LD objects';
-        this._applyStyles(subtitle, {
-            fontSize: '18px',
-            color: '#666',
-            margin: '10px 0 40px 0'
-        });
-        this._loginContainer.appendChild(subtitle);
-
-        const loginBtn = document.createElement('button');
-        loginBtn.textContent = 'Login with GitHub';
-        loginBtn.className = 'tc-login-btn';
-        this._applyStyles(loginBtn, {
-            padding: '12px 24px',
-            fontSize: '16px',
-            fontWeight: '500',
-            background: '#24292e',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            transition: 'background 0.2s'
-        });
-        loginBtn.addEventListener('mouseenter', () => {
-            loginBtn.style.background = '#444d56';
-        });
-        loginBtn.addEventListener('mouseleave', () => {
-            loginBtn.style.background = '#24292e';
-        });
-        loginBtn.addEventListener('click', () => this._loginWithGitHub());
-        this._loginContainer.appendChild(loginBtn);
     }
 
     async _loginWithGitHub() {
@@ -278,6 +325,16 @@ class TensCity extends HTMLElement {
     }
 
     async _showApp() {
+        // Prevent duplicate initialization from race condition between onAuthStateChange and _checkAuth completion
+        // If app is already shown, just make it visible without rebuilding UI (preserves permalink data)
+        if (this._appShown) {
+            console.log('App already initialized, skipping duplicate _showApp() call');
+            this._loginContainer.style.display = 'none';
+            this._appContainer.style.display = 'flex';
+            return;
+        }
+        
+        this._appShown = true;
         this._loginContainer.style.display = 'none';
         this._appContainer.style.display = 'flex';
         this._appContainer.innerHTML = '';
@@ -341,6 +398,7 @@ class TensCity extends HTMLElement {
 
         header.appendChild(leftSection);
 
+        // Right section: user info and logout
         const userInfo = document.createElement('div');
         this._applyStyles(userInfo, {
             display: 'flex',
@@ -380,6 +438,86 @@ class TensCity extends HTMLElement {
         this._appContainer.appendChild(header);
     }
 
+    _createHeaderWithLogin() {
+        const header = document.createElement('div');
+        header.className = 'tc-header';
+        this._applyStyles(header, {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '16px 24px',
+            background: '#fff',
+            borderBottom: '1px solid #e1e4e8',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        });
+
+        // Left section: hamburger menu + logo
+        const leftSection = document.createElement('div');
+        this._applyStyles(leftSection, {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px'
+        });
+
+        // Hamburger menu button
+        const menuBtn = document.createElement('button');
+        menuBtn.innerHTML = '☰';
+        menuBtn.title = 'Menu';
+        this._applyStyles(menuBtn, {
+            padding: '8px 12px',
+            fontSize: '24px',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#24292e',
+            lineHeight: '1'
+        });
+        menuBtn.addEventListener('click', () => this._toggleMenu());
+        leftSection.appendChild(menuBtn);
+
+        // Logo
+        const logo = document.createElement('img');
+        logo.src = 'logo.svg';
+        logo.alt = 'Tens City';
+        logo.onerror = () => {
+            // If logo fails to load, hide it gracefully
+            logo.style.display = 'none';
+        };
+        this._applyStyles(logo, {
+            height: '40px',
+            width: 'auto'
+        });
+        leftSection.appendChild(logo);
+
+        header.appendChild(leftSection);
+
+        // Right section: login button
+        const loginBtn = document.createElement('button');
+        loginBtn.textContent = 'Login with GitHub';
+        loginBtn.className = 'tc-login-btn';
+        this._applyStyles(loginBtn, {
+            padding: '8px 16px',
+            fontSize: '14px',
+            fontWeight: '500',
+            background: '#24292e',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            transition: 'background 0.2s'
+        });
+        loginBtn.addEventListener('mouseenter', () => {
+            loginBtn.style.background = '#444d56';
+        });
+        loginBtn.addEventListener('mouseleave', () => {
+            loginBtn.style.background = '#24292e';
+        });
+        loginBtn.addEventListener('click', () => this._loginWithGitHub());
+
+        header.appendChild(loginBtn);
+        this._appContainer.appendChild(header);
+    }
+
     _createToolbar() {
         const toolbar = document.createElement('div');
         toolbar.className = 'tc-toolbar';
@@ -414,6 +552,12 @@ class TensCity extends HTMLElement {
             btn.addEventListener('click', onClick);
             return btn;
         };
+
+        // Add Save button only if user is authenticated
+        if (this._user) {
+            const saveBtn = makeButton('💾 Save', 'Save to create CID and update URL', () => this._saveData());
+            toolbar.appendChild(saveBtn);
+        }
 
         const clearBtn = makeButton('🗑️ Clear', 'Clear editor', () => this._clearEditor());
 
@@ -751,8 +895,8 @@ class TensCity extends HTMLElement {
                 content: 'Each user has their own namespace based on their GitHub username. Within that namespace, you can create "slugs" - unique identifiers for your JSON-LD objects. For example, if your GitHub username is "alice" and you create a slug called "my-project", your objects will be accessible at /u/alice/g/my-project/latest. This provides a human-readable way to organize and access your data.'
             },
             {
-                title: 'Auto-Save with data=XXX',
-                content: 'When you visit a URL with the data parameter (e.g., ?data=...), Tens City automatically saves the JSON-LD object if:\n\n• You are logged in\n• The JSON is valid JSON-LD (has an @context field)\n\nAfter saving, the app redirects you to a ?cid=... URL that references the permanent, content-addressed version of your data. This makes it easy to share and preserve JSON-LD objects just by sharing a link.'
+                title: 'Saving Your Work',
+                content: 'To save your JSON-LD document, click the "Save" button in the toolbar. This will:\n\n• Validate that your JSON has an @context field (required for JSON-LD)\n• Send the data to the server to create a content-addressed identifier (CID)\n• Update the URL to ?cid=... without reloading the page\n\nYou must be logged in to save. You can view data from ?data= and ?cid= URLs without logging in.'
             },
             {
                 title: 'Using the Editor',
@@ -841,98 +985,99 @@ class TensCity extends HTMLElement {
         }
     }
 
-    _loadFromURL() {
-        // Check for data in URL parameter
-        const urlParams = new URLSearchParams(window.location.search);
-        const encodedData = urlParams.get('data');
+    async _saveData() {
+        console.log('Save: User clicked save button');
         
-        if (encodedData) {
-            try {
-                // Decode recursively in case of double (or multiple) encoding
-                let decodedData = encodedData;
-                
-                // Keep decoding until we can't decode anymore or get valid JSON
-                while (true) {
-                    try {
-                        const nextDecoded = decodeURIComponent(decodedData);
-                        // If decoding doesn't change the string, we're done
-                        if (nextDecoded === decodedData) {
-                            break;
-                        }
-                        decodedData = nextDecoded;
-                        
-                        // Try to parse as JSON - if successful, we're done
-                        JSON.parse(decodedData);
-                        break;
-                    } catch (jsonErr) {
-                        // Not valid JSON yet, continue decoding if possible
-                        // The loop will continue and nextDecoded === decodedData will eventually be true
-                    }
-                }
-                
-                const data = JSON.parse(decodedData);
-                // Update script tag with loaded data
-                const scriptTag = document.createElement('script');
-                scriptTag.type = 'application/ld+json';
-                scriptTag.textContent = JSON.stringify(data, null, 2);
-                this.appendChild(scriptTag);
-                return {
-                    jsonString: JSON.stringify(data, null, 2),
-                    data: data
-                };
-            } catch (err) {
-                console.error('Failed to parse URL data:', err);
-                return null;
-            }
-        }
-        return null;
-    }
-
-    async _autoSaveFromURL(data) {
-        // Auto-save feature: if user is authenticated and data has valid JSON-LD, save it
-        if (!this._user || !data || !data.data) {
-            return null;
+        if (!this._user) {
+            alert('Please log in to save data');
+            return;
         }
 
-        // Validate it's valid JSON-LD (has @context)
-        if (!data.data['@context']) {
-            console.log('Not auto-saving: missing @context');
-            return null;
+        if (!this._aceEditor) {
+            console.error('Save: Editor not initialized');
+            return;
         }
 
         try {
+            const editorContent = this._aceEditor.session.getValue();
+            const data = JSON.parse(editorContent);
+
+            // Validate it's valid JSON-LD (has @context)
+            if (!data['@context']) {
+                alert('Invalid JSON-LD: missing @context field');
+                return;
+            }
+
+            console.log('Save: Valid JSON-LD, sending to /api/save');
+            
             // Use canonical JSON encoding to ensure consistent CID calculation
-            const canonicalData = canonicalJSON(data.data);
+            const canonicalData = canonicalJSON(data);
+            
+            // Get the session token for authentication
+            const { data: { session } } = await this._supabase.auth.getSession();
+            const authToken = session?.access_token;
+            
+            if (!authToken) {
+                console.error('Save: No auth token available');
+                alert('Authentication token not available. Please log in again.');
+                return;
+            }
+            
+            console.log('Save: Sending save request to /api/save');
             
             // Use API endpoint to save
             const response = await fetch('/api/save', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
                 },
                 body: canonicalData
             });
 
             if (!response.ok) {
-                console.error('Auto-save failed:', response.statusText);
-                return null;
+                const errorText = await response.text();
+                console.error('Save: Failed with status', response.status, errorText);
+                alert(`Save failed: ${response.statusText}`);
+                return;
             }
 
             const result = await response.json();
             const cid = result.cid;
             
-            console.log('Auto-saved with CID:', cid);
+            console.log('Save: Success! CID:', cid, '- Updating URL');
             
-            // Redirect to ?cid= URL
+            // Update URL without reloading page
             const url = new URL(window.location.origin + window.location.pathname);
             url.searchParams.set('cid', cid);
-            window.location.href = url.toString();
+            window.history.pushState({}, '', url.toString());
             
-            return cid;
+            // Show success message
+            alert(`Saved successfully! CID: ${cid}`);
+            
         } catch (err) {
-            console.error('Auto-save exception:', err);
-            return null;
+            console.error('Save: Exception occurred:', err);
+            alert(`Save failed: ${err.message}`);
         }
+    }
+
+    _loadFromURL() {
+        // Check for data in URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const encodedData = urlParams.get('data');
+        
+        if (encodedData) {
+            const permalinkData = this._decodePermalinkData(encodedData);
+            if (permalinkData) {
+                // Update script tag with loaded data
+                const scriptTag = document.createElement('script');
+                scriptTag.type = 'application/ld+json';
+                scriptTag.textContent = permalinkData.jsonString;
+                this.appendChild(scriptTag);
+                return permalinkData;
+            }
+        }
+        return null;
     }
 
     _updatePermalinkAnchor() {
@@ -950,18 +1095,23 @@ class TensCity extends HTMLElement {
             
             // Update anchor href
             this._permalinkAnchor.href = url.toString();
+            console.log('Permalink: Updated permalink anchor with current editor content');
         } catch (err) {
             // If JSON is invalid, set href to # to prevent navigation
             this._permalinkAnchor.href = '#';
+            console.log('Permalink: Invalid JSON, permalink disabled');
         }
     }
 
     async _loadInitialData() {
+        console.log('Loading initial data...');
+        
         // Check for CID parameter first
         const urlParams = new URLSearchParams(window.location.search);
         const cidParam = urlParams.get('cid');
         
         if (cidParam && this._aceEditor) {
+            console.log('Loading data from CID:', cidParam);
             // Load object by CID from API
             try {
                 const response = await fetch(`/o/${cidParam}`);
@@ -969,37 +1119,62 @@ class TensCity extends HTMLElement {
                     const data = await response.json();
                     this._aceEditor.session.setValue(JSON.stringify(data, null, 2));
                     this._updatePermalinkAnchor();
+                    console.log('Successfully loaded data from CID');
                     return;
+                } else {
+                    console.error('Failed to load CID:', response.status, response.statusText);
                 }
             } catch (err) {
                 console.error('Failed to load object by CID:', err);
             }
         }
 
-        // Check for permalink data in URL
-        const urlData = this._loadFromURL();
-        if (urlData) {
-            // Auto-save if user is authenticated
-            await this._autoSaveFromURL(urlData);
+        // Check for pending permalink data captured before authentication
+        if (this._pendingPermalinkData) {
+            console.log('Loading data from pending permalink data');
+            const urlData = this._pendingPermalinkData;
             
-            // If auto-save redirected, we won't reach here
-            // Otherwise, just load the data into editor
+            // Load the data into editor
             if (urlData.jsonString && this._aceEditor) {
                 this._aceEditor.session.setValue(urlData.jsonString);
                 this._updatePermalinkAnchor();
-                return;
+                console.log('Successfully loaded permalink data into editor');
             }
+            
+            // Clear the pending data now that we're using it
+            this._pendingPermalinkData = null;
+            sessionStorage.removeItem('pendingPermalinkData');
+            
+            return;
+        }
+
+        // Fallback: Check for permalink data in URL (edge case where early capture failed)
+        const urlData = this._loadFromURL();
+        if (urlData) {
+            console.log('Loading data from URL parameter (fallback path)');
+            
+            // Load the data into editor
+            if (urlData.jsonString && this._aceEditor) {
+                this._aceEditor.session.setValue(urlData.jsonString);
+                this._updatePermalinkAnchor();
+                console.log('Successfully loaded URL data into editor');
+            }
+            
+            return;
         }
 
         // Check for script tag data
         const scriptData = this._loadFromScriptTag();
         if (scriptData && this._aceEditor) {
+            console.log('Loading data from script tag');
             this._aceEditor.session.setValue(scriptData);
             this._updatePermalinkAnchor();
+            console.log('Successfully loaded script tag data');
             return;
         }
 
         // Use default template
+        console.log('Using default template');
         if (this._aceEditor) {
             this._updatePermalinkAnchor();
         }
