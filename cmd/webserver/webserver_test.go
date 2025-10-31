@@ -43,6 +43,12 @@ func createTestToken(userID, email, username, githubID string) string {
 	return tokenString
 }
 
+// decodeJSON is a helper to decode JSON from an io.Reader
+func decodeJSON(r io.Reader, v interface{}) error {
+	return json.NewDecoder(r).Decode(v)
+}
+
+
 func TestFSStorageGetObject(t *testing.T) {
 tmpDir := t.TempDir()
 storage := NewFSStorage(tmpDir)

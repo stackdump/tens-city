@@ -277,6 +277,67 @@ w.Header().Set("Content-Type", "application/json")
 json.NewEncoder(w).Encode(history)
 }
 
+// Handler for GET /api/ownership/{cid} - check if current user owns the object
+func (s *Server) handleCheckOwnership(w http.ResponseWriter, r *http.Request) {
+	if s.handleCORS(w, r) {
+		return
+	}
+
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract CID from path
+	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/ownership/"), "/")
+	if len(parts) == 0 || parts[0] == "" {
+		http.Error(w, "CID required", http.StatusBadRequest)
+		return
+	}
+	cid := parts[0]
+
+	// Extract and validate authentication token
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		// Return not owned if not authenticated
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]bool{"owned": false})
+		return
+	}
+
+	userInfo, err := auth.ExtractUserFromToken(authHeader)
+	if err != nil {
+		// Return not owned if authentication fails
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]bool{"owned": false})
+		return
+	}
+
+	// Get the object author
+	authorUser, authorID, err := s.storage.GetObjectAuthor(cid)
+	if err != nil {
+		if os.IsNotExist(err) {
+			http.Error(w, "Object not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("Error getting object author for %s: %v", cid, err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Check if the user is the author
+	// Priority: GitHub ID (most secure) > username (for backward compatibility)
+	isOwned := false
+	if authorID != "" && userInfo.GitHubID != "" && authorID == userInfo.GitHubID {
+		isOwned = true
+	} else if authorUser != "" && userInfo.UserName != "" && authorUser == userInfo.UserName {
+		isOwned = true
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{"owned": isOwned})
+}
+
 // Handler for POST /api/save - save JSON-LD and return CID
 func (s *Server) handleSave(w http.ResponseWriter, r *http.Request) {
 	if s.handleCORS(w, r) {
@@ -439,6 +500,10 @@ log.Printf("%s %s", r.Method, r.URL.Path)
 // API routes
 if r.URL.Path == "/api/save" {
 s.handleSave(w, r)
+return
+}
+if strings.HasPrefix(r.URL.Path, "/api/ownership/") {
+s.handleCheckOwnership(w, r)
 return
 }
 
