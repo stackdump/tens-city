@@ -178,6 +178,8 @@ class TensCity extends HTMLElement {
                 console.log('Auth state changed:', event, session);
                 if (session?.user) {
                     this._user = session.user;
+                    // Force app rebuild to ensure delete button is created with correct auth state
+                    this._appShown = false;
                     await this._showApp();
                 } else {
                     this._user = null;
