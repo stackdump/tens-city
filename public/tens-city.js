@@ -38,6 +38,7 @@ class TensCity extends HTMLElement {
         this._helpContainer = null;
         this._menuOpen = false;
         this._pendingPermalinkData = null; // Store permalink data before authentication
+        this._appShown = false; // Track whether app has been initialized to prevent race condition where _showApp() is called multiple times
     }
 
     connectedCallback() {
@@ -284,6 +285,7 @@ class TensCity extends HTMLElement {
     }
 
     _showLogin() {
+        this._appShown = false; // Reset app shown flag when showing login
         this._loginContainer.style.display = 'flex';
         this._appContainer.style.display = 'none';
         this._loginContainer.innerHTML = '';
@@ -358,6 +360,16 @@ class TensCity extends HTMLElement {
     }
 
     async _showApp() {
+        // Prevent duplicate initialization from race condition between onAuthStateChange and _checkAuth completion
+        // If app is already shown, just make it visible without rebuilding UI (preserves permalink data)
+        if (this._appShown) {
+            console.log('App already initialized, skipping duplicate _showApp() call');
+            this._loginContainer.style.display = 'none';
+            this._appContainer.style.display = 'flex';
+            return;
+        }
+        
+        this._appShown = true;
         this._loginContainer.style.display = 'none';
         this._appContainer.style.display = 'flex';
         this._appContainer.innerHTML = '';

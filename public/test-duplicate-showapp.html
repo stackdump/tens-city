@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
+    <title>Test Duplicate _showApp() - Tens City</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        }
+        h1 { margin-bottom: 20px; }
+        .test-info {
+            background: #f0f0f0;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        #log {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Duplicate _showApp() Call</h1>
+    
+    <div class="test-info">
+        <h2>Test Scenario:</h2>
+        <p>This test simulates what happens when _showApp() is called multiple times (from both onAuthStateChange and _checkAuth).</p>
+        <p>Expected behavior: The second call should be ignored, preserving the loaded permalink data.</p>
+    </div>
+
+    <div>
+        <button onclick="simulateTest()">Run Test</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <div id="log"></div>
+
+    <script type="module">
+        // Import and patch the TensCity class to override auth and test the scenario
+        import { TensCity } from './tens-city.js';
+
+        window.clearLog = function() {
+            document.getElementById('log').textContent = '';
+        };
+
+        window.simulateTest = async function() {
+            const log = document.getElementById('log');
+            log.textContent = '';
+            
+            function addLog(msg) {
+                log.textContent += msg + '\n';
+            }
+
+            addLog('=== Starting Test ===\n');
+            
+            // Create a test tens-city element with permalink data
+            const testUrl = new URL(window.location.origin);
+            testUrl.searchParams.set('data', '%7B%22%40context%22%3A%22https%3A%2F%2Fpflow.xyz%2Fschema%22%2C%22%40type%22%3A%22PetriNet%22%2C%22%40version%22%3A%221.1%22%2C%22arcs%22%3A%5B%5D%2C%22places%22%3A%7B%7D%2C%22token%22%3A%5B%22https%3A%2F%2Fpflow.xyz%2Ftokens%2Fblack%22%5D%2C%22transitions%22%3A%7B%7D%7D');
+            
+            // Update URL without reload
+            window.history.pushState({}, '', testUrl.toString());
+            addLog('1. URL updated with ?data parameter');
+            
+            // Create element
+            const element = document.createElement('tens-city');
+            element.setAttribute('supabase-url', 'https://gquccmagslcoytktmcfa.supabase.co');
+            element.setAttribute('supabase-key', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxdWNjbWFnc2xjb3l0a3RtY2ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3NjY5MTUsImV4cCI6MjA3NzM0MjkxNX0.vmQRR7kNnGfkmkNUcs9aoZMMPrjeMqPWA5X7VQiqkiQ');
+            
+            // Add script tag with default data
+            const scriptTag = document.createElement('script');
+            scriptTag.type = 'application/ld+json';
+            scriptTag.textContent = JSON.stringify({
+                "@context": "https://pflow.xyz/schema",
+                "@type": "PetriNet",
+                "@version": "1.1",
+                "arcs": [],
+                "places": {},
+                "token": ["https://pflow.xyz/tokens/black"],
+                "transitions": {}
+            }, null, 2);
+            element.appendChild(scriptTag);
+            
+            // Intercept console.log to capture logs
+            const originalLog = console.log;
+            const logs = [];
+            console.log = function(...args) {
+                logs.push(args.join(' '));
+                originalLog.apply(console, args);
+            };
+            
+            addLog('2. Element created with script tag\n');
+            
+            // Override _initSupabase to mock authentication
+            const origInit = element._initSupabase;
+            element._initSupabase = function() {
+                addLog('3. _initSupabase called (mocked)');
+                this._supabase = {
+                    auth: {
+                        getSession: async () => {
+                            addLog('4. getSession called - returning mock session');
+                            return {
+                                data: {
+                                    session: {
+                                        user: { email: 'test@example.com' },
+                                        access_token: 'mock-token'
+                                    }
+                                }
+                            };
+                        },
+                        onAuthStateChange: (callback) => {
+                            addLog('5. onAuthStateChange registered');
+                            // Simulate auth callback firing BEFORE checkAuth completes
+                            setTimeout(() => {
+                                addLog('6. onAuthStateChange callback fired (1st _showApp call)');
+                                callback('SIGNED_IN', {
+                                    user: { email: 'test@example.com' },
+                                    access_token: 'mock-token'
+                                });
+                            }, 50);
+                            return { data: { subscription: {} } };
+                        }
+                    }
+                };
+            };
+            
+            // Add element to DOM to trigger connectedCallback
+            document.body.appendChild(element);
+            addLog('7. Element added to DOM - connectedCallback should fire\n');
+            
+            // Wait for auth flow
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            addLog('\n=== Checking Results ===');
+            
+            // Check if _pendingPermalinkData was captured
+            if (element._pendingPermalinkData) {
+                addLog('✓ Permalink data was captured');
+            } else {
+                addLog('✗ Permalink data was NOT captured (or was cleared)');
+            }
+            
+            // Check if _appShown flag is set
+            if (element._appShown) {
+                addLog('✓ _appShown flag is set');
+            } else {
+                addLog('✗ _appShown flag is NOT set');
+            }
+            
+            // Check captured console logs
+            addLog('\n=== Console Logs ===');
+            logs.forEach(log => {
+                if (log.includes('Permalink:') || log.includes('Loading') || log.includes('App already initialized')) {
+                    addLog(log);
+                }
+            });
+            
+            // Restore console.log
+            console.log = originalLog;
+            
+            // Clean up
+            element.remove();
+            window.history.pushState({}, '', window.location.pathname);
+            
+            addLog('\n=== Test Complete ===');
+        };
+    </script>
+</body>
+</html>
