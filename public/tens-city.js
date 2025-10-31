@@ -59,42 +59,15 @@ class TensCity extends HTMLElement {
         
         if (encodedData) {
             console.log('Permalink: Captured data from URL parameter');
-            try {
-                // Decode recursively in case of double (or multiple) encoding
-                let decodedData = encodedData;
-                
-                // Keep decoding until we can't decode anymore or get valid JSON
-                while (true) {
-                    try {
-                        const nextDecoded = decodeURIComponent(decodedData);
-                        // If decoding doesn't change the string, we're done
-                        if (nextDecoded === decodedData) {
-                            break;
-                        }
-                        decodedData = nextDecoded;
-                        
-                        // Try to parse as JSON - if successful, we're done
-                        JSON.parse(decodedData);
-                        break;
-                    } catch (jsonErr) {
-                        // Not valid JSON yet, continue decoding if possible
-                        // The loop will continue and nextDecoded === decodedData will eventually be true
-                    }
-                }
-                
-                const data = JSON.parse(decodedData);
-                const permalinkData = {
-                    jsonString: JSON.stringify(data, null, 2),
-                    data: data
-                };
-                
+            const permalinkData = this._decodePermalinkData(encodedData);
+            
+            if (permalinkData) {
                 // Store in both instance variable and sessionStorage
                 // sessionStorage persists across OAuth redirects
                 this._pendingPermalinkData = permalinkData;
                 sessionStorage.setItem('pendingPermalinkData', JSON.stringify(permalinkData));
                 console.log('Permalink: Successfully parsed and stored permalink data (in memory and sessionStorage)');
-            } catch (err) {
-                console.error('Permalink: Failed to parse URL data:', err);
+            } else {
                 this._pendingPermalinkData = null;
                 sessionStorage.removeItem('pendingPermalinkData');
             }
@@ -111,6 +84,45 @@ class TensCity extends HTMLElement {
                     sessionStorage.removeItem('pendingPermalinkData');
                 }
             }
+        }
+    }
+
+    _decodePermalinkData(encodedData) {
+        // Utility method to decode URL-encoded JSON data
+        // Handles multiple levels of encoding
+        if (!encodedData) return null;
+        
+        try {
+            // Decode recursively in case of double (or multiple) encoding
+            let decodedData = encodedData;
+            
+            // Keep decoding until we can't decode anymore or get valid JSON
+            while (true) {
+                try {
+                    const nextDecoded = decodeURIComponent(decodedData);
+                    // If decoding doesn't change the string, we're done
+                    if (nextDecoded === decodedData) {
+                        break;
+                    }
+                    decodedData = nextDecoded;
+                    
+                    // Try to parse as JSON - if successful, we're done
+                    JSON.parse(decodedData);
+                    break;
+                } catch (jsonErr) {
+                    // Not valid JSON yet, continue decoding if possible
+                    // The loop will continue and nextDecoded === decodedData will eventually be true
+                }
+            }
+            
+            const data = JSON.parse(decodedData);
+            return {
+                jsonString: JSON.stringify(data, null, 2),
+                data: data
+            };
+        } catch (err) {
+            console.error('Permalink: Failed to parse URL data:', err);
+            return null;
         }
     }
 
@@ -915,42 +927,14 @@ class TensCity extends HTMLElement {
         const encodedData = urlParams.get('data');
         
         if (encodedData) {
-            try {
-                // Decode recursively in case of double (or multiple) encoding
-                let decodedData = encodedData;
-                
-                // Keep decoding until we can't decode anymore or get valid JSON
-                while (true) {
-                    try {
-                        const nextDecoded = decodeURIComponent(decodedData);
-                        // If decoding doesn't change the string, we're done
-                        if (nextDecoded === decodedData) {
-                            break;
-                        }
-                        decodedData = nextDecoded;
-                        
-                        // Try to parse as JSON - if successful, we're done
-                        JSON.parse(decodedData);
-                        break;
-                    } catch (jsonErr) {
-                        // Not valid JSON yet, continue decoding if possible
-                        // The loop will continue and nextDecoded === decodedData will eventually be true
-                    }
-                }
-                
-                const data = JSON.parse(decodedData);
+            const permalinkData = this._decodePermalinkData(encodedData);
+            if (permalinkData) {
                 // Update script tag with loaded data
                 const scriptTag = document.createElement('script');
                 scriptTag.type = 'application/ld+json';
-                scriptTag.textContent = JSON.stringify(data, null, 2);
+                scriptTag.textContent = permalinkData.jsonString;
                 this.appendChild(scriptTag);
-                return {
-                    jsonString: JSON.stringify(data, null, 2),
-                    data: data
-                };
-            } catch (err) {
-                console.error('Failed to parse URL data:', err);
-                return null;
+                return permalinkData;
             }
         }
         return null;
@@ -1091,10 +1075,11 @@ class TensCity extends HTMLElement {
             }
         }
 
-        // Check for permalink data in URL (fallback if not already captured)
+        // Fallback: Check for permalink data in URL (edge case where early capture failed)
+        // This should rarely be needed since _capturePermalinkData runs on connectedCallback
         const urlData = this._loadFromURL();
         if (urlData) {
-            console.log('Loading data from URL parameter');
+            console.log('Loading data from URL parameter (fallback path)');
             // Auto-save if user is authenticated
             await this._autoSaveFromURL(urlData);
             
