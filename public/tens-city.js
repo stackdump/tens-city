@@ -1070,21 +1070,22 @@ class TensCity extends HTMLElement {
             console.log('Loading data from pending permalink data');
             const urlData = this._pendingPermalinkData;
             
-            // Clear the pending data now that we're using it
-            this._pendingPermalinkData = null;
-            sessionStorage.removeItem('pendingPermalinkData');
-            
-            // Auto-save if user is authenticated
-            await this._autoSaveFromURL(urlData);
-            
-            // If auto-save redirected, we won't reach here
-            // Otherwise, just load the data into editor
+            // Load the data into editor first so user can see it
             if (urlData.jsonString && this._aceEditor) {
                 this._aceEditor.session.setValue(urlData.jsonString);
                 this._updatePermalinkAnchor();
                 console.log('Successfully loaded permalink data into editor');
-                return;
             }
+            
+            // Clear the pending data now that we're using it
+            this._pendingPermalinkData = null;
+            sessionStorage.removeItem('pendingPermalinkData');
+            
+            // Auto-save if user is authenticated (this will redirect to ?cid= URL)
+            await this._autoSaveFromURL(urlData);
+            
+            // If auto-save redirected, we won't reach here
+            return;
         }
 
         // Fallback: Check for permalink data in URL (edge case where early capture failed)
@@ -1092,17 +1093,19 @@ class TensCity extends HTMLElement {
         const urlData = this._loadFromURL();
         if (urlData) {
             console.log('Loading data from URL parameter (fallback path)');
-            // Auto-save if user is authenticated
-            await this._autoSaveFromURL(urlData);
             
-            // If auto-save redirected, we won't reach here
-            // Otherwise, just load the data into editor
+            // Load the data into editor first so user can see it
             if (urlData.jsonString && this._aceEditor) {
                 this._aceEditor.session.setValue(urlData.jsonString);
                 this._updatePermalinkAnchor();
                 console.log('Successfully loaded URL data into editor');
-                return;
             }
+            
+            // Auto-save if user is authenticated (this will redirect to ?cid= URL)
+            await this._autoSaveFromURL(urlData);
+            
+            // If auto-save redirected, we won't reach here
+            return;
         }
 
         // Check for script tag data
