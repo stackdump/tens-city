@@ -2,37 +2,45 @@ package main
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/stackdump/tens-city/internal/auth"
 	"github.com/stackdump/tens-city/internal/store"
 )
 
-// createTestToken creates a mock JWT token for testing
+// createTestToken creates a properly signed JWT token for testing
 func createTestToken(userID, email, username, githubID string) string {
-	payload := map[string]interface{}{
-		"sub":   userID,
-		"email": email,
-		"user_metadata": map[string]interface{}{
+	// Use a test secret and set it in environment
+	testSecret := "test-secret-key-for-testing"
+	os.Setenv("SUPABASE_JWT_SECRET", testSecret)
+	
+	// Create claims
+	claims := &auth.SupabaseClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   userID,
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+		Email: email,
+		UserMetadata: map[string]interface{}{
 			"user_name":   username,
 			"provider_id": githubID,
 		},
 	}
 	
-	payloadJSON, _ := json.Marshal(payload)
-	payloadB64 := base64.RawURLEncoding.EncodeToString(payloadJSON)
+	// Create and sign the token
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, _ := token.SignedString([]byte(testSecret))
 	
-	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
-	signature := base64.RawURLEncoding.EncodeToString([]byte("test-signature"))
-	
-	return strings.Join([]string{header, payloadB64, signature}, ".")
+	return tokenString
 }
 
 func TestFSStorageGetObject(t *testing.T) {
@@ -78,7 +86,7 @@ if err := storage.SaveObject(cid, testData, canonical); err != nil {
 t.Fatalf("Failed to save object: %v", err)
 }
 
-server := NewServer(storage, "", false)
+server := NewServer(storage, "", false, 1*1024*1024)
 
 // Test successful retrieval
 req := httptest.NewRequest("GET", "/o/"+cid, nil)
@@ -109,7 +117,7 @@ t.Errorf("Expected status 404, got %d", resp.StatusCode)
 func TestHandleSave(t *testing.T) {
 	tmpDir := t.TempDir()
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, "", false)
+	server := NewServer(storage, "", false, 1*1024*1024)
 
 	// Create test auth token
 	authToken := createTestToken("test-user-123", "test@example.com", "testuser", "123456")
@@ -221,7 +229,7 @@ if err := storage.UpdateLatest(user, slug, cid); err != nil {
 t.Fatalf("Failed to update latest: %v", err)
 }
 
-server := NewServer(storage, "", false)
+server := NewServer(storage, "", false, 1*1024*1024)
 
 req := httptest.NewRequest("GET", "/u/"+user+"/g/"+slug+"/latest", nil)
 w := httptest.NewRecorder()
@@ -255,7 +263,7 @@ if err := storage.AppendHistory(user, slug, cid2); err != nil {
 t.Fatalf("Failed to append history: %v", err)
 }
 
-server := NewServer(storage, "", false)
+server := NewServer(storage, "", false, 1*1024*1024)
 
 req := httptest.NewRequest("GET", "/u/"+user+"/g/"+slug+"/_history", nil)
 w := httptest.NewRecorder()
@@ -289,7 +297,7 @@ testJS := []byte("console.log('test');")
 os.WriteFile(filepath.Join(publicDir, "test.js"), testJS, 0644)
 
 storage := NewFSStorage(tmpDir)
-server := NewServer(storage, publicDir, false)
+server := NewServer(storage, publicDir, false, 1*1024*1024)
 
 // Test serving index.html at root
 req := httptest.NewRequest("GET", "/", nil)
@@ -325,7 +333,7 @@ t.Error("Expected test.js content")
 func TestCORSHeaders(t *testing.T) {
 tmpDir := t.TempDir()
 storage := NewFSStorage(tmpDir)
-server := NewServer(storage, "", true) // CORS enabled
+server := NewServer(storage, "", true, 1*1024*1024) // CORS enabled
 
 // Test OPTIONS request
 req := httptest.NewRequest("OPTIONS", "/api/save", nil)

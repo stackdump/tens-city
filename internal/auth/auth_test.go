@@ -1,36 +1,55 @@
 package auth
 
 import (
-	"encoding/base64"
-	"encoding/json"
-	"strings"
+	"os"
 	"testing"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
+// Helper function to create a valid signed JWT for testing
+func createTestToken(t *testing.T, claims *SupabaseClaims) string {
+	t.Helper()
+	
+	// Use a test secret
+	testSecret := "test-secret-key-for-testing"
+	
+	// Set the secret in environment for the test
+	os.Setenv("SUPABASE_JWT_SECRET", testSecret)
+	
+	// Create the token
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	
+	// Sign and get the complete encoded token as a string
+	tokenString, err := token.SignedString([]byte(testSecret))
+	if err != nil {
+		t.Fatalf("Failed to sign token: %v", err)
+	}
+	
+	return tokenString
+}
+
 func TestExtractUserFromToken(t *testing.T) {
-	// Create a mock JWT payload with GitHub user info
-	payload := map[string]interface{}{
-		"sub":   "user-id-123",
-		"email": "test@example.com",
-		"user_metadata": map[string]interface{}{
+	// Create claims with GitHub user info
+	claims := &SupabaseClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   "user-id-123",
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+		Email: "test@example.com",
+		UserMetadata: map[string]interface{}{
 			"user_name":   "testuser",
 			"full_name":   "Test User",
 			"provider_id": "12345678",
 		},
-		"app_metadata": map[string]interface{}{
+		AppMetadata: map[string]interface{}{
 			"provider": "github",
 		},
 	}
 	
-	payloadJSON, _ := json.Marshal(payload)
-	payloadB64 := base64.RawURLEncoding.EncodeToString(payloadJSON)
-	
-	// Create a mock JWT (header.payload.signature)
-	// We don't verify signature in this implementation, so we can use dummy values
-	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
-	signature := base64.RawURLEncoding.EncodeToString([]byte("dummy-signature"))
-	
-	token := strings.Join([]string{header, payloadB64, signature}, ".")
+	token := createTestToken(t, claims)
 	
 	// Test extraction
 	userInfo, err := ExtractUserFromToken(token)
@@ -62,18 +81,16 @@ func TestExtractUserFromToken(t *testing.T) {
 
 func TestExtractUserFromTokenWithBearer(t *testing.T) {
 	// Create a simple token
-	payload := map[string]interface{}{
-		"sub":   "user-id-456",
-		"email": "user@test.com",
+	claims := &SupabaseClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   "user-id-456",
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+		Email: "user@test.com",
 	}
 	
-	payloadJSON, _ := json.Marshal(payload)
-	payloadB64 := base64.RawURLEncoding.EncodeToString(payloadJSON)
-	
-	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
-	signature := base64.RawURLEncoding.EncodeToString([]byte("dummy-signature"))
-	
-	token := "Bearer " + strings.Join([]string{header, payloadB64, signature}, ".")
+	token := "Bearer " + createTestToken(t, claims)
 	
 	// Test extraction with Bearer prefix
 	userInfo, err := ExtractUserFromToken(token)
@@ -87,6 +104,9 @@ func TestExtractUserFromTokenWithBearer(t *testing.T) {
 }
 
 func TestExtractUserFromTokenInvalid(t *testing.T) {
+	// Set a test secret
+	os.Setenv("SUPABASE_JWT_SECRET", "test-secret")
+	
 	tests := []struct {
 		name  string
 		token string
@@ -94,6 +114,7 @@ func TestExtractUserFromTokenInvalid(t *testing.T) {
 		{"Empty token", ""},
 		{"Invalid format", "not.a.valid.jwt.token"},
 		{"Only two parts", "header.payload"},
+		{"Invalid signature", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0In0.invalid"},
 	}
 	
 	for _, tt := range tests {
@@ -108,20 +129,34 @@ func TestExtractUserFromTokenInvalid(t *testing.T) {
 
 func TestExtractUserFromTokenNoUserInfo(t *testing.T) {
 	// Create a token with no user identification
-	payload := map[string]interface{}{
-		"iat": 1234567890,
+	claims := &SupabaseClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
 	}
 	
-	payloadJSON, _ := json.Marshal(payload)
-	payloadB64 := base64.RawURLEncoding.EncodeToString(payloadJSON)
-	
-	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
-	signature := base64.RawURLEncoding.EncodeToString([]byte("dummy-signature"))
-	
-	token := strings.Join([]string{header, payloadB64, signature}, ".")
+	token := createTestToken(t, claims)
 	
 	_, err := ExtractUserFromToken(token)
 	if err == nil {
 		t.Error("Expected error for token with no user info, got nil")
 	}
+}
+
+func TestExtractUserFromTokenNoSecret(t *testing.T) {
+	// Unset the environment variable
+	os.Unsetenv("SUPABASE_JWT_SECRET")
+	
+	// Just use a dummy token - we don't need to create a valid one
+	// since the function should fail before validating the signature
+	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0In0.test"
+	
+	_, err := ExtractUserFromToken(token)
+	if err == nil {
+		t.Error("Expected error when SUPABASE_JWT_SECRET is not set, got nil")
+	}
+	
+	// Restore for other tests
+	os.Setenv("SUPABASE_JWT_SECRET", "test-secret")
 }

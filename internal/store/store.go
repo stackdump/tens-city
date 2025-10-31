@@ -352,3 +352,69 @@ func (s *FSStore) ReadSignature(cid string) (*SignatureMetadata, error) {
 
 	return &meta, nil
 }
+
+// GetObjectAuthor retrieves the author information from a stored object
+func (s *FSStore) GetObjectAuthor(cid string) (githubUser, githubID string, err error) {
+	cleanCID, err := sanitizePathComponent(cid)
+	if err != nil {
+		return "", "", fmt.Errorf("invalid cid: %w", err)
+	}
+	
+	path := filepath.Join(s.base, "o", cleanCID)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", "", err
+	}
+
+	var doc map[string]interface{}
+	if err := json.Unmarshal(data, &doc); err != nil {
+		return "", "", fmt.Errorf("failed to parse object: %w", err)
+	}
+
+	// Extract author information
+	if author, ok := doc["author"].(map[string]interface{}); ok {
+		if name, ok := author["name"].(string); ok {
+			githubUser = name
+		}
+		if id, ok := author["id"].(string); ok {
+			// Strip "github:" prefix if present
+			githubID = strings.TrimPrefix(id, "github:")
+		}
+	}
+
+	return githubUser, githubID, nil
+}
+
+// DeleteObject removes an object and its associated files
+func (s *FSStore) DeleteObject(cid string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	
+	cleanCID, err := sanitizePathComponent(cid)
+	if err != nil {
+		return fmt.Errorf("invalid cid: %w", err)
+	}
+	
+	// Delete the main object file
+	objPath := filepath.Join(s.base, "o", cleanCID)
+	if err := os.Remove(objPath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to delete object: %w", err)
+	}
+	
+	// Delete the canonical file
+	canonPath := filepath.Join(s.base, "o", "canonical", cleanCID+".nq")
+	if err := os.Remove(canonPath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to delete canonical file: %w", err)
+	}
+	
+	// Delete the signature file if it exists
+	sigPath := filepath.Join(s.base, "o", "signatures", cleanCID+".json")
+	if err := os.Remove(sigPath); err != nil && !os.IsNotExist(err) {
+		// Log error but don't fail the deletion - signature may not exist for all objects
+		// This is a non-critical cleanup operation
+		// Note: We can't use log here since this is internal/store package
+		// Callers should check if they need to log this
+	}
+	
+	return nil
+}

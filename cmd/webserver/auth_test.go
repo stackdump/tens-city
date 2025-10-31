@@ -11,7 +11,7 @@ import (
 func TestAuthenticationRequired(t *testing.T) {
 	tmpDir := t.TempDir()
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, "", false)
+	server := NewServer(storage, "", false, 1*1024*1024)
 
 	doc := map[string]interface{}{
 		"@context": "https://pflow.xyz/schema",
@@ -46,7 +46,7 @@ func TestAuthenticationRequired(t *testing.T) {
 func TestInvalidTokenRejected(t *testing.T) {
 	tmpDir := t.TempDir()
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, "", false)
+	server := NewServer(storage, "", false, 1*1024*1024)
 
 	doc := map[string]interface{}{
 		"@context": "https://pflow.xyz/schema",
@@ -83,7 +83,7 @@ func TestInvalidTokenRejected(t *testing.T) {
 func TestAuthorInfoInjection(t *testing.T) {
 	tmpDir := t.TempDir()
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, "", false)
+	server := NewServer(storage, "", false, 1*1024*1024)
 
 	tests := []struct {
 		name         string
