@@ -406,6 +406,8 @@ func (s *Server) handleDeleteObject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !isAuthor {
+		// Note: Logging usernames and GitHub IDs here is safe as they are public information
+		// from GitHub profiles, not sensitive authentication data
 		log.Printf("Delete denied: user %s (ID: %s) tried to delete object authored by %s (ID: %s)",
 			userInfo.UserName, userInfo.GitHubID, authorUser, authorID)
 		http.Error(w, "Forbidden: only the author can delete this object", http.StatusForbidden)
@@ -419,6 +421,8 @@ func (s *Server) handleDeleteObject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Note: Logging usernames and GitHub IDs here is safe as they are public information
+	// from GitHub profiles, not sensitive authentication data
 	log.Printf("Object %s deleted by author %s (ID: %s)", cid, userInfo.UserName, userInfo.GitHubID)
 	w.WriteHeader(http.StatusNoContent)
 }
