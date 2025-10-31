@@ -160,3 +160,66 @@ func TestExtractUserFromTokenNoSecret(t *testing.T) {
 	// Restore for other tests
 	os.Setenv("SUPABASE_JWT_SECRET", "test-secret")
 }
+
+func TestExtractUserFromTokenWithSubFallback(t *testing.T) {
+	// Create claims with 'sub' in user_metadata but no 'provider_id'
+	// This tests the fallback behavior when provider_id is missing
+	claims := &SupabaseClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   "supabase-user-id-789",
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+		Email: "fallback@example.com",
+		UserMetadata: map[string]interface{}{
+			"user_name": "fallbackuser",
+			"sub":       "87654321", // GitHub user ID in 'sub' field
+		},
+	}
+	
+	token := createTestToken(t, claims)
+	
+	userInfo, err := ExtractUserFromToken(token)
+	if err != nil {
+		t.Fatalf("Failed to extract user: %v", err)
+	}
+	
+	// Verify that GitHubID was extracted from 'sub' fallback
+	if userInfo.GitHubID != "87654321" {
+		t.Errorf("Expected GitHub ID '87654321' from sub fallback, got '%s'", userInfo.GitHubID)
+	}
+	
+	if userInfo.UserName != "fallbackuser" {
+		t.Errorf("Expected username 'fallbackuser', got '%s'", userInfo.UserName)
+	}
+}
+
+func TestExtractUserFromTokenProviderIdTakesPrecedence(t *testing.T) {
+	// Create claims with both 'provider_id' and 'sub' in user_metadata
+	// This tests that provider_id takes precedence over sub
+	claims := &SupabaseClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   "supabase-user-id-999",
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+		Email: "precedence@example.com",
+		UserMetadata: map[string]interface{}{
+			"user_name":   "precedenceuser",
+			"provider_id": "11111111", // Should take precedence
+			"sub":         "22222222", // Should be ignored
+		},
+	}
+	
+	token := createTestToken(t, claims)
+	
+	userInfo, err := ExtractUserFromToken(token)
+	if err != nil {
+		t.Fatalf("Failed to extract user: %v", err)
+	}
+	
+	// Verify that GitHubID was extracted from provider_id, not sub
+	if userInfo.GitHubID != "11111111" {
+		t.Errorf("Expected GitHub ID '11111111' from provider_id, got '%s'", userInfo.GitHubID)
+	}
+}
