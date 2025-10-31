@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -41,6 +42,8 @@ func sanitizePathComponent(component string) (string, error) {
 //  {base}/u/{login}/g/{slug}/_history -> JSON array of history entries
 type FSStore struct {
 	base string
+	// mu protects concurrent access to files, especially for read-modify-write operations like AppendHistory
+	mu sync.Mutex
 }
 
 type HistoryEntry struct {
@@ -73,6 +76,9 @@ func (s *FSStore) SaveObject(cid string, raw []byte, canonical []byte) error {
 // SaveObjectWithAuthor writes the raw JSON-LD and canonical bytes to disk.
 // It injects the computed CID as the @id field and author information into the stored JSON-LD.
 func (s *FSStore) SaveObjectWithAuthor(cid string, raw []byte, canonical []byte, githubUser, githubID string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	
 	cleanCID, err := sanitizePathComponent(cid)
 	if err != nil {
 		return fmt.Errorf("invalid cid: %w", err)
@@ -154,6 +160,9 @@ func (s *FSStore) ensureGistDir(user, slug string) (string, error) {
 
 // UpdateLatest writes the pointer file /u/{login}/g/{slug}/latest containing the CID.
 func (s *FSStore) UpdateLatest(user, slug, cid string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	
 	dir, err := s.ensureGistDir(user, slug)
 	if err != nil {
 		return err
@@ -164,6 +173,9 @@ func (s *FSStore) UpdateLatest(user, slug, cid string) error {
 
 // AppendHistory appends a history entry (CID + timestamp) to _history (JSON array).
 func (s *FSStore) AppendHistory(user, slug, cidStr string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	
 	dir, err := s.ensureGistDir(user, slug)
 	if err != nil {
 		return err
