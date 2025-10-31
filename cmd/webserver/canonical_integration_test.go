@@ -17,6 +17,9 @@ func TestSaveWithDifferentKeyOrder(t *testing.T) {
 	storage := NewFSStorage(tmpDir)
 	server := NewServer(storage, "", false)
 
+	// Create test auth token
+	authToken := createTestToken("test-user-123", "test@example.com", "testuser", "123456")
+
 	// Two JSON strings with the same content but different key order
 	json1 := map[string]interface{}{
 		"@context":    "https://pflow.xyz/schema",
@@ -42,6 +45,7 @@ func TestSaveWithDifferentKeyOrder(t *testing.T) {
 	body1, _ := json.Marshal(json1)
 	req1 := httptest.NewRequest("POST", "/api/save", bytes.NewReader(body1))
 	req1.Header.Set("Content-Type", "application/json")
+	req1.Header.Set("Authorization", "Bearer "+authToken)
 	w1 := httptest.NewRecorder()
 	server.ServeHTTP(w1, req1)
 
@@ -58,6 +62,7 @@ func TestSaveWithDifferentKeyOrder(t *testing.T) {
 	body2, _ := json.Marshal(json2)
 	req2 := httptest.NewRequest("POST", "/api/save", bytes.NewReader(body2))
 	req2.Header.Set("Content-Type", "application/json")
+	req2.Header.Set("Authorization", "Bearer "+authToken)
 	w2 := httptest.NewRecorder()
 	server.ServeHTTP(w2, req2)
 
@@ -85,6 +90,9 @@ func TestSaveMultipleTimes(t *testing.T) {
 	storage := NewFSStorage(tmpDir)
 	server := NewServer(storage, "", false)
 
+	// Create test auth token
+	authToken := createTestToken("test-user-123", "test@example.com", "testuser", "123456")
+
 	doc := map[string]interface{}{
 		"@context":    "https://pflow.xyz/schema",
 		"@type":       "PetriNet",
@@ -102,6 +110,7 @@ func TestSaveMultipleTimes(t *testing.T) {
 		body, _ := json.Marshal(doc)
 		req := httptest.NewRequest("POST", "/api/save", bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+authToken)
 		w := httptest.NewRecorder()
 		server.ServeHTTP(w, req)
 

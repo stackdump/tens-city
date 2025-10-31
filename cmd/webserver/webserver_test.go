@@ -1,17 +1,39 @@
 package main
 
 import (
-"bytes"
-"encoding/json"
-"io"
-"net/http"
-"net/http/httptest"
-"os"
-"path/filepath"
-"testing"
+	"bytes"
+	"encoding/base64"
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
 
-"github.com/stackdump/tens-city/internal/store"
+	"github.com/stackdump/tens-city/internal/store"
 )
+
+// createTestToken creates a mock JWT token for testing
+func createTestToken(userID, email, username, githubID string) string {
+	payload := map[string]interface{}{
+		"sub":   userID,
+		"email": email,
+		"user_metadata": map[string]interface{}{
+			"user_name":   username,
+			"provider_id": githubID,
+		},
+	}
+	
+	payloadJSON, _ := json.Marshal(payload)
+	payloadB64 := base64.RawURLEncoding.EncodeToString(payloadJSON)
+	
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
+	signature := base64.RawURLEncoding.EncodeToString([]byte("test-signature"))
+	
+	return strings.Join([]string{header, payloadB64, signature}, ".")
+}
 
 func TestFSStorageGetObject(t *testing.T) {
 tmpDir := t.TempDir()
@@ -85,61 +107,105 @@ t.Errorf("Expected status 404, got %d", resp.StatusCode)
 }
 
 func TestHandleSave(t *testing.T) {
-tmpDir := t.TempDir()
-storage := NewFSStorage(tmpDir)
-server := NewServer(storage, "", false)
+	tmpDir := t.TempDir()
+	storage := NewFSStorage(tmpDir)
+	server := NewServer(storage, "", false)
 
-// Test valid JSON-LD
-doc := map[string]interface{}{
-"@context": map[string]string{
-"name": "http://schema.org/name",
-},
-"@type": "Test",
-"name":  "Test Object",
-}
-body, _ := json.Marshal(doc)
+	// Create test auth token
+	authToken := createTestToken("test-user-123", "test@example.com", "testuser", "123456")
 
-req := httptest.NewRequest("POST", "/api/save", bytes.NewReader(body))
-req.Header.Set("Content-Type", "application/json")
-w := httptest.NewRecorder()
-server.ServeHTTP(w, req)
+	// Test valid JSON-LD
+	doc := map[string]interface{}{
+		"@context": map[string]string{
+			"name": "http://schema.org/name",
+		},
+		"@type": "Test",
+		"name":  "Test Object",
+	}
+	body, _ := json.Marshal(doc)
 
-resp := w.Result()
-if resp.StatusCode != http.StatusOK {
-t.Errorf("Expected status 200, got %d", resp.StatusCode)
-}
+	req := httptest.NewRequest("POST", "/api/save", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+authToken)
+	w := httptest.NewRecorder()
+	server.ServeHTTP(w, req)
 
-var result map[string]string
-if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-t.Fatalf("Failed to decode response: %v", err)
-}
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		t.Errorf("Expected status 200, got %d: %s", resp.StatusCode, string(bodyBytes))
+	}
 
-cid, ok := result["cid"]
-if !ok || cid == "" {
-t.Error("Response missing CID")
-}
+	var result map[string]string
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("Failed to decode response: %v", err)
+	}
 
-// Verify object was saved
-_, err := storage.GetObject(cid)
-if err != nil {
-t.Errorf("Object not saved: %v", err)
-}
+	cid, ok := result["cid"]
+	if !ok || cid == "" {
+		t.Error("Response missing CID")
+	}
 
-// Test invalid JSON-LD (missing @context)
-invalidDoc := map[string]interface{}{
-"name": "Invalid",
-}
-body, _ = json.Marshal(invalidDoc)
+	// Verify object was saved
+	savedData, err := storage.GetObject(cid)
+	if err != nil {
+		t.Errorf("Object not saved: %v", err)
+	}
 
-req = httptest.NewRequest("POST", "/api/save", bytes.NewReader(body))
-req.Header.Set("Content-Type", "application/json")
-w = httptest.NewRecorder()
-server.ServeHTTP(w, req)
+	// Verify author information was injected
+	var savedDoc map[string]interface{}
+	if err := json.Unmarshal(savedData, &savedDoc); err != nil {
+		t.Fatalf("Failed to unmarshal saved object: %v", err)
+	}
 
-resp = w.Result()
-if resp.StatusCode != http.StatusBadRequest {
-t.Errorf("Expected status 400, got %d", resp.StatusCode)
-}
+	author, ok := savedDoc["author"].(map[string]interface{})
+	if !ok {
+		t.Error("Author information not found in saved object")
+	} else {
+		if author["name"] != "testuser" {
+			t.Errorf("Expected author name 'testuser', got '%v'", author["name"])
+		}
+		if author["id"] != "github:123456" {
+			t.Errorf("Expected author id 'github:123456', got '%v'", author["id"])
+		}
+	}
+
+	// Test invalid JSON-LD (missing @context)
+	invalidDoc := map[string]interface{}{
+		"name": "Invalid",
+	}
+	body, _ = json.Marshal(invalidDoc)
+
+	req = httptest.NewRequest("POST", "/api/save", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+authToken)
+	w = httptest.NewRecorder()
+	server.ServeHTTP(w, req)
+
+	resp = w.Result()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("Expected status 400, got %d", resp.StatusCode)
+	}
+
+	// Test missing authentication
+	validDoc := map[string]interface{}{
+		"@context": map[string]string{
+			"name": "http://schema.org/name",
+		},
+		"name": "Test",
+	}
+	body, _ = json.Marshal(validDoc)
+
+	req = httptest.NewRequest("POST", "/api/save", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	// No auth header
+	w = httptest.NewRecorder()
+	server.ServeHTTP(w, req)
+
+	resp = w.Result()
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("Expected status 401 for missing auth, got %d", resp.StatusCode)
+	}
 }
 
 func TestHandleGetLatest(t *testing.T) {

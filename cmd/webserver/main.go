@@ -1,27 +1,29 @@
 package main
 
 import (
-"encoding/json"
-"flag"
-"log"
-"net/http"
-"os"
-"path/filepath"
-"strings"
+	"encoding/json"
+	"flag"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 
-"github.com/stackdump/tens-city/internal/canonical"
-"github.com/stackdump/tens-city/internal/seal"
-"github.com/stackdump/tens-city/internal/store"
+	"github.com/stackdump/tens-city/internal/auth"
+	"github.com/stackdump/tens-city/internal/canonical"
+	"github.com/stackdump/tens-city/internal/seal"
+	"github.com/stackdump/tens-city/internal/store"
 )
 
 // Storage interface abstracts filesystem backends
 type Storage interface {
-GetObject(cid string) ([]byte, error)
-SaveObject(cid string, raw []byte, canonical []byte) error
-GetLatest(user, slug string) (string, error)
-GetHistory(user, slug string) ([]store.HistoryEntry, error)
-UpdateLatest(user, slug, cid string) error
-AppendHistory(user, slug, cid string) error
+	GetObject(cid string) ([]byte, error)
+	SaveObject(cid string, raw []byte, canonical []byte) error
+	SaveObjectWithAuthor(cid string, raw []byte, canonical []byte, githubUser, githubID string) error
+	GetLatest(user, slug string) (string, error)
+	GetHistory(user, slug string) ([]store.HistoryEntry, error)
+	UpdateLatest(user, slug, cid string) error
+	AppendHistory(user, slug, cid string) error
 }
 
 // FSStorage implements Storage using filesystem
@@ -38,7 +40,11 @@ return fs.store.ReadObject(cid)
 }
 
 func (fs *FSStorage) SaveObject(cid string, raw []byte, canonical []byte) error {
-return fs.store.SaveObject(cid, raw, canonical)
+	return fs.store.SaveObject(cid, raw, canonical)
+}
+
+func (fs *FSStorage) SaveObjectWithAuthor(cid string, raw []byte, canonical []byte, githubUser, githubID string) error {
+	return fs.store.SaveObjectWithAuthor(cid, raw, canonical, githubUser, githubID)
 }
 
 func (fs *FSStorage) GetLatest(user, slug string) (string, error) {
@@ -176,53 +182,75 @@ json.NewEncoder(w).Encode(history)
 
 // Handler for POST /api/save - save JSON-LD and return CID
 func (s *Server) handleSave(w http.ResponseWriter, r *http.Request) {
-if s.handleCORS(w, r) {
-return
-}
+	if s.handleCORS(w, r) {
+		return
+	}
 
-if r.Method != http.MethodPost {
-http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-return
-}
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-var doc map[string]interface{}
-if err := json.NewDecoder(r.Body).Decode(&doc); err != nil {
-http.Error(w, "Invalid JSON", http.StatusBadRequest)
-return
-}
+	// Extract and validate authentication token
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "Authentication required", http.StatusUnauthorized)
+		return
+	}
 
-// Validate JSON-LD: must have @context
-if _, hasContext := doc["@context"]; !hasContext {
-http.Error(w, "Invalid JSON-LD: missing @context", http.StatusBadRequest)
-return
-}
+	userInfo, err := auth.ExtractUserFromToken(authHeader)
+	if err != nil {
+		log.Printf("Authentication failed: %v", err)
+		http.Error(w, "Invalid authentication token", http.StatusUnauthorized)
+		return
+	}
 
-// Serialize back to JSON using canonical encoding (sorted keys)
-raw, err := canonical.MarshalJSON(doc)
-if err != nil {
-http.Error(w, "Failed to serialize JSON", http.StatusInternalServerError)
-return
-}
+	var doc map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&doc); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
 
-// Compute CID
-cid, canonical, err := seal.SealJSONLD(raw)
-if err != nil {
-log.Printf("Error sealing JSON-LD: %v", err)
-http.Error(w, "Failed to compute CID", http.StatusInternalServerError)
-return
-}
+	// Validate JSON-LD: must have @context
+	if _, hasContext := doc["@context"]; !hasContext {
+		http.Error(w, "Invalid JSON-LD: missing @context", http.StatusBadRequest)
+		return
+	}
 
-// Save to storage
-if err := s.storage.SaveObject(cid, raw, canonical); err != nil {
-log.Printf("Error saving object: %v", err)
-http.Error(w, "Failed to save object", http.StatusInternalServerError)
-return
-}
+	// Serialize back to JSON using canonical encoding (sorted keys)
+	raw, err := canonical.MarshalJSON(doc)
+	if err != nil {
+		http.Error(w, "Failed to serialize JSON", http.StatusInternalServerError)
+		return
+	}
 
-// Return CID
-response := map[string]string{
-"cid": cid,
-}
+	// Compute CID
+	cid, canonicalData, err := seal.SealJSONLD(raw)
+	if err != nil {
+		log.Printf("Error sealing JSON-LD: %v", err)
+		http.Error(w, "Failed to compute CID", http.StatusInternalServerError)
+		return
+	}
+
+	// Save to storage with author information
+	githubUser := userInfo.UserName
+	githubID := userInfo.GitHubID
+	
+	// Fallback to email if username is not available
+	if githubUser == "" && userInfo.Email != "" {
+		githubUser = userInfo.Email
+	}
+
+	if err := s.storage.SaveObjectWithAuthor(cid, raw, canonicalData, githubUser, githubID); err != nil {
+		log.Printf("Error saving object: %v", err)
+		http.Error(w, "Failed to save object", http.StatusInternalServerError)
+		return
+	}
+
+	// Return CID
+	response := map[string]string{
+		"cid": cid,
+	}
 w.Header().Set("Content-Type", "application/json")
 json.NewEncoder(w).Encode(response)
 }

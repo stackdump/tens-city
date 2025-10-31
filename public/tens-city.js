@@ -904,11 +904,21 @@ class TensCity extends HTMLElement {
             // Use canonical JSON encoding to ensure consistent CID calculation
             const canonicalData = canonicalJSON(data.data);
             
+            // Get the session token for authentication
+            const { data: { session } } = await this._supabase.auth.getSession();
+            const authToken = session?.access_token;
+            
+            if (!authToken) {
+                console.error('No auth token available');
+                return null;
+            }
+            
             // Use API endpoint to save
             const response = await fetch('/api/save', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
                 },
                 body: canonicalData
             });

@@ -14,40 +14,44 @@ import (
 // 2. Retrieve it by CID
 // 3. Verify the content
 func TestEndToEndWorkflow(t *testing.T) {
-tmpDir := t.TempDir()
-storage := NewFSStorage(tmpDir)
-server := NewServer(storage, "", false)
+	tmpDir := t.TempDir()
+	storage := NewFSStorage(tmpDir)
+	server := NewServer(storage, "", false)
 
-// Step 1: Create and save a JSON-LD document
-doc := map[string]interface{}{
-"@context": map[string]string{
-"name":        "http://schema.org/name",
-"description": "http://schema.org/description",
-},
-"@type":       "TestDocument",
-"name":        "Integration Test Document",
-"description": "This is a test document for the end-to-end workflow",
-}
+	// Create test auth token
+	authToken := createTestToken("test-user-123", "test@example.com", "testuser", "123456")
 
-body, _ := json.Marshal(doc)
-req := httptest.NewRequest("POST", "/api/save", bytes.NewReader(body))
-req.Header.Set("Content-Type", "application/json")
-w := httptest.NewRecorder()
+	// Step 1: Create and save a JSON-LD document
+	doc := map[string]interface{}{
+		"@context": map[string]string{
+			"name":        "http://schema.org/name",
+			"description": "http://schema.org/description",
+		},
+		"@type":       "TestDocument",
+		"name":        "Integration Test Document",
+		"description": "This is a test document for the end-to-end workflow",
+	}
 
-server.ServeHTTP(w, req)
+	body, _ := json.Marshal(doc)
+	req := httptest.NewRequest("POST", "/api/save", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+authToken)
+	w := httptest.NewRecorder()
 
-if w.Code != http.StatusOK {
-t.Fatalf("Expected status 200, got %d: %s", w.Code, w.Body.String())
-}
+	server.ServeHTTP(w, req)
 
-var saveResponse map[string]string
-if err := json.NewDecoder(w.Body).Decode(&saveResponse); err != nil {
-t.Fatalf("Failed to decode save response: %v", err)
-}
+	if w.Code != http.StatusOK {
+		t.Fatalf("Expected status 200, got %d: %s", w.Code, w.Body.String())
+	}
 
-cid := saveResponse["cid"]
-if cid == "" {
-t.Fatal("No CID in response")
+	var saveResponse map[string]string
+	if err := json.NewDecoder(w.Body).Decode(&saveResponse); err != nil {
+		t.Fatalf("Failed to decode save response: %v", err)
+	}
+
+	cid := saveResponse["cid"]
+	if cid == "" {
+		t.Fatal("No CID in response")
 }
 
 t.Logf("Saved document with CID: %s", cid)
@@ -88,42 +92,46 @@ t.Log("End-to-end workflow test passed successfully!")
 
 // TestWorkflowWithMultipleObjects tests saving and retrieving multiple objects
 func TestWorkflowWithMultipleObjects(t *testing.T) {
-tmpDir := t.TempDir()
-storage := NewFSStorage(tmpDir)
-server := NewServer(storage, "", false)
+	tmpDir := t.TempDir()
+	storage := NewFSStorage(tmpDir)
+	server := NewServer(storage, "", false)
 
-documents := []map[string]interface{}{
-{
-"@context": map[string]string{"name": "http://schema.org/name"},
-"@type":    "Document1",
-"name":     "First Document",
-},
-{
-"@context": map[string]string{"name": "http://schema.org/name"},
-"@type":    "Document2",
-"name":     "Second Document",
-},
-{
-"@context": map[string]string{"name": "http://schema.org/name"},
-"@type":    "Document3",
-"name":     "Third Document",
-},
-}
+	// Create test auth token
+	authToken := createTestToken("test-user-123", "test@example.com", "testuser", "123456")
 
-cids := make([]string, len(documents))
+	documents := []map[string]interface{}{
+		{
+			"@context": map[string]string{"name": "http://schema.org/name"},
+			"@type":    "Document1",
+			"name":     "First Document",
+		},
+		{
+			"@context": map[string]string{"name": "http://schema.org/name"},
+			"@type":    "Document2",
+			"name":     "Second Document",
+		},
+		{
+			"@context": map[string]string{"name": "http://schema.org/name"},
+			"@type":    "Document3",
+			"name":     "Third Document",
+		},
+	}
 
-// Save all documents
-for i, doc := range documents {
-body, _ := json.Marshal(doc)
-req := httptest.NewRequest("POST", "/api/save", bytes.NewReader(body))
-req.Header.Set("Content-Type", "application/json")
-w := httptest.NewRecorder()
+	cids := make([]string, len(documents))
 
-server.ServeHTTP(w, req)
+	// Save all documents
+	for i, doc := range documents {
+		body, _ := json.Marshal(doc)
+		req := httptest.NewRequest("POST", "/api/save", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+authToken)
+		w := httptest.NewRecorder()
 
-if w.Code != http.StatusOK {
-t.Fatalf("Failed to save document %d: status %d", i, w.Code)
-}
+		server.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("Failed to save document %d: status %d", i, w.Code)
+		}
 
 var response map[string]string
 json.NewDecoder(w.Body).Decode(&response)
