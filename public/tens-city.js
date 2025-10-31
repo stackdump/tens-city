@@ -1153,7 +1153,7 @@ class TensCity extends HTMLElement {
         }
     }
 
-    async _updateDeleteButtonVisibility() {
+    async _updateDeleteButtonVisibility(loadedData = null) {
         console.log('=== DELETE BUTTON VISIBILITY CHECK START ===');
         // Show delete button only when viewing a CID, user is authenticated, and user owns the object
         const deleteBtn = this._root?.querySelector('#tc-delete-btn');
@@ -1178,7 +1178,7 @@ class TensCity extends HTMLElement {
         
         console.log('DELETE BUTTON: CID and user present', { cid: cidParam });
 
-        // Check cache first to avoid redundant API calls
+        // Check cache first to avoid redundant checks
         if (this._ownershipCache.hasOwnProperty(cidParam)) {
             console.log('DELETE BUTTON: Using cached result', { cid: cidParam, owned: this._ownershipCache[cidParam] });
             deleteBtn.style.display = this._ownershipCache[cidParam] ? 'inline-block' : 'none';
@@ -1186,40 +1186,74 @@ class TensCity extends HTMLElement {
             return;
         }
 
-        // Check if the current user owns this object
+        // Check ownership from loaded data (if provided) or from editor content
         try {
-            const { data: { session } } = await this._supabase.auth.getSession();
-            const authToken = session?.access_token;
+            let data = loadedData;
             
-            if (!authToken) {
-                console.log('DELETE BUTTON: No auth token available');
+            // If data not provided, try to parse from editor
+            if (!data && this._aceEditor) {
+                try {
+                    const editorContent = this._aceEditor.session.getValue();
+                    data = JSON.parse(editorContent);
+                    console.log('DELETE BUTTON: Parsed data from editor');
+                } catch (err) {
+                    console.log('DELETE BUTTON: Could not parse editor content', err);
+                }
+            }
+            
+            if (!data) {
+                console.log('DELETE BUTTON: No data available to check ownership');
                 this._ownershipCache[cidParam] = false;
                 deleteBtn.style.display = 'none';
-                console.log('=== DELETE BUTTON VISIBILITY CHECK END (NO TOKEN) ===');
+                console.log('=== DELETE BUTTON VISIBILITY CHECK END (NO DATA) ===');
                 return;
             }
-
-            console.log('DELETE BUTTON: Calling ownership API for CID:', cidParam);
-            const response = await fetch(`/api/ownership/${cidParam}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${authToken}`,
-                }
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                console.log('DELETE BUTTON: API response', { cid: cidParam, owned: result.owned });
-                this._ownershipCache[cidParam] = result.owned;
-                deleteBtn.style.display = result.owned ? 'inline-block' : 'none';
-                console.log('DELETE BUTTON: Final state =', deleteBtn.style.display);
-                console.log('=== DELETE BUTTON VISIBILITY CHECK END (API SUCCESS) ===');
-            } else {
-                console.log('DELETE BUTTON: API request failed', { status: response.status, statusText: response.statusText });
+            
+            // Extract author information from the data
+            const author = data.author;
+            if (!author) {
+                console.log('DELETE BUTTON: No author field in data');
                 this._ownershipCache[cidParam] = false;
                 deleteBtn.style.display = 'none';
-                console.log('=== DELETE BUTTON VISIBILITY CHECK END (API FAILED) ===');
+                console.log('=== DELETE BUTTON VISIBILITY CHECK END (NO AUTHOR) ===');
+                return;
             }
+            
+            // Get current user's GitHub info from Supabase session
+            const { data: { session } } = await this._supabase.auth.getSession();
+            if (!session?.user) {
+                console.log('DELETE BUTTON: No session available');
+                this._ownershipCache[cidParam] = false;
+                deleteBtn.style.display = 'none';
+                console.log('=== DELETE BUTTON VISIBILITY CHECK END (NO SESSION) ===');
+                return;
+            }
+            
+            const userMetadata = session.user.user_metadata || {};
+            const currentUserName = userMetadata.user_name || userMetadata.preferred_username;
+            const currentGitHubID = userMetadata.provider_id || userMetadata.sub;
+            
+            console.log('DELETE BUTTON: Current user', { userName: currentUserName, gitHubID: currentGitHubID });
+            console.log('DELETE BUTTON: Object author', { name: author.name, id: author.id });
+            
+            // Check if current user is the author
+            // Compare GitHub ID (strip "github:" prefix if present)
+            const authorGitHubID = author.id ? author.id.replace(/^github:/, '') : null;
+            const authorUserName = author.name;
+            
+            const isOwned = (currentGitHubID && authorGitHubID && currentGitHubID === authorGitHubID) ||
+                           (currentUserName && authorUserName && currentUserName === authorUserName);
+            
+            console.log('DELETE BUTTON: Ownership check result', { 
+                isOwned, 
+                idMatch: currentGitHubID && authorGitHubID && currentGitHubID === authorGitHubID,
+                nameMatch: currentUserName && authorUserName && currentUserName === authorUserName
+            });
+            
+            this._ownershipCache[cidParam] = isOwned;
+            deleteBtn.style.display = isOwned ? 'inline-block' : 'none';
+            console.log('DELETE BUTTON: Final state =', deleteBtn.style.display);
+            console.log('=== DELETE BUTTON VISIBILITY CHECK END (LOCAL CHECK) ===');
         } catch (err) {
             console.error('DELETE BUTTON: Exception occurred', err);
             this._ownershipCache[cidParam] = false;
@@ -1286,7 +1320,8 @@ class TensCity extends HTMLElement {
                     const data = await response.json();
                     this._aceEditor.session.setValue(JSON.stringify(data, null, 2));
                     this._updatePermalinkAnchor();
-                    await this._updateDeleteButtonVisibility();
+                    // Pass the loaded data to ownership check to avoid API call
+                    await this._updateDeleteButtonVisibility(data);
                     console.log('Successfully loaded data from CID');
                     return;
                 } else {
