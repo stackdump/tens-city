@@ -39,6 +39,7 @@ class TensCity extends HTMLElement {
         this._menuOpen = false;
         this._pendingPermalinkData = null; // Store permalink data before authentication
         this._appShown = false; // Track whether app has been initialized to prevent race condition where _showApp() is called multiple times
+        this._ownershipCache = {}; // Cache ownership checks to avoid redundant API calls
     }
 
     connectedCallback() {
@@ -1163,12 +1164,19 @@ class TensCity extends HTMLElement {
             return;
         }
 
+        // Check cache first to avoid redundant API calls
+        if (this._ownershipCache.hasOwnProperty(cidParam)) {
+            deleteBtn.style.display = this._ownershipCache[cidParam] ? 'inline-block' : 'none';
+            return;
+        }
+
         // Check if the current user owns this object
         try {
             const { data: { session } } = await this._supabase.auth.getSession();
             const authToken = session?.access_token;
             
             if (!authToken) {
+                this._ownershipCache[cidParam] = false;
                 deleteBtn.style.display = 'none';
                 return;
             }
@@ -1182,16 +1190,15 @@ class TensCity extends HTMLElement {
 
             if (response.ok) {
                 const result = await response.json();
-                if (result.owned) {
-                    deleteBtn.style.display = 'inline-block';
-                } else {
-                    deleteBtn.style.display = 'none';
-                }
+                this._ownershipCache[cidParam] = result.owned;
+                deleteBtn.style.display = result.owned ? 'inline-block' : 'none';
             } else {
+                this._ownershipCache[cidParam] = false;
                 deleteBtn.style.display = 'none';
             }
         } catch (err) {
             console.error('Failed to check ownership:', err);
+            this._ownershipCache[cidParam] = false;
             deleteBtn.style.display = 'none';
         }
     }

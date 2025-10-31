@@ -327,12 +327,8 @@ func (s *Server) handleCheckOwnership(w http.ResponseWriter, r *http.Request) {
 
 	// Check if the user is the author
 	// Priority: GitHub ID (most secure) > username (for backward compatibility)
-	isOwned := false
-	if authorID != "" && userInfo.GitHubID != "" && authorID == userInfo.GitHubID {
-		isOwned = true
-	} else if authorUser != "" && userInfo.UserName != "" && authorUser == userInfo.UserName {
-		isOwned = true
-	}
+	isOwned := (authorID != "" && userInfo.GitHubID != "" && authorID == userInfo.GitHubID) ||
+		(authorUser != "" && userInfo.UserName != "" && authorUser == userInfo.UserName)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]bool{"owned": isOwned})
