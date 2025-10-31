@@ -16,7 +16,7 @@ import (
 func TestEndToEndWorkflow(t *testing.T) {
 	tmpDir := t.TempDir()
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, "", false)
+	server := NewServer(storage, "", false, 1*1024*1024)
 
 	// Create test auth token
 	authToken := createTestToken("test-user-123", "test@example.com", "testuser", "123456")
@@ -94,7 +94,7 @@ t.Log("End-to-end workflow test passed successfully!")
 func TestWorkflowWithMultipleObjects(t *testing.T) {
 	tmpDir := t.TempDir()
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, "", false)
+	server := NewServer(storage, "", false, 1*1024*1024)
 
 	// Create test auth token
 	authToken := createTestToken("test-user-123", "test@example.com", "testuser", "123456")

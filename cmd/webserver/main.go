@@ -161,16 +161,18 @@ func validateKeys(doc map[string]interface{}) error {
 
 
 type Server struct {
-storage    Storage
-publicDir  string
-enableCORS bool
+storage        Storage
+publicDir      string
+enableCORS     bool
+maxContentSize int64 // Maximum content size in bytes
 }
 
-func NewServer(storage Storage, publicDir string, enableCORS bool) *Server {
+func NewServer(storage Storage, publicDir string, enableCORS bool, maxContentSize int64) *Server {
 return &Server{
-storage:    storage,
-publicDir:  publicDir,
-enableCORS: enableCORS,
+storage:        storage,
+publicDir:      publicDir,
+enableCORS:     enableCORS,
+maxContentSize: maxContentSize,
 }
 }
 
@@ -300,8 +302,8 @@ func (s *Server) handleSave(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Limit request body size to prevent abuse (10MB limit)
-	r.Body = http.MaxBytesReader(w, r.Body, 10*1024*1024)
+	// Limit request body size to prevent abuse
+	r.Body = http.MaxBytesReader(w, r.Body, s.maxContentSize)
 	
 	var doc map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&doc); err != nil {
@@ -479,12 +481,17 @@ addr := flag.String("addr", ":8080", "Server address")
 storeDir := flag.String("store", "data", "Filesystem store directory")
 publicDir := flag.String("public", "public", "Public directory for static files")
 enableCORS := flag.Bool("cors", true, "Enable CORS headers")
+maxContentMB := flag.Int("max-content-mb", 1, "Maximum content size in megabytes (default: 1MB)")
 flag.Parse()
 
+// Convert MB to bytes
+maxContentSize := int64(*maxContentMB) * 1024 * 1024
+
 log.Printf("Using filesystem storage: %s", *storeDir)
+log.Printf("Maximum content size: %d MB (%d bytes)", *maxContentMB, maxContentSize)
 storage := NewFSStorage(*storeDir)
 
-server := NewServer(storage, *publicDir, *enableCORS)
+server := NewServer(storage, *publicDir, *enableCORS, maxContentSize)
 
 log.Printf("Starting server on %s", *addr)
 log.Printf("Public directory: %s", *publicDir)

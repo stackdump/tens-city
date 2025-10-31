@@ -23,7 +23,7 @@ func TestHandleDeleteObject(t *testing.T) {
 		t.Fatalf("Failed to save object: %v", err)
 	}
 
-	server := NewServer(storage, "", false)
+	server := NewServer(storage, "", false, 1*1024*1024)
 
 	tests := []struct {
 		name           string
@@ -116,7 +116,7 @@ func TestHandleDeleteObjectByUsername(t *testing.T) {
 		t.Fatalf("Failed to save object: %v", err)
 	}
 
-	server := NewServer(storage, "", false)
+	server := NewServer(storage, "", false, 1*1024*1024)
 
 	// Test that author can delete by username when GitHub ID is not available
 	token := createTestToken("user123", "test@example.com", githubUser, "")
@@ -260,7 +260,7 @@ func TestDeleteObject(t *testing.T) {
 func TestSaveWithValidation(t *testing.T) {
 	tmpDir := t.TempDir()
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, "", false)
+	server := NewServer(storage, "", false, 1*1024*1024)
 
 	tests := []struct {
 		name           string
@@ -325,5 +325,42 @@ func TestSaveWithValidation(t *testing.T) {
 				t.Errorf("Expected status %d, got %d. Body: %s", tt.expectedStatus, resp.StatusCode, bodyBytes.String())
 			}
 		})
+	}
+}
+
+func TestContentSizeLimit(t *testing.T) {
+	tmpDir := t.TempDir()
+	storage := NewFSStorage(tmpDir)
+	// Set a very small content size limit for testing (1KB)
+	server := NewServer(storage, "", false, 1024)
+
+	// Create a document that exceeds the size limit
+	largeDoc := map[string]interface{}{
+		"@context": "http://schema.org",
+		"@type":    "Person",
+	}
+	
+	// Add a large string to exceed 1KB
+	largeString := make([]byte, 2000)
+	for i := range largeString {
+		largeString[i] = 'A'
+	}
+	largeDoc["data"] = string(largeString)
+
+	body, _ := json.Marshal(largeDoc)
+	req := httptest.NewRequest("POST", "/api/save", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	
+	// Add authentication
+	token := createTestToken("user123", "test@example.com", "testuser", "12345")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	w := httptest.NewRecorder()
+	server.ServeHTTP(w, req)
+
+	resp := w.Result()
+	// Should fail with 413 Request Entity Too Large or 400 Bad Request
+	if resp.StatusCode != http.StatusRequestEntityTooLarge && resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("Expected status 413 or 400 for oversized content, got %d", resp.StatusCode)
 	}
 }

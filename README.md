@@ -60,18 +60,21 @@ Runs a web server that provides API access to JSON-LD objects and serves the web
 - **Storage backend**: Filesystem-based storage
 - **API routes**:
   - `GET /o/{cid}` - Retrieve object by CID
-  - `POST /api/save` - Save JSON-LD and get CID
+  - `POST /api/save` - Save JSON-LD and get CID (requires authentication)
+  - `DELETE /o/{cid}` - Delete object by CID (author only, requires authentication)
   - `GET /u/{user}/g/{slug}/latest` - Get latest CID for user's gist
   - `GET /u/{user}/g/{slug}/_history` - Get history for user's gist
 - **Autosave**: When a logged-in user visits `?data=<json>`, valid JSON-LD is automatically saved and redirected to `?cid=<CID>`
 - **Static file serving**: Serves the web application from the public directory
 - **CORS support**: Enable with `-cors` flag for cross-origin requests
+- **Security**: Server-side validation of JSON-LD structure, content size limits, and author verification for deletions
 
 **Options:**
 - `-addr` - Server address (default: `:8080`)
 - `-store` - Filesystem store directory (default: `data`)
 - `-public` - Public directory for static files (default: `public`)
 - `-cors` - Enable CORS headers (default: `true`)
+- `-max-content-mb` - Maximum content size in megabytes (default: `1`)
 
 ### seal - Create sealed JSON-LD objects
 Seals JSON-LD documents using URDNA2015 canonicalization and computes CIDv1 identifiers.
