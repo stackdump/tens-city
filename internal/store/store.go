@@ -92,17 +92,23 @@ func (s *FSStore) SaveObjectWithAuthor(cid string, raw []byte, canonical []byte,
 	// Add the @id field with ipfs:// prefix
 	doc["@id"] = "ipfs://" + cid
 	
-	// Add author information if provided
+	// Add author information if we have at least username or GitHub ID
+	// Both are needed to provide meaningful provenance
 	if githubUser != "" || githubID != "" {
 		author := make(map[string]interface{})
 		author["@type"] = "Person"
+		
+		// Only add username-based fields if username is present
 		if githubUser != "" {
 			author["name"] = githubUser
 			author["identifier"] = "https://github.com/" + githubUser
 		}
+		
+		// Add GitHub ID if present
 		if githubID != "" {
 			author["id"] = "github:" + githubID
 		}
+		
 		doc["author"] = author
 	}
 	

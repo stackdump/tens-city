@@ -32,12 +32,8 @@ func ExtractUserFromToken(tokenString string) (*GitHubUserInfo, error) {
 	// Decode the payload (second part)
 	// JWT uses base64url encoding without padding
 	payload := parts[1]
-	// Add padding if needed
-	if m := len(payload) % 4; m != 0 {
-		payload += strings.Repeat("=", 4-m)
-	}
 	
-	// Decode base64
+	// Decode base64url (without padding)
 	decoded, err := decodeBase64URL(payload)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode token payload: %w", err)
@@ -90,12 +86,7 @@ func ExtractUserFromToken(tokenString string) (*GitHubUserInfo, error) {
 	return userInfo, nil
 }
 
-// decodeBase64URL decodes base64url encoded string
+// decodeBase64URL decodes base64url encoded string using the standard library
 func decodeBase64URL(s string) ([]byte, error) {
-	// Replace URL-safe characters with standard base64 characters
-	s = strings.ReplaceAll(s, "-", "+")
-	s = strings.ReplaceAll(s, "_", "/")
-	
-	// Standard base64 decode
-	return base64.StdEncoding.DecodeString(s)
+	return base64.RawURLEncoding.DecodeString(s)
 }

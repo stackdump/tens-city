@@ -236,10 +236,8 @@ func (s *Server) handleSave(w http.ResponseWriter, r *http.Request) {
 	githubUser := userInfo.UserName
 	githubID := userInfo.GitHubID
 	
-	// Fallback to email if username is not available
-	if githubUser == "" && userInfo.Email != "" {
-		githubUser = userInfo.Email
-	}
+	// Don't use email as username fallback since it would create invalid GitHub URLs
+	// The storage layer will handle empty username appropriately
 
 	if err := s.storage.SaveObjectWithAuthor(cid, raw, canonicalData, githubUser, githubID); err != nil {
 		log.Printf("Error saving object: %v", err)

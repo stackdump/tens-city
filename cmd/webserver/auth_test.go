@@ -113,12 +113,12 @@ func TestAuthorInfoInjection(t *testing.T) {
 			expectedID:   "",
 		},
 		{
-			name:         "Email fallback",
+			name:         "GitHub ID only (no username)",
 			userID:       "user-789",
 			email:        "emailonly@example.com",
 			username:     "",
 			githubID:     "111222",
-			expectedName: "emailonly@example.com",
+			expectedName: "", // No username, so no name field
 			expectedID:   "github:111222",
 		},
 	}
