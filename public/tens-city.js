@@ -83,14 +83,33 @@ class TensCity extends HTMLElement {
                 }
                 
                 const data = JSON.parse(decodedData);
-                this._pendingPermalinkData = {
+                const permalinkData = {
                     jsonString: JSON.stringify(data, null, 2),
                     data: data
                 };
-                console.log('Permalink: Successfully parsed and stored permalink data');
+                
+                // Store in both instance variable and sessionStorage
+                // sessionStorage persists across OAuth redirects
+                this._pendingPermalinkData = permalinkData;
+                sessionStorage.setItem('pendingPermalinkData', JSON.stringify(permalinkData));
+                console.log('Permalink: Successfully parsed and stored permalink data (in memory and sessionStorage)');
             } catch (err) {
                 console.error('Permalink: Failed to parse URL data:', err);
                 this._pendingPermalinkData = null;
+                sessionStorage.removeItem('pendingPermalinkData');
+            }
+        } else {
+            // Check if we have pending data from sessionStorage (after OAuth redirect)
+            const storedData = sessionStorage.getItem('pendingPermalinkData');
+            if (storedData) {
+                console.log('Permalink: Restored data from sessionStorage (after OAuth redirect)');
+                try {
+                    this._pendingPermalinkData = JSON.parse(storedData);
+                } catch (err) {
+                    console.error('Permalink: Failed to parse stored data:', err);
+                    this._pendingPermalinkData = null;
+                    sessionStorage.removeItem('pendingPermalinkData');
+                }
             }
         }
     }
@@ -1054,6 +1073,10 @@ class TensCity extends HTMLElement {
         if (this._pendingPermalinkData) {
             console.log('Loading data from pending permalink data');
             const urlData = this._pendingPermalinkData;
+            
+            // Clear the pending data now that we're using it
+            this._pendingPermalinkData = null;
+            sessionStorage.removeItem('pendingPermalinkData');
             
             // Auto-save if user is authenticated
             await this._autoSaveFromURL(urlData);
