@@ -34,7 +34,10 @@ The server extracts user information from the JWT token and validates the reques
    - `sub`: Supabase user ID
    - `email`: User email address
    - `user_metadata.user_name`: GitHub username
-   - `user_metadata.provider_id`: GitHub user ID
+   - `user_metadata.provider_id`: GitHub user ID (primary)
+   - `user_metadata.sub`: GitHub user ID (fallback if provider_id is missing)
+
+Note: The GitHub user ID extraction uses a fallback mechanism to handle variations in Supabase JWT structure. It first checks `user_metadata.provider_id` and falls back to `user_metadata.sub` if the primary field is empty.
 
 ## Author Information Injection
 
