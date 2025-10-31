@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
+    <title>Test Permalink - Tens City</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        }
+        h1 { margin-bottom: 20px; }
+        .test-info {
+            background: #f0f0f0;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .permalink-link {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 5px;
+            text-decoration: none;
+            color: #1976d2;
+        }
+        .permalink-link:hover {
+            background: #bbdefb;
+        }
+    </style>
+</head>
+<body>
+    <h1>Permalink Test Page</h1>
+    
+    <div class="test-info">
+        <h2>Instructions:</h2>
+        <ol>
+            <li>Click one of the permalink links below</li>
+            <li>This will navigate to the main app with data in the URL</li>
+            <li>The JSON data should be loaded into the editor after login</li>
+            <li>Check the browser console for "Permalink:" log messages</li>
+        </ol>
+    </div>
+
+    <h2>Test Links:</h2>
+    
+    <a class="permalink-link" href="/?data=%7B%22%40context%22%3A%22https%3A%2F%2Fpflow.xyz%2Fschema%22%2C%22%40type%22%3A%22TestObject%22%2C%22name%22%3A%22Test%201%22%7D">
+        Test 1: Simple Object
+    </a>
+    
+    <a class="permalink-link" href="/?data=%7B%22%40context%22%3A%22https%3A%2F%2Fpflow.xyz%2Fschema%22%2C%22%40type%22%3A%22PetriNet%22%2C%22arcs%22%3A%5B%5D%2C%22name%22%3A%22Example%20Petri%20Net%22%2C%22places%22%3A%7B%7D%2C%22transitions%22%3A%7B%7D%7D">
+        Test 2: Petri Net
+    </a>
+    
+    <a class="permalink-link" href="/?data=%7B%22%40context%22%3A%22http%3A%2F%2Fschema.org%2F%22%2C%22%40type%22%3A%22Person%22%2C%22name%22%3A%22Jane%20Doe%22%7D">
+        Test 3: Schema.org Person
+    </a>
+
+    <script>
+        // Log the current URL parameters
+        const params = new URLSearchParams(window.location.search);
+        const data = params.get('data');
+        if (data) {
+            console.log('Current page has data parameter:', data);
+            try {
+                const decoded = decodeURIComponent(data);
+                const parsed = JSON.parse(decoded);
+                console.log('Decoded data:', parsed);
+            } catch (err) {
+                console.error('Failed to decode:', err);
+            }
+        } else {
+            console.log('No data parameter in URL');
+        }
+    </script>
+</body>
+</html>
