@@ -39,6 +39,7 @@ class TensCity extends HTMLElement {
         this._menuOpen = false;
         this._pendingPermalinkData = null; // Store permalink data before authentication
         this._appShown = false; // Track whether app has been initialized to prevent race condition where _showApp() is called multiple times
+        this._ownershipCache = {}; // Cache ownership checks to avoid redundant API calls
     }
 
     connectedCallback() {
@@ -1064,7 +1065,7 @@ class TensCity extends HTMLElement {
             alert(`Saved successfully! CID: ${cid}`);
             
             // Show delete button since we now have a CID
-            this._updateDeleteButtonVisibility();
+            await this._updateDeleteButtonVisibility();
             
         } catch (err) {
             console.error('Save: Exception occurred:', err);
@@ -1139,7 +1140,7 @@ class TensCity extends HTMLElement {
             window.history.pushState({}, '', url.toString());
             
             // Hide delete button
-            this._updateDeleteButtonVisibility();
+            await this._updateDeleteButtonVisibility();
             
             // Show success message
             alert('Object deleted successfully!');
@@ -1150,17 +1151,54 @@ class TensCity extends HTMLElement {
         }
     }
 
-    _updateDeleteButtonVisibility() {
-        // Show delete button only when viewing a CID and user is authenticated
+    async _updateDeleteButtonVisibility() {
+        // Show delete button only when viewing a CID, user is authenticated, and user owns the object
         const deleteBtn = this._root?.querySelector('#tc-delete-btn');
         if (!deleteBtn) return;
 
         const urlParams = new URLSearchParams(window.location.search);
         const cidParam = urlParams.get('cid');
         
-        if (cidParam && this._user) {
-            deleteBtn.style.display = 'inline-block';
-        } else {
+        if (!cidParam || !this._user) {
+            deleteBtn.style.display = 'none';
+            return;
+        }
+
+        // Check cache first to avoid redundant API calls
+        if (this._ownershipCache.hasOwnProperty(cidParam)) {
+            deleteBtn.style.display = this._ownershipCache[cidParam] ? 'inline-block' : 'none';
+            return;
+        }
+
+        // Check if the current user owns this object
+        try {
+            const { data: { session } } = await this._supabase.auth.getSession();
+            const authToken = session?.access_token;
+            
+            if (!authToken) {
+                this._ownershipCache[cidParam] = false;
+                deleteBtn.style.display = 'none';
+                return;
+            }
+
+            const response = await fetch(`/api/ownership/${cidParam}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                this._ownershipCache[cidParam] = result.owned;
+                deleteBtn.style.display = result.owned ? 'inline-block' : 'none';
+            } else {
+                this._ownershipCache[cidParam] = false;
+                deleteBtn.style.display = 'none';
+            }
+        } catch (err) {
+            console.error('Failed to check ownership:', err);
+            this._ownershipCache[cidParam] = false;
             deleteBtn.style.display = 'none';
         }
     }
@@ -1223,7 +1261,7 @@ class TensCity extends HTMLElement {
                     const data = await response.json();
                     this._aceEditor.session.setValue(JSON.stringify(data, null, 2));
                     this._updatePermalinkAnchor();
-                    this._updateDeleteButtonVisibility();
+                    await this._updateDeleteButtonVisibility();
                     console.log('Successfully loaded data from CID');
                     return;
                 } else {
@@ -1243,7 +1281,7 @@ class TensCity extends HTMLElement {
             if (urlData.jsonString && this._aceEditor) {
                 this._aceEditor.session.setValue(urlData.jsonString);
                 this._updatePermalinkAnchor();
-                this._updateDeleteButtonVisibility();
+                await this._updateDeleteButtonVisibility();
                 console.log('Successfully loaded permalink data into editor');
             }
             
