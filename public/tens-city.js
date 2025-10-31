@@ -561,6 +561,14 @@ class TensCity extends HTMLElement {
 
         const clearBtn = makeButton('🗑️ Clear', 'Clear editor', () => this._clearEditor());
 
+        // Add Delete button only if user is authenticated and viewing a CID
+        if (this._user) {
+            const deleteBtn = makeButton('🗑️ Delete', 'Delete this object (author only)', () => this._deleteObject());
+            deleteBtn.style.display = 'none'; // Hidden by default, shown when viewing CID
+            deleteBtn.id = 'tc-delete-btn';
+            toolbar.appendChild(deleteBtn);
+        }
+
         // Create permalink anchor styled as a button
         this._permalinkAnchor = document.createElement('a');
         this._permalinkAnchor.textContent = '🔗 Permalink';
@@ -1055,9 +1063,105 @@ class TensCity extends HTMLElement {
             // Show success message
             alert(`Saved successfully! CID: ${cid}`);
             
+            // Show delete button since we now have a CID
+            this._updateDeleteButtonVisibility();
+            
         } catch (err) {
             console.error('Save: Exception occurred:', err);
             alert(`Save failed: ${err.message}`);
+        }
+    }
+
+    async _deleteObject() {
+        console.log('Delete: User clicked delete button');
+        
+        if (!this._user) {
+            alert('Please log in to delete data');
+            return;
+        }
+
+        // Get the current CID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const cidParam = urlParams.get('cid');
+        
+        if (!cidParam) {
+            alert('No object to delete. Save an object first to get a CID.');
+            return;
+        }
+
+        // Confirm deletion
+        if (!confirm(`Are you sure you want to delete this object?\n\nCID: ${cidParam}\n\nThis action cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            console.log('Delete: Sending delete request for CID:', cidParam);
+            
+            // Get the session token for authentication
+            const { data: { session } } = await this._supabase.auth.getSession();
+            const authToken = session?.access_token;
+            
+            if (!authToken) {
+                console.error('Delete: No auth token available');
+                alert('Authentication token not available. Please log in again.');
+                return;
+            }
+            
+            console.log('Delete: Sending delete request to /o/' + cidParam);
+            
+            // Send delete request
+            const response = await fetch('/o/' + cidParam, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Delete: Failed with status', response.status, errorText);
+                
+                if (response.status === 403) {
+                    alert('Delete failed: Only the author can delete this object.');
+                } else if (response.status === 404) {
+                    alert('Delete failed: Object not found.');
+                } else {
+                    alert(`Delete failed: ${response.statusText}`);
+                }
+                return;
+            }
+            
+            console.log('Delete: Success! Object deleted');
+            
+            // Clear the editor and URL
+            this._clearEditor();
+            const url = new URL(window.location.origin + window.location.pathname);
+            window.history.pushState({}, '', url.toString());
+            
+            // Hide delete button
+            this._updateDeleteButtonVisibility();
+            
+            // Show success message
+            alert('Object deleted successfully!');
+            
+        } catch (err) {
+            console.error('Delete: Exception occurred:', err);
+            alert(`Delete failed: ${err.message}`);
+        }
+    }
+
+    _updateDeleteButtonVisibility() {
+        // Show delete button only when viewing a CID and user is authenticated
+        const deleteBtn = this._root?.querySelector('#tc-delete-btn');
+        if (!deleteBtn) return;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const cidParam = urlParams.get('cid');
+        
+        if (cidParam && this._user) {
+            deleteBtn.style.display = 'inline-block';
+        } else {
+            deleteBtn.style.display = 'none';
         }
     }
 
@@ -1119,6 +1223,7 @@ class TensCity extends HTMLElement {
                     const data = await response.json();
                     this._aceEditor.session.setValue(JSON.stringify(data, null, 2));
                     this._updatePermalinkAnchor();
+                    this._updateDeleteButtonVisibility();
                     console.log('Successfully loaded data from CID');
                     return;
                 } else {
@@ -1138,6 +1243,7 @@ class TensCity extends HTMLElement {
             if (urlData.jsonString && this._aceEditor) {
                 this._aceEditor.session.setValue(urlData.jsonString);
                 this._updatePermalinkAnchor();
+                this._updateDeleteButtonVisibility();
                 console.log('Successfully loaded permalink data into editor');
             }
             
