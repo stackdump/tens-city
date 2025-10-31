@@ -399,11 +399,15 @@ func (s *Server) handleDeleteObject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verify the requesting user is the author
-	// Match by GitHub ID (primary) or username (fallback)
+	// Priority: GitHub ID (most secure) > username (for backward compatibility)
+	// Note: Username fallback is less secure as usernames can be changed or reused,
+	// but is needed for objects saved before GitHub IDs were tracked.
+	// GitHub ID verification is strongly preferred when available.
 	isAuthor := false
 	if authorID != "" && userInfo.GitHubID != "" && authorID == userInfo.GitHubID {
 		isAuthor = true
 	} else if authorUser != "" && userInfo.UserName != "" && authorUser == userInfo.UserName {
+		// Username fallback for backward compatibility
 		isAuthor = true
 	}
 

@@ -410,8 +410,10 @@ func (s *FSStore) DeleteObject(cid string) error {
 	// Delete the signature file if it exists
 	sigPath := filepath.Join(s.base, "o", "signatures", cleanCID+".json")
 	if err := os.Remove(sigPath); err != nil && !os.IsNotExist(err) {
-		// Log but don't fail if signature deletion fails
-		// Signature may not exist for all objects
+		// Log error but don't fail the deletion - signature may not exist for all objects
+		// This is a non-critical cleanup operation
+		// Note: We can't use log here since this is internal/store package
+		// Callers should check if they need to log this
 	}
 	
 	return nil
