@@ -1152,26 +1152,35 @@ class TensCity extends HTMLElement {
     }
 
     async _updateDeleteButtonVisibility() {
+        console.log('=== DELETE BUTTON VISIBILITY CHECK START ===');
         // Show delete button only when viewing a CID, user is authenticated, and user owns the object
         const deleteBtn = this._root?.querySelector('#tc-delete-btn');
         if (!deleteBtn) {
-            console.log('Ownership check: Delete button element not found');
+            console.log('DELETE BUTTON: Element not found in DOM - button was not created');
+            console.log('DELETE BUTTON: this._user =', this._user ? 'SET' : 'NULL');
+            console.log('=== DELETE BUTTON VISIBILITY CHECK END (NO BUTTON) ===');
             return;
         }
+        
+        console.log('DELETE BUTTON: Element found in DOM');
 
         const urlParams = new URLSearchParams(window.location.search);
         const cidParam = urlParams.get('cid');
         
         if (!cidParam || !this._user) {
-            console.log('Ownership check: No CID or user not authenticated', { cidParam, user: this._user });
+            console.log('DELETE BUTTON: Hiding - No CID or user not authenticated', { cidParam, user: this._user ? 'SET' : 'NULL' });
             deleteBtn.style.display = 'none';
+            console.log('=== DELETE BUTTON VISIBILITY CHECK END (HIDDEN) ===');
             return;
         }
+        
+        console.log('DELETE BUTTON: CID and user present', { cid: cidParam });
 
         // Check cache first to avoid redundant API calls
         if (this._ownershipCache.hasOwnProperty(cidParam)) {
-            console.log('Ownership check: Using cached result', { cid: cidParam, owned: this._ownershipCache[cidParam] });
+            console.log('DELETE BUTTON: Using cached result', { cid: cidParam, owned: this._ownershipCache[cidParam] });
             deleteBtn.style.display = this._ownershipCache[cidParam] ? 'inline-block' : 'none';
+            console.log('=== DELETE BUTTON VISIBILITY CHECK END (CACHED) ===');
             return;
         }
 
@@ -1181,13 +1190,14 @@ class TensCity extends HTMLElement {
             const authToken = session?.access_token;
             
             if (!authToken) {
-                console.log('Ownership check: No auth token available');
+                console.log('DELETE BUTTON: No auth token available');
                 this._ownershipCache[cidParam] = false;
                 deleteBtn.style.display = 'none';
+                console.log('=== DELETE BUTTON VISIBILITY CHECK END (NO TOKEN) ===');
                 return;
             }
 
-            console.log('Ownership check: Calling API for CID:', cidParam);
+            console.log('DELETE BUTTON: Calling ownership API for CID:', cidParam);
             const response = await fetch(`/api/ownership/${cidParam}`, {
                 method: 'GET',
                 headers: {
@@ -1197,18 +1207,22 @@ class TensCity extends HTMLElement {
 
             if (response.ok) {
                 const result = await response.json();
-                console.log('Ownership check: API response', { cid: cidParam, owned: result.owned });
+                console.log('DELETE BUTTON: API response', { cid: cidParam, owned: result.owned });
                 this._ownershipCache[cidParam] = result.owned;
                 deleteBtn.style.display = result.owned ? 'inline-block' : 'none';
+                console.log('DELETE BUTTON: Final state =', deleteBtn.style.display);
+                console.log('=== DELETE BUTTON VISIBILITY CHECK END (API SUCCESS) ===');
             } else {
-                console.log('Ownership check: API request failed', { status: response.status, statusText: response.statusText });
+                console.log('DELETE BUTTON: API request failed', { status: response.status, statusText: response.statusText });
                 this._ownershipCache[cidParam] = false;
                 deleteBtn.style.display = 'none';
+                console.log('=== DELETE BUTTON VISIBILITY CHECK END (API FAILED) ===');
             }
         } catch (err) {
-            console.error('Ownership check: Exception occurred', err);
+            console.error('DELETE BUTTON: Exception occurred', err);
             this._ownershipCache[cidParam] = false;
             deleteBtn.style.display = 'none';
+            console.log('=== DELETE BUTTON VISIBILITY CHECK END (EXCEPTION) ===');
         }
     }
 
