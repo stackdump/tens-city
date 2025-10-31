@@ -3,6 +3,7 @@
 /keygen
 /edge
 /webserver
+/bin/
 *.exe
 *.dll
 *.so

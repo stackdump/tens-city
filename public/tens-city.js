@@ -286,51 +286,16 @@ class TensCity extends HTMLElement {
 
     _showLogin() {
         this._appShown = false; // Reset app shown flag when showing login
-        this._loginContainer.style.display = 'flex';
-        this._appContainer.style.display = 'none';
-        this._loginContainer.innerHTML = '';
-
-        const title = document.createElement('h1');
-        title.textContent = 'Tens City';
-        this._applyStyles(title, {
-            fontSize: '48px',
-            fontWeight: 'bold',
-            margin: '0',
-            color: '#333'
+        // Don't show full login screen - just show app with login button in header
+        this._loginContainer.style.display = 'none';
+        this._appContainer.style.display = 'flex';
+        this._appContainer.innerHTML = '';
+        
+        this._createHeaderWithLogin();
+        this._createToolbar();
+        this._createEditor().then(() => {
+            this._loadInitialData();
         });
-        this._loginContainer.appendChild(title);
-
-        const subtitle = document.createElement('p');
-        subtitle.textContent = 'A place for your JSON-LD objects';
-        this._applyStyles(subtitle, {
-            fontSize: '18px',
-            color: '#666',
-            margin: '10px 0 40px 0'
-        });
-        this._loginContainer.appendChild(subtitle);
-
-        const loginBtn = document.createElement('button');
-        loginBtn.textContent = 'Login with GitHub';
-        loginBtn.className = 'tc-login-btn';
-        this._applyStyles(loginBtn, {
-            padding: '12px 24px',
-            fontSize: '16px',
-            fontWeight: '500',
-            background: '#24292e',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            transition: 'background 0.2s'
-        });
-        loginBtn.addEventListener('mouseenter', () => {
-            loginBtn.style.background = '#444d56';
-        });
-        loginBtn.addEventListener('mouseleave', () => {
-            loginBtn.style.background = '#24292e';
-        });
-        loginBtn.addEventListener('click', () => this._loginWithGitHub());
-        this._loginContainer.appendChild(loginBtn);
     }
 
     async _loginWithGitHub() {
@@ -433,6 +398,7 @@ class TensCity extends HTMLElement {
 
         header.appendChild(leftSection);
 
+        // Right section: user info and logout
         const userInfo = document.createElement('div');
         this._applyStyles(userInfo, {
             display: 'flex',
@@ -472,6 +438,86 @@ class TensCity extends HTMLElement {
         this._appContainer.appendChild(header);
     }
 
+    _createHeaderWithLogin() {
+        const header = document.createElement('div');
+        header.className = 'tc-header';
+        this._applyStyles(header, {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '16px 24px',
+            background: '#fff',
+            borderBottom: '1px solid #e1e4e8',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        });
+
+        // Left section: hamburger menu + logo
+        const leftSection = document.createElement('div');
+        this._applyStyles(leftSection, {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px'
+        });
+
+        // Hamburger menu button
+        const menuBtn = document.createElement('button');
+        menuBtn.innerHTML = '☰';
+        menuBtn.title = 'Menu';
+        this._applyStyles(menuBtn, {
+            padding: '8px 12px',
+            fontSize: '24px',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#24292e',
+            lineHeight: '1'
+        });
+        menuBtn.addEventListener('click', () => this._toggleMenu());
+        leftSection.appendChild(menuBtn);
+
+        // Logo
+        const logo = document.createElement('img');
+        logo.src = 'logo.svg';
+        logo.alt = 'Tens City';
+        logo.onerror = () => {
+            // If logo fails to load, hide it gracefully
+            logo.style.display = 'none';
+        };
+        this._applyStyles(logo, {
+            height: '40px',
+            width: 'auto'
+        });
+        leftSection.appendChild(logo);
+
+        header.appendChild(leftSection);
+
+        // Right section: login button
+        const loginBtn = document.createElement('button');
+        loginBtn.textContent = 'Login with GitHub';
+        loginBtn.className = 'tc-login-btn';
+        this._applyStyles(loginBtn, {
+            padding: '8px 16px',
+            fontSize: '14px',
+            fontWeight: '500',
+            background: '#24292e',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            transition: 'background 0.2s'
+        });
+        loginBtn.addEventListener('mouseenter', () => {
+            loginBtn.style.background = '#444d56';
+        });
+        loginBtn.addEventListener('mouseleave', () => {
+            loginBtn.style.background = '#24292e';
+        });
+        loginBtn.addEventListener('click', () => this._loginWithGitHub());
+
+        header.appendChild(loginBtn);
+        this._appContainer.appendChild(header);
+    }
+
     _createToolbar() {
         const toolbar = document.createElement('div');
         toolbar.className = 'tc-toolbar';
@@ -506,6 +552,12 @@ class TensCity extends HTMLElement {
             btn.addEventListener('click', onClick);
             return btn;
         };
+
+        // Add Save button only if user is authenticated
+        if (this._user) {
+            const saveBtn = makeButton('💾 Save', 'Save to create CID and update URL', () => this._saveData());
+            toolbar.appendChild(saveBtn);
+        }
 
         const clearBtn = makeButton('🗑️ Clear', 'Clear editor', () => this._clearEditor());
 
@@ -843,8 +895,8 @@ class TensCity extends HTMLElement {
                 content: 'Each user has their own namespace based on their GitHub username. Within that namespace, you can create "slugs" - unique identifiers for your JSON-LD objects. For example, if your GitHub username is "alice" and you create a slug called "my-project", your objects will be accessible at /u/alice/g/my-project/latest. This provides a human-readable way to organize and access your data.'
             },
             {
-                title: 'Auto-Save with data=XXX',
-                content: 'When you visit a URL with the data parameter (e.g., ?data=...), Tens City automatically saves the JSON-LD object if:\n\n• You are logged in\n• The JSON is valid JSON-LD (has an @context field)\n\nAfter saving, the app redirects you to a ?cid=... URL that references the permanent, content-addressed version of your data. This makes it easy to share and preserve JSON-LD objects just by sharing a link.'
+                title: 'Saving Your Work',
+                content: 'To save your JSON-LD document, click the "Save" button in the toolbar. This will:\n\n• Validate that your JSON has an @context field (required for JSON-LD)\n• Send the data to the server to create a content-addressed identifier (CID)\n• Update the URL to ?cid=... without reloading the page\n\nYou must be logged in to save. You can view data from ?data= and ?cid= URLs without logging in.'
             },
             {
                 title: 'Using the Editor',
@@ -933,6 +985,82 @@ class TensCity extends HTMLElement {
         }
     }
 
+    async _saveData() {
+        console.log('Save: User clicked save button');
+        
+        if (!this._user) {
+            alert('Please log in to save data');
+            return;
+        }
+
+        if (!this._aceEditor) {
+            console.error('Save: Editor not initialized');
+            return;
+        }
+
+        try {
+            const editorContent = this._aceEditor.session.getValue();
+            const data = JSON.parse(editorContent);
+
+            // Validate it's valid JSON-LD (has @context)
+            if (!data['@context']) {
+                alert('Invalid JSON-LD: missing @context field');
+                return;
+            }
+
+            console.log('Save: Valid JSON-LD, sending to /api/save');
+            
+            // Use canonical JSON encoding to ensure consistent CID calculation
+            const canonicalData = canonicalJSON(data);
+            
+            // Get the session token for authentication
+            const { data: { session } } = await this._supabase.auth.getSession();
+            const authToken = session?.access_token;
+            
+            if (!authToken) {
+                console.error('Save: No auth token available');
+                alert('Authentication token not available. Please log in again.');
+                return;
+            }
+            
+            console.log('Save: Sending save request to /api/save');
+            
+            // Use API endpoint to save
+            const response = await fetch('/api/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
+                },
+                body: canonicalData
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Save: Failed with status', response.status, errorText);
+                alert(`Save failed: ${response.statusText}`);
+                return;
+            }
+
+            const result = await response.json();
+            const cid = result.cid;
+            
+            console.log('Save: Success! CID:', cid, '- Updating URL');
+            
+            // Update URL without reloading page
+            const url = new URL(window.location.origin + window.location.pathname);
+            url.searchParams.set('cid', cid);
+            window.history.pushState({}, '', url.toString());
+            
+            // Show success message
+            alert(`Saved successfully! CID: ${cid}`);
+            
+        } catch (err) {
+            console.error('Save: Exception occurred:', err);
+            alert(`Save failed: ${err.message}`);
+        }
+    }
+
     _loadFromURL() {
         // Check for data in URL parameter
         const urlParams = new URLSearchParams(window.location.search);
@@ -950,70 +1078,6 @@ class TensCity extends HTMLElement {
             }
         }
         return null;
-    }
-
-    async _autoSaveFromURL(data) {
-        console.log('Auto-save: Checking if auto-save should run...');
-        
-        // Auto-save feature: if user is authenticated and data has valid JSON-LD, save it
-        if (!this._user || !data || !data.data) {
-            console.log('Auto-save: Skipping - user not authenticated or no data');
-            return null;
-        }
-
-        // Validate it's valid JSON-LD (has @context)
-        if (!data.data['@context']) {
-            console.log('Auto-save: Skipping - missing @context');
-            return null;
-        }
-
-        console.log('Auto-save: Attempting to auto-save JSON-LD data');
-        
-        try {
-            // Use canonical JSON encoding to ensure consistent CID calculation
-            const canonicalData = canonicalJSON(data.data);
-            
-            // Get the session token for authentication
-            const { data: { session } } = await this._supabase.auth.getSession();
-            const authToken = session?.access_token;
-            
-            if (!authToken) {
-                console.error('Auto-save: No auth token available');
-                return null;
-            }
-            
-            console.log('Auto-save: Sending save request to /api/save');
-            
-            // Use API endpoint to save
-            const response = await fetch('/api/save', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`,
-                },
-                body: canonicalData
-            });
-
-            if (!response.ok) {
-                console.error('Auto-save: Failed with status', response.status, response.statusText);
-                return null;
-            }
-
-            const result = await response.json();
-            const cid = result.cid;
-            
-            console.log('Auto-save: Success! CID:', cid, '- Redirecting to ?cid= URL');
-            
-            // Redirect to ?cid= URL
-            const url = new URL(window.location.origin + window.location.pathname);
-            url.searchParams.set('cid', cid);
-            window.location.href = url.toString();
-            
-            return cid;
-        } catch (err) {
-            console.error('Auto-save: Exception occurred:', err);
-            return null;
-        }
     }
 
     _updatePermalinkAnchor() {
@@ -1070,7 +1134,7 @@ class TensCity extends HTMLElement {
             console.log('Loading data from pending permalink data');
             const urlData = this._pendingPermalinkData;
             
-            // Load the data into editor first so user can see it
+            // Load the data into editor
             if (urlData.jsonString && this._aceEditor) {
                 this._aceEditor.session.setValue(urlData.jsonString);
                 this._updatePermalinkAnchor();
@@ -1081,30 +1145,21 @@ class TensCity extends HTMLElement {
             this._pendingPermalinkData = null;
             sessionStorage.removeItem('pendingPermalinkData');
             
-            // Auto-save if user is authenticated (this will redirect to ?cid= URL)
-            await this._autoSaveFromURL(urlData);
-            
-            // If auto-save redirected, we won't reach here
             return;
         }
 
         // Fallback: Check for permalink data in URL (edge case where early capture failed)
-        // This should rarely be needed since _capturePermalinkData runs on connectedCallback
         const urlData = this._loadFromURL();
         if (urlData) {
             console.log('Loading data from URL parameter (fallback path)');
             
-            // Load the data into editor first so user can see it
+            // Load the data into editor
             if (urlData.jsonString && this._aceEditor) {
                 this._aceEditor.session.setValue(urlData.jsonString);
                 this._updatePermalinkAnchor();
                 console.log('Successfully loaded URL data into editor');
             }
             
-            // Auto-save if user is authenticated (this will redirect to ?cid= URL)
-            await this._autoSaveFromURL(urlData);
-            
-            // If auto-save redirected, we won't reach here
             return;
         }
 
