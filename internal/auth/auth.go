@@ -1,10 +1,11 @@
 package auth
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // GitHubUserInfo contains the GitHub user information from Supabase JWT
@@ -16,62 +17,67 @@ type GitHubUserInfo struct {
 	GitHubID string `json:"provider_id"`   // GitHub user ID
 }
 
-// ExtractUserFromToken extracts GitHub user information from a Supabase JWT token
-// For now, we'll do basic extraction without full verification since this is a simple app
-// In production, you'd verify the JWT signature against Supabase's public key
+// SupabaseClaims represents the JWT claims from Supabase
+type SupabaseClaims struct {
+	jwt.RegisteredClaims
+	Email        string                 `json:"email"`
+	UserMetadata map[string]interface{} `json:"user_metadata"`
+	AppMetadata  map[string]interface{} `json:"app_metadata"`
+}
+
+// ExtractUserFromToken extracts and verifies GitHub user information from a Supabase JWT token
+// The token signature is verified using the Supabase JWT secret from the SUPABASE_JWT_SECRET environment variable
 func ExtractUserFromToken(tokenString string) (*GitHubUserInfo, error) {
 	// Remove "Bearer " prefix if present
 	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
 	
-	// Split the JWT into its parts (header.payload.signature)
-	parts := strings.Split(tokenString, ".")
-	if len(parts) != 3 {
-		return nil, fmt.Errorf("invalid token format")
+	// Get JWT secret from environment variable
+	jwtSecret := os.Getenv("SUPABASE_JWT_SECRET")
+	if jwtSecret == "" {
+		return nil, fmt.Errorf("SUPABASE_JWT_SECRET environment variable not set")
 	}
 	
-	// Decode the payload (second part)
-	// JWT uses base64url encoding without padding
-	payload := parts[1]
+	// Parse and verify the JWT token
+	token, err := jwt.ParseWithClaims(tokenString, &SupabaseClaims{}, func(token *jwt.Token) (interface{}, error) {
+		// Verify the signing method is HMAC
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(jwtSecret), nil
+	})
 	
-	// Decode base64url (without padding)
-	decoded, err := decodeBase64URL(payload)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode token payload: %w", err)
+		return nil, fmt.Errorf("failed to parse JWT: %w", err)
 	}
 	
-	// Parse JSON payload
-	var claims map[string]interface{}
-	if err := json.Unmarshal(decoded, &claims); err != nil {
-		return nil, fmt.Errorf("failed to parse token claims: %w", err)
+	// Extract claims
+	claims, ok := token.Claims.(*SupabaseClaims)
+	if !ok || !token.Valid {
+		return nil, fmt.Errorf("invalid token claims")
 	}
 	
-	// Extract user information
-	userInfo := &GitHubUserInfo{}
-	
-	if sub, ok := claims["sub"].(string); ok {
-		userInfo.ID = sub
-	}
-	
-	if email, ok := claims["email"].(string); ok {
-		userInfo.Email = email
+	// Build user info from verified claims
+	userInfo := &GitHubUserInfo{
+		ID:    claims.Subject,
+		Email: claims.Email,
 	}
 	
 	// Extract user_metadata which contains GitHub info
-	if userMetadata, ok := claims["user_metadata"].(map[string]interface{}); ok {
-		if userName, ok := userMetadata["user_name"].(string); ok {
+	if claims.UserMetadata != nil {
+		if userName, ok := claims.UserMetadata["user_name"].(string); ok {
 			userInfo.UserName = userName
 		}
-		if fullName, ok := userMetadata["full_name"].(string); ok {
+		if fullName, ok := claims.UserMetadata["full_name"].(string); ok {
 			userInfo.FullName = fullName
 		}
-		if providerID, ok := userMetadata["provider_id"].(string); ok {
+		if providerID, ok := claims.UserMetadata["provider_id"].(string); ok {
 			userInfo.GitHubID = providerID
 		}
 	}
 	
 	// Also try app_metadata for provider info
-	if appMetadata, ok := claims["app_metadata"].(map[string]interface{}); ok {
-		if provider, ok := appMetadata["provider"].(string); ok {
+	if claims.AppMetadata != nil {
+		if provider, ok := claims.AppMetadata["provider"].(string); ok {
 			if provider != "github" {
 				return nil, fmt.Errorf("unsupported provider: %s", provider)
 			}
@@ -84,9 +90,4 @@ func ExtractUserFromToken(tokenString string) (*GitHubUserInfo, error) {
 	}
 	
 	return userInfo, nil
-}
-
-// decodeBase64URL decodes base64url encoded string using the standard library
-func decodeBase64URL(s string) ([]byte, error) {
-	return base64.RawURLEncoding.DecodeString(s)
 }

@@ -2,37 +2,45 @@ package main
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/stackdump/tens-city/internal/auth"
 	"github.com/stackdump/tens-city/internal/store"
 )
 
-// createTestToken creates a mock JWT token for testing
+// createTestToken creates a properly signed JWT token for testing
 func createTestToken(userID, email, username, githubID string) string {
-	payload := map[string]interface{}{
-		"sub":   userID,
-		"email": email,
-		"user_metadata": map[string]interface{}{
+	// Use a test secret and set it in environment
+	testSecret := "test-secret-key-for-testing"
+	os.Setenv("SUPABASE_JWT_SECRET", testSecret)
+	
+	// Create claims
+	claims := &auth.SupabaseClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   userID,
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+		Email: email,
+		UserMetadata: map[string]interface{}{
 			"user_name":   username,
 			"provider_id": githubID,
 		},
 	}
 	
-	payloadJSON, _ := json.Marshal(payload)
-	payloadB64 := base64.RawURLEncoding.EncodeToString(payloadJSON)
+	// Create and sign the token
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, _ := token.SignedString([]byte(testSecret))
 	
-	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
-	signature := base64.RawURLEncoding.EncodeToString([]byte("test-signature"))
-	
-	return strings.Join([]string{header, payloadB64, signature}, ".")
+	return tokenString
 }
 
 func TestFSStorageGetObject(t *testing.T) {

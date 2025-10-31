@@ -52,6 +52,9 @@ Maps to:
 Runs a web server that provides API access to JSON-LD objects and serves the web application using filesystem storage.
 
 ```bash
+# Set the Supabase JWT secret for authentication
+export SUPABASE_JWT_SECRET="your-supabase-jwt-secret"
+
 # Start with filesystem storage
 ./webserver -addr :8080 -store data -public public
 ```
@@ -67,7 +70,11 @@ Runs a web server that provides API access to JSON-LD objects and serves the web
 - **Autosave**: When a logged-in user visits `?data=<json>`, valid JSON-LD is automatically saved and redirected to `?cid=<CID>`
 - **Static file serving**: Serves the web application from the public directory
 - **CORS support**: Enable with `-cors` flag for cross-origin requests
-- **Security**: Server-side validation of JSON-LD structure, content size limits, and author verification for deletions
+- **Security**: 
+  - Cryptographic JWT verification using Supabase JWT secret
+  - Server-side validation of JSON-LD structure
+  - Content size limits
+  - Author verification for deletions
 
 **Options:**
 - `-addr` - Server address (default: `:8080`)
@@ -75,6 +82,9 @@ Runs a web server that provides API access to JSON-LD objects and serves the web
 - `-public` - Public directory for static files (default: `public`)
 - `-cors` - Enable CORS headers (default: `true`)
 - `-max-content-mb` - Maximum content size in megabytes (default: `1`)
+
+**Environment Variables:**
+- `SUPABASE_JWT_SECRET` - Required. JWT secret from Supabase project settings for verifying authentication tokens
 
 ### seal - Create sealed JSON-LD objects
 Seals JSON-LD documents using URDNA2015 canonicalization and computes CIDv1 identifiers.
