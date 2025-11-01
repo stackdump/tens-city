@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/stackdump/tens-city/internal/auth"
 	"github.com/stackdump/tens-city/internal/canonical"
 	"github.com/stackdump/tens-city/internal/seal"
+	"github.com/stackdump/tens-city/internal/static"
 	"github.com/stackdump/tens-city/internal/store"
 )
 
@@ -162,15 +163,15 @@ func validateKeys(doc map[string]interface{}) error {
 
 type Server struct {
 storage        Storage
-publicDir      string
+publicFS       fs.FS
 enableCORS     bool
 maxContentSize int64 // Maximum content size in bytes
 }
 
-func NewServer(storage Storage, publicDir string, enableCORS bool, maxContentSize int64) *Server {
+func NewServer(storage Storage, publicFS fs.FS, enableCORS bool, maxContentSize int64) *Server {
 return &Server{
 storage:        storage,
-publicDir:      publicDir,
+publicFS:       publicFS,
 enableCORS:     enableCORS,
 maxContentSize: maxContentSize,
 }
@@ -525,16 +526,22 @@ return
 }
 }
 
-// Serve static files from public directory
-if s.publicDir != "" {
+// Serve static files from embedded filesystem
+if s.publicFS != nil {
 // For root path, serve index.html
 if r.URL.Path == "/" {
-http.ServeFile(w, r, filepath.Join(s.publicDir, "index.html"))
+data, err := fs.ReadFile(s.publicFS, "index.html")
+if err != nil {
+http.Error(w, "Not found", http.StatusNotFound)
+return
+}
+w.Header().Set("Content-Type", "text/html")
+w.Write(data)
 return
 }
 
 // Serve other static files
-http.FileServer(http.Dir(s.publicDir)).ServeHTTP(w, r)
+http.FileServer(http.FS(s.publicFS)).ServeHTTP(w, r)
 return
 }
 
@@ -544,7 +551,6 @@ http.NotFound(w, r)
 func main() {
 addr := flag.String("addr", ":8080", "Server address")
 storeDir := flag.String("store", "data", "Filesystem store directory")
-publicDir := flag.String("public", "public", "Public directory for static files")
 enableCORS := flag.Bool("cors", true, "Enable CORS headers")
 maxContentMB := flag.Int("max-content-mb", 1, "Maximum content size in megabytes (default: 1MB)")
 flag.Parse()
@@ -556,10 +562,16 @@ log.Printf("Using filesystem storage: %s", *storeDir)
 log.Printf("Maximum content size: %d MB (%d bytes)", *maxContentMB, maxContentSize)
 storage := NewFSStorage(*storeDir)
 
-server := NewServer(storage, *publicDir, *enableCORS, maxContentSize)
+// Get the embedded public filesystem
+publicSubFS, err := static.Public()
+if err != nil {
+log.Fatalf("Failed to access embedded public files: %v", err)
+}
+
+server := NewServer(storage, publicSubFS, *enableCORS, maxContentSize)
 
 log.Printf("Starting server on %s", *addr)
-log.Printf("Public directory: %s", *publicDir)
+log.Println("Using embedded public files")
 if err := http.ListenAndServe(*addr, server); err != nil {
 log.Fatalf("Server failed: %v", err)
 }

@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stackdump/tens-city/internal/auth"
+	"github.com/stackdump/tens-city/internal/static"
 	"github.com/stackdump/tens-city/internal/store"
 )
 
@@ -92,7 +92,7 @@ if err := storage.SaveObject(cid, testData, canonical); err != nil {
 t.Fatalf("Failed to save object: %v", err)
 }
 
-server := NewServer(storage, "", false, 1*1024*1024)
+server := NewServer(storage, nil, false, 1*1024*1024)
 
 // Test successful retrieval
 req := httptest.NewRequest("GET", "/o/"+cid, nil)
@@ -123,7 +123,7 @@ t.Errorf("Expected status 404, got %d", resp.StatusCode)
 func TestHandleSave(t *testing.T) {
 	tmpDir := t.TempDir()
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, "", false, 1*1024*1024)
+	server := NewServer(storage, nil, false, 1*1024*1024)
 
 	// Create test auth token
 	authToken := createTestToken("test-user-123", "test@example.com", "testuser", "123456")
@@ -235,7 +235,7 @@ if err := storage.UpdateLatest(user, slug, cid); err != nil {
 t.Fatalf("Failed to update latest: %v", err)
 }
 
-server := NewServer(storage, "", false, 1*1024*1024)
+server := NewServer(storage, nil, false, 1*1024*1024)
 
 req := httptest.NewRequest("GET", "/u/"+user+"/g/"+slug+"/latest", nil)
 w := httptest.NewRecorder()
@@ -269,7 +269,7 @@ if err := storage.AppendHistory(user, slug, cid2); err != nil {
 t.Fatalf("Failed to append history: %v", err)
 }
 
-server := NewServer(storage, "", false, 1*1024*1024)
+server := NewServer(storage, nil, false, 1*1024*1024)
 
 req := httptest.NewRequest("GET", "/u/"+user+"/g/"+slug+"/_history", nil)
 w := httptest.NewRecorder()
@@ -292,18 +292,16 @@ t.Errorf("Expected 2 history entries, got %d", len(history))
 
 func TestStaticFileServing(t *testing.T) {
 tmpDir := t.TempDir()
-publicDir := filepath.Join(tmpDir, "public")
-os.MkdirAll(publicDir, 0755)
-
-// Create test files
-indexHTML := []byte("<html><body>Test</body></html>")
-os.WriteFile(filepath.Join(publicDir, "index.html"), indexHTML, 0644)
-
-testJS := []byte("console.log('test');")
-os.WriteFile(filepath.Join(publicDir, "test.js"), testJS, 0644)
 
 storage := NewFSStorage(tmpDir)
-server := NewServer(storage, publicDir, false, 1*1024*1024)
+
+// Get the embedded public filesystem
+publicFS, err := static.Public()
+if err != nil {
+t.Fatalf("Failed to get public filesystem: %v", err)
+}
+
+server := NewServer(storage, publicFS, false, 1*1024*1024)
 
 // Test serving index.html at root
 req := httptest.NewRequest("GET", "/", nil)
@@ -316,12 +314,13 @@ t.Errorf("Expected status 200, got %d", resp.StatusCode)
 }
 
 body, _ := io.ReadAll(resp.Body)
-if !bytes.Contains(body, indexHTML) {
+// Just check that we got some content (the actual embedded index.html)
+if len(body) == 0 {
 t.Error("Expected index.html content")
 }
 
-// Test serving other static file
-req = httptest.NewRequest("GET", "/test.js", nil)
+// Test serving other static file (tens-city.js exists in embedded files)
+req = httptest.NewRequest("GET", "/tens-city.js", nil)
 w = httptest.NewRecorder()
 server.ServeHTTP(w, req)
 
@@ -331,15 +330,15 @@ t.Errorf("Expected status 200, got %d", resp.StatusCode)
 }
 
 body, _ = io.ReadAll(resp.Body)
-if !bytes.Contains(body, testJS) {
-t.Error("Expected test.js content")
+if len(body) == 0 {
+t.Error("Expected tens-city.js content")
 }
 }
 
 func TestCORSHeaders(t *testing.T) {
 tmpDir := t.TempDir()
 storage := NewFSStorage(tmpDir)
-server := NewServer(storage, "", true, 1*1024*1024) // CORS enabled
+server := NewServer(storage, nil, true, 1*1024*1024) // CORS enabled
 
 // Test OPTIONS request
 req := httptest.NewRequest("OPTIONS", "/api/save", nil)
