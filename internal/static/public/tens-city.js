@@ -562,11 +562,11 @@ class TensCity extends HTMLElement {
             toolbar.appendChild(saveBtn);
         }
 
-        const clearBtn = makeButton('🗑️ Clear', 'Clear editor', () => this._clearEditor());
+        const clearBtn = makeButton('✖️ Clear', 'Clear editor content', () => this._clearEditor());
 
         // Add Delete button only if user is authenticated and viewing a CID
         if (this._user) {
-            const deleteBtn = makeButton('🗑️ Delete', 'Delete this object (author only)', () => this._deleteObject());
+            const deleteBtn = makeButton('🗑️ Delete', 'Permanently delete this saved object (author only)', () => this._deleteObject());
             deleteBtn.style.display = 'none'; // Hidden by default, shown when viewing CID
             deleteBtn.id = 'tc-delete-btn';
             toolbar.appendChild(deleteBtn);
@@ -911,7 +911,7 @@ class TensCity extends HTMLElement {
             },
             {
                 title: 'Using the Editor',
-                content: 'The editor allows you to create and edit JSON-LD documents. Use the Clear button to reset the editor. The Permalink button creates a shareable link with your current editor content. The editor automatically updates the embedded <script type="application/ld+json"> tag in the page as you type.'
+                content: 'The editor allows you to create and edit JSON-LD documents. Use the Clear (✖️) button to reset the editor content locally. The Permalink button creates a shareable link with your current editor content. If you\'ve saved an object and are viewing it by CID, the Delete (🗑️) button will permanently remove it from the server (author only). The editor automatically updates the embedded <script type="application/ld+json"> tag in the page as you type.'
             }
         ];
 
