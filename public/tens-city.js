@@ -1224,19 +1224,18 @@ class TensCity extends HTMLElement {
                 return;
             }
             
-            console.log('DELETE BUTTON: Getting Supabase session...');
-            // Get current user's GitHub info from Supabase session
-            const { data: { session } } = await this._supabase.auth.getSession();
-            console.log('DELETE BUTTON: Got session', !!session);
-            if (!session?.user) {
-                console.log('DELETE BUTTON: No session available');
+            console.log('DELETE BUTTON: Using this._user for comparison');
+            // Get current user's GitHub info from this._user (already set during auth)
+            // No need for async session call which may hang due to server concurrency issues
+            if (!this._user) {
+                console.log('DELETE BUTTON: No user available');
                 this._ownershipCache[cidParam] = false;
                 deleteBtn.style.display = 'none';
-                console.log('=== DELETE BUTTON VISIBILITY CHECK END (NO SESSION) ===');
+                console.log('=== DELETE BUTTON VISIBILITY CHECK END (NO USER) ===');
                 return;
             }
             
-            const userMetadata = session.user.user_metadata || {};
+            const userMetadata = this._user.user_metadata || {};
             const currentUserName = userMetadata.user_name || userMetadata.preferred_username;
             const currentGitHubID = userMetadata.provider_id || userMetadata.sub;
             
