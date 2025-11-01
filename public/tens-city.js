@@ -802,6 +802,48 @@ class TensCity extends HTMLElement {
         });
         menuItems.appendChild(helpItem);
 
+        // GitHub repository link
+        const githubItem = document.createElement('a');
+        githubItem.href = 'https://github.com/stackdump/tens-city';
+        githubItem.target = '_blank';
+        githubItem.rel = 'noopener noreferrer';
+        this._applyStyles(githubItem, {
+            width: '100%',
+            padding: '12px 24px',
+            background: 'transparent',
+            border: 'none',
+            textAlign: 'left',
+            fontSize: '16px',
+            cursor: 'pointer',
+            transition: 'background 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            textDecoration: 'none',
+            color: 'inherit'
+        });
+        githubItem.addEventListener('mouseenter', () => {
+            githubItem.style.background = '#f6f8fa';
+        });
+        githubItem.addEventListener('mouseleave', () => {
+            githubItem.style.background = 'transparent';
+        });
+        
+        // GitHub Octocat SVG logo
+        const octocatSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        octocatSvg.setAttribute('height', '16');
+        octocatSvg.setAttribute('width', '16');
+        octocatSvg.setAttribute('viewBox', '0 0 16 16');
+        octocatSvg.setAttribute('fill', 'currentColor');
+        const octocatPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        octocatPath.setAttribute('d', 'M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z');
+        octocatSvg.appendChild(octocatPath);
+        githubItem.appendChild(octocatSvg);
+        
+        const githubText = document.createTextNode('GitHub Repository');
+        githubItem.appendChild(githubText);
+        menuItems.appendChild(githubItem);
+
         menu.appendChild(menuItems);
         overlay.appendChild(menu);
         this._root.appendChild(overlay);
@@ -898,6 +940,14 @@ class TensCity extends HTMLElement {
         // Build help content
         const sections = [
             {
+                title: 'What is JSON-LD?',
+                content: 'JSON-LD (JavaScript Object Notation for Linked Data) is a lightweight format for expressing structured data using JSON. It allows you to add semantic meaning to your data by linking it to vocabularies and schemas. Tens City uses JSON-LD to create machine-readable, semantically rich data objects that can be shared and linked across the web.',
+                link: {
+                    text: 'Learn more about structured data at schema.org',
+                    url: 'https://schema.org'
+                }
+            },
+            {
                 title: 'GitHub Authentication',
                 content: 'Tens City uses GitHub OAuth for authentication. When you click "Login with GitHub", you\'ll be redirected to GitHub to authorize the application. After authorization, you\'ll be redirected back to Tens City with your GitHub identity. This allows the application to associate your data with your GitHub username.'
             },
@@ -937,6 +987,29 @@ class TensCity extends HTMLElement {
                 whiteSpace: 'pre-wrap'
             });
             helpContent.appendChild(sectionContent);
+
+            // Add link if present
+            if (section.link) {
+                const linkElement = document.createElement('a');
+                linkElement.href = section.link.url;
+                linkElement.textContent = section.link.text;
+                linkElement.target = '_blank';
+                linkElement.rel = 'noopener noreferrer';
+                this._applyStyles(linkElement, {
+                    fontSize: '14px',
+                    color: '#0366d6',
+                    textDecoration: 'none',
+                    display: 'block',
+                    marginBottom: '16px'
+                });
+                linkElement.addEventListener('mouseenter', () => {
+                    linkElement.style.textDecoration = 'underline';
+                });
+                linkElement.addEventListener('mouseleave', () => {
+                    linkElement.style.textDecoration = 'none';
+                });
+                helpContent.appendChild(linkElement);
+            }
         });
 
         helpPanel.appendChild(helpContent);
@@ -1063,11 +1136,17 @@ class TensCity extends HTMLElement {
             url.searchParams.set('cid', cid);
             window.history.pushState({}, '', url.toString());
             
+            // Cache ownership immediately after save since we know the current user owns it
+            this._ownershipCache[cid] = true;
+            
+            // Show delete button since we now have a CID and we own it
+            const deleteBtn = this._root?.querySelector('#tc-delete-btn');
+            if (deleteBtn) {
+                deleteBtn.style.display = 'inline-block';
+            }
+            
             // Show success message
             alert(`Saved successfully! CID: ${cid}`);
-            
-            // Show delete button since we now have a CID
-            await this._updateDeleteButtonVisibility();
             
         } catch (err) {
             console.error('Save: Exception occurred:', err);
