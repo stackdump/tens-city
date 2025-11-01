@@ -82,7 +82,14 @@ Then open http://localhost:8080 in your browser.
 4. A CID (Content Identifier) will be automatically generated
 
 ### Clear Editor
-- Click "🗑️ Clear" to reset the editor to a blank JSON-LD template
+- Click "✖️ Clear" to reset the editor to a blank JSON-LD template locally
+- This only clears your editor content and does not affect any saved objects
+
+### Delete Saved Objects
+- When viewing a saved object by CID, the "🗑️ Delete" button becomes available
+- Only the author of an object can delete it
+- Deletion permanently removes the object from the server
+- You must be logged in to delete objects
 
 ## JSON-LD Format
 
