@@ -1186,12 +1186,16 @@ class TensCity extends HTMLElement {
             return;
         }
 
+        console.log('DELETE BUTTON: Not in cache, checking ownership...');
+
         // Check ownership from loaded data (if provided) or from editor content
         try {
             let data = loadedData;
+            console.log('DELETE BUTTON: loadedData provided?', !!loadedData);
             
             // If data not provided, try to parse from editor
             if (!data && this._aceEditor) {
+                console.log('DELETE BUTTON: Attempting to parse from editor');
                 try {
                     const editorContent = this._aceEditor.session.getValue();
                     data = JSON.parse(editorContent);
@@ -1211,6 +1215,7 @@ class TensCity extends HTMLElement {
             
             // Extract author information from the data
             const author = data.author;
+            console.log('DELETE BUTTON: Extracted author from data', author);
             if (!author) {
                 console.log('DELETE BUTTON: No author field in data');
                 this._ownershipCache[cidParam] = false;
@@ -1219,8 +1224,10 @@ class TensCity extends HTMLElement {
                 return;
             }
             
+            console.log('DELETE BUTTON: Getting Supabase session...');
             // Get current user's GitHub info from Supabase session
             const { data: { session } } = await this._supabase.auth.getSession();
+            console.log('DELETE BUTTON: Got session', !!session);
             if (!session?.user) {
                 console.log('DELETE BUTTON: No session available');
                 this._ownershipCache[cidParam] = false;
