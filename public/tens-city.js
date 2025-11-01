@@ -1154,93 +1154,64 @@ class TensCity extends HTMLElement {
     }
 
     async _updateDeleteButtonVisibility(loadedData = null) {
-        console.log('=== DELETE BUTTON VISIBILITY CHECK START ===');
         // Show delete button only when viewing a CID, user is authenticated, and user owns the object
         const deleteBtn = this._root?.querySelector('#tc-delete-btn');
         if (!deleteBtn) {
-            console.log('DELETE BUTTON: Element not found in DOM - button was not created');
-            console.log('DELETE BUTTON: this._user =', this._user ? 'SET' : 'NULL');
-            console.log('=== DELETE BUTTON VISIBILITY CHECK END (NO BUTTON) ===');
             return;
         }
-        
-        console.log('DELETE BUTTON: Element found in DOM');
 
         const urlParams = new URLSearchParams(window.location.search);
         const cidParam = urlParams.get('cid');
         
         if (!cidParam || !this._user) {
-            console.log('DELETE BUTTON: Hiding - No CID or user not authenticated', { cidParam, user: this._user ? 'SET' : 'NULL' });
             deleteBtn.style.display = 'none';
-            console.log('=== DELETE BUTTON VISIBILITY CHECK END (HIDDEN) ===');
             return;
         }
-        
-        console.log('DELETE BUTTON: CID and user present', { cid: cidParam });
 
         // Check cache first to avoid redundant checks
         if (this._ownershipCache.hasOwnProperty(cidParam)) {
-            console.log('DELETE BUTTON: Using cached result', { cid: cidParam, owned: this._ownershipCache[cidParam] });
             deleteBtn.style.display = this._ownershipCache[cidParam] ? 'inline-block' : 'none';
-            console.log('=== DELETE BUTTON VISIBILITY CHECK END (CACHED) ===');
             return;
         }
-
-        console.log('DELETE BUTTON: Not in cache, checking ownership...');
 
         // Check ownership from loaded data (if provided) or from editor content
         try {
             let data = loadedData;
-            console.log('DELETE BUTTON: loadedData provided?', !!loadedData);
             
             // If data not provided, try to parse from editor
             if (!data && this._aceEditor) {
-                console.log('DELETE BUTTON: Attempting to parse from editor');
                 try {
                     const editorContent = this._aceEditor.session.getValue();
                     data = JSON.parse(editorContent);
-                    console.log('DELETE BUTTON: Parsed data from editor');
                 } catch (err) {
-                    console.log('DELETE BUTTON: Could not parse editor content', err);
+                    // Could not parse editor content
                 }
             }
             
             if (!data) {
-                console.log('DELETE BUTTON: No data available to check ownership');
                 this._ownershipCache[cidParam] = false;
                 deleteBtn.style.display = 'none';
-                console.log('=== DELETE BUTTON VISIBILITY CHECK END (NO DATA) ===');
                 return;
             }
             
             // Extract author information from the data
             const author = data.author;
-            console.log('DELETE BUTTON: Extracted author from data', author);
             if (!author) {
-                console.log('DELETE BUTTON: No author field in data');
                 this._ownershipCache[cidParam] = false;
                 deleteBtn.style.display = 'none';
-                console.log('=== DELETE BUTTON VISIBILITY CHECK END (NO AUTHOR) ===');
                 return;
             }
             
-            console.log('DELETE BUTTON: Using this._user for comparison');
             // Get current user's GitHub info from this._user (already set during auth)
-            // No need for async session call which may hang due to server concurrency issues
             if (!this._user) {
-                console.log('DELETE BUTTON: No user available');
                 this._ownershipCache[cidParam] = false;
                 deleteBtn.style.display = 'none';
-                console.log('=== DELETE BUTTON VISIBILITY CHECK END (NO USER) ===');
                 return;
             }
             
             const userMetadata = this._user.user_metadata || {};
             const currentUserName = userMetadata.user_name || userMetadata.preferred_username;
             const currentGitHubID = userMetadata.provider_id || userMetadata.sub;
-            
-            console.log('DELETE BUTTON: Current user', { userName: currentUserName, gitHubID: currentGitHubID });
-            console.log('DELETE BUTTON: Object author', { name: author.name, id: author.id });
             
             // Check if current user is the author
             // Compare GitHub ID (strip "github:" prefix if present)
@@ -1250,21 +1221,12 @@ class TensCity extends HTMLElement {
             const isOwned = (currentGitHubID && authorGitHubID && currentGitHubID === authorGitHubID) ||
                            (currentUserName && authorUserName && currentUserName === authorUserName);
             
-            console.log('DELETE BUTTON: Ownership check result', { 
-                isOwned, 
-                idMatch: currentGitHubID && authorGitHubID && currentGitHubID === authorGitHubID,
-                nameMatch: currentUserName && authorUserName && currentUserName === authorUserName
-            });
-            
             this._ownershipCache[cidParam] = isOwned;
             deleteBtn.style.display = isOwned ? 'inline-block' : 'none';
-            console.log('DELETE BUTTON: Final state =', deleteBtn.style.display);
-            console.log('=== DELETE BUTTON VISIBILITY CHECK END (LOCAL CHECK) ===');
         } catch (err) {
-            console.error('DELETE BUTTON: Exception occurred', err);
+            console.error('Failed to check ownership:', err);
             this._ownershipCache[cidParam] = false;
             deleteBtn.style.display = 'none';
-            console.log('=== DELETE BUTTON VISIBILITY CHECK END (EXCEPTION) ===');
         }
     }
 
