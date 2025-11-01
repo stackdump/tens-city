@@ -21,7 +21,7 @@ func TestHandleCheckOwnership(t *testing.T) {
 		t.Fatalf("Failed to save object: %v", err)
 	}
 
-	server := NewServer(storage, "", false, 1*1024*1024)
+	server := NewServer(storage, nil, false, 1*1024*1024)
 
 	tests := []struct {
 		name           string
@@ -130,7 +130,7 @@ func TestCheckOwnershipWithUsernameOnly(t *testing.T) {
 		t.Fatalf("Failed to save object: %v", err)
 	}
 
-	server := NewServer(storage, "", false, 1*1024*1024)
+	server := NewServer(storage, nil, false, 1*1024*1024)
 
 	// Test that owner can be identified by username when GitHub ID is not available
 	token := createTestToken("user123", "test@example.com", githubUser, "")
