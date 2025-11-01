@@ -70,8 +70,13 @@ func ExtractUserFromToken(tokenString string) (*GitHubUserInfo, error) {
 		if fullName, ok := claims.UserMetadata["full_name"].(string); ok {
 			userInfo.FullName = fullName
 		}
-		if providerID, ok := claims.UserMetadata["provider_id"].(string); ok {
+		// Try multiple fields for GitHub user ID
+		// Supabase may store this in different fields depending on OAuth flow and token refresh
+		if providerID, ok := claims.UserMetadata["provider_id"].(string); ok && providerID != "" {
 			userInfo.GitHubID = providerID
+		} else if sub, ok := claims.UserMetadata["sub"].(string); ok && sub != "" {
+			// Fallback to 'sub' which may contain GitHub user ID from OAuth provider
+			userInfo.GitHubID = sub
 		}
 	}
 	

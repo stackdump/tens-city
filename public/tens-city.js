@@ -178,6 +178,8 @@ class TensCity extends HTMLElement {
                 console.log('Auth state changed:', event, session);
                 if (session?.user) {
                     this._user = session.user;
+                    // Force app rebuild to ensure delete button is created with correct auth state
+                    this._appShown = false;
                     await this._showApp();
                 } else {
                     this._user = null;
@@ -1151,10 +1153,12 @@ class TensCity extends HTMLElement {
         }
     }
 
-    async _updateDeleteButtonVisibility() {
+    async _updateDeleteButtonVisibility(loadedData = null) {
         // Show delete button only when viewing a CID, user is authenticated, and user owns the object
         const deleteBtn = this._root?.querySelector('#tc-delete-btn');
-        if (!deleteBtn) return;
+        if (!deleteBtn) {
+            return;
+        }
 
         const urlParams = new URLSearchParams(window.location.search);
         const cidParam = urlParams.get('cid');
@@ -1164,38 +1168,61 @@ class TensCity extends HTMLElement {
             return;
         }
 
-        // Check cache first to avoid redundant API calls
+        // Check cache first to avoid redundant checks
         if (this._ownershipCache.hasOwnProperty(cidParam)) {
             deleteBtn.style.display = this._ownershipCache[cidParam] ? 'inline-block' : 'none';
             return;
         }
 
-        // Check if the current user owns this object
+        // Check ownership from loaded data (if provided) or from editor content
         try {
-            const { data: { session } } = await this._supabase.auth.getSession();
-            const authToken = session?.access_token;
+            let data = loadedData;
             
-            if (!authToken) {
+            // If data not provided, try to parse from editor
+            if (!data && this._aceEditor) {
+                try {
+                    const editorContent = this._aceEditor.session.getValue();
+                    data = JSON.parse(editorContent);
+                } catch (err) {
+                    // Could not parse editor content
+                }
+            }
+            
+            if (!data) {
                 this._ownershipCache[cidParam] = false;
                 deleteBtn.style.display = 'none';
                 return;
             }
-
-            const response = await fetch(`/api/ownership/${cidParam}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${authToken}`,
-                }
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                this._ownershipCache[cidParam] = result.owned;
-                deleteBtn.style.display = result.owned ? 'inline-block' : 'none';
-            } else {
+            
+            // Extract author information from the data
+            const author = data.author;
+            if (!author) {
                 this._ownershipCache[cidParam] = false;
                 deleteBtn.style.display = 'none';
+                return;
             }
+            
+            // Get current user's GitHub info from this._user (already set during auth)
+            if (!this._user) {
+                this._ownershipCache[cidParam] = false;
+                deleteBtn.style.display = 'none';
+                return;
+            }
+            
+            const userMetadata = this._user.user_metadata || {};
+            const currentUserName = userMetadata.user_name || userMetadata.preferred_username;
+            const currentGitHubID = userMetadata.provider_id || userMetadata.sub;
+            
+            // Check if current user is the author
+            // Compare GitHub ID (strip "github:" prefix if present)
+            const authorGitHubID = author.id ? author.id.replace(/^github:/, '') : null;
+            const authorUserName = author.name;
+            
+            const isOwned = (currentGitHubID && authorGitHubID && currentGitHubID === authorGitHubID) ||
+                           (currentUserName && authorUserName && currentUserName === authorUserName);
+            
+            this._ownershipCache[cidParam] = isOwned;
+            deleteBtn.style.display = isOwned ? 'inline-block' : 'none';
         } catch (err) {
             console.error('Failed to check ownership:', err);
             this._ownershipCache[cidParam] = false;
@@ -1261,7 +1288,8 @@ class TensCity extends HTMLElement {
                     const data = await response.json();
                     this._aceEditor.session.setValue(JSON.stringify(data, null, 2));
                     this._updatePermalinkAnchor();
-                    await this._updateDeleteButtonVisibility();
+                    // Pass the loaded data to ownership check to avoid API call
+                    await this._updateDeleteButtonVisibility(data);
                     console.log('Successfully loaded data from CID');
                     return;
                 } else {
