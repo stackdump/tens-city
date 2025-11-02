@@ -425,8 +425,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
     %s
     <div class="footer">
         <div class="footer-menu">
-            <a href="/posts">← All Posts</a>
-            <a href="/posts/%s.jsonld">JSON-LD</a>`, doc.HTML, escapedSlug)
+            <a href="/posts">← All Posts</a>`, doc.HTML)
 
 	// Add CID link if available
 	if cached.CID != "" {
@@ -439,7 +438,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 		escapedCIDShort := html.EscapeString(cidShort)
 
 		fmt.Fprintf(w, `
-            <a href="#" class="cid-link" onclick="showCIDModal(); return false;">CID: ...%s</a>`, escapedCIDShort)
+            <a href="#" class="cid-link" onclick="showCIDModal(); return false;">CID: %s</a>`, escapedCIDShort)
 	}
 
 	// Add edit link (will be shown/hidden by JavaScript based on authorship)
