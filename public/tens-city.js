@@ -414,13 +414,39 @@ class TensCity extends HTMLElement {
             gap: '16px'
         });
 
+        // GitHub user info with icon
+        const githubUserContainer = document.createElement('div');
+        this._applyStyles(githubUserContainer, {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '4px 12px',
+            background: '#f6f8fa',
+            borderRadius: '6px',
+            border: '1px solid #e1e4e8'
+        });
+
+        // GitHub icon (SVG)
+        const githubIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        githubIcon.setAttribute('height', '16');
+        githubIcon.setAttribute('width', '16');
+        githubIcon.setAttribute('viewBox', '0 0 16 16');
+        githubIcon.setAttribute('fill', 'currentColor');
+        const githubPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        githubPath.setAttribute('d', 'M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z');
+        githubIcon.appendChild(githubPath);
+        githubUserContainer.appendChild(githubIcon);
+
         const userEmail = document.createElement('span');
-        userEmail.textContent = this._user?.email || this._user?.user_metadata?.user_name || 'User';
+        userEmail.textContent = this._user?.user_metadata?.user_name || this._user?.email || 'User';
         this._applyStyles(userEmail, {
             fontSize: '14px',
-            color: '#586069'
+            color: '#24292e',
+            fontWeight: '500'
         });
-        userInfo.appendChild(userEmail);
+        githubUserContainer.appendChild(userEmail);
+        
+        userInfo.appendChild(githubUserContainer);
 
         const logoutBtn = document.createElement('button');
         logoutBtn.textContent = 'Logout';
@@ -909,13 +935,74 @@ class TensCity extends HTMLElement {
             return group;
         };
 
+        // Author info (read-only display)
+        if (this._user) {
+            const authorGroup = document.createElement('div');
+            this._applyStyles(authorGroup, {
+                marginBottom: '16px',
+                padding: '12px',
+                background: '#fff',
+                borderRadius: '4px',
+                border: '1px solid #d1d5da'
+            });
+
+            const authorLabel = document.createElement('div');
+            authorLabel.textContent = 'Author';
+            this._applyStyles(authorLabel, {
+                fontSize: '13px',
+                fontWeight: '600',
+                marginBottom: '8px',
+                color: '#24292e'
+            });
+            authorGroup.appendChild(authorLabel);
+
+            const authorInfo = document.createElement('div');
+            this._applyStyles(authorInfo, {
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+            });
+
+            // GitHub icon
+            const githubIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            githubIcon.setAttribute('height', '16');
+            githubIcon.setAttribute('width', '16');
+            githubIcon.setAttribute('viewBox', '0 0 16 16');
+            githubIcon.setAttribute('fill', 'currentColor');
+            const githubPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            githubPath.setAttribute('d', 'M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z');
+            githubIcon.appendChild(githubPath);
+            authorInfo.appendChild(githubIcon);
+
+            const authorName = document.createElement('span');
+            authorName.textContent = this._user.user_metadata?.user_name || this._user.email || 'User';
+            this._applyStyles(authorName, {
+                fontSize: '13px',
+                color: '#24292e',
+                fontWeight: '500'
+            });
+            authorInfo.appendChild(authorName);
+
+            authorGroup.appendChild(authorInfo);
+
+            const authorNote = document.createElement('div');
+            authorNote.textContent = 'Author is set from your GitHub login';
+            this._applyStyles(authorNote, {
+                fontSize: '11px',
+                color: '#586069',
+                marginTop: '6px',
+                fontStyle: 'italic'
+            });
+            authorGroup.appendChild(authorNote);
+
+            form.appendChild(authorGroup);
+        }
+
         form.appendChild(createField('Title', 'fm-title', 'text', true, 'Document title'));
         form.appendChild(createField('Description', 'fm-description', 'textarea', false, 'Short description'));
         form.appendChild(createField('Slug', 'fm-slug', 'text', false, 'url-friendly-slug'));
         form.appendChild(createField('Date Published', 'fm-datePublished', 'datetime-local', true));
         form.appendChild(createField('Date Modified', 'fm-dateModified', 'datetime-local', false));
-
-        // Note: Author fields removed - author is automatically set server-side from authenticated user
 
         // Set default date
         const now = new Date().toISOString().slice(0, 16);
@@ -1254,6 +1341,31 @@ class TensCity extends HTMLElement {
         });
         menuItems.appendChild(helpItem);
 
+        // Documentation browser menu item
+        const docsItem = document.createElement('button');
+        docsItem.textContent = '📚 Documentation';
+        this._applyStyles(docsItem, {
+            width: '100%',
+            padding: '12px 24px',
+            background: 'transparent',
+            border: 'none',
+            textAlign: 'left',
+            fontSize: '16px',
+            cursor: 'pointer',
+            transition: 'background 0.2s'
+        });
+        docsItem.addEventListener('mouseenter', () => {
+            docsItem.style.background = '#f6f8fa';
+        });
+        docsItem.addEventListener('mouseleave', () => {
+            docsItem.style.background = 'transparent';
+        });
+        docsItem.addEventListener('click', () => {
+            this._toggleMenu();
+            this._showDocsBrowser();
+        });
+        menuItems.appendChild(docsItem);
+
         // GitHub repository link
         const githubItem = document.createElement('a');
         githubItem.href = 'https://github.com/stackdump/tens-city';
@@ -1475,6 +1587,271 @@ class TensCity extends HTMLElement {
 
     _hideHelp() {
         const overlay = this._root.querySelector('.tc-help-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
+    }
+
+    async _showDocsBrowser() {
+        // Create docs browser overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'tc-docs-overlay';
+        this._applyStyles(overlay, {
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            width: '100%',
+            height: '100%',
+            background: 'rgba(0, 0, 0, 0.5)',
+            zIndex: '1000',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '24px'
+        });
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                this._hideDocsBrowser();
+            }
+        });
+
+        // Create docs browser panel
+        const docsPanel = document.createElement('div');
+        docsPanel.className = 'tc-docs-panel';
+        this._applyStyles(docsPanel, {
+            background: '#fff',
+            maxWidth: '900px',
+            width: '100%',
+            maxHeight: '90vh',
+            borderRadius: '8px',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+        });
+
+        // Docs header
+        const docsHeader = document.createElement('div');
+        this._applyStyles(docsHeader, {
+            padding: '20px 24px',
+            borderBottom: '1px solid #e1e4e8',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+        });
+
+        const docsTitle = document.createElement('h2');
+        docsTitle.textContent = 'Documentation Browser';
+        this._applyStyles(docsTitle, {
+            margin: '0',
+            fontSize: '24px',
+            fontWeight: 'bold'
+        });
+        docsHeader.appendChild(docsTitle);
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '×';
+        this._applyStyles(closeBtn, {
+            background: 'transparent',
+            border: 'none',
+            fontSize: '32px',
+            cursor: 'pointer',
+            padding: '0',
+            lineHeight: '1',
+            color: '#586069'
+        });
+        closeBtn.addEventListener('click', () => this._hideDocsBrowser());
+        docsHeader.appendChild(closeBtn);
+
+        docsPanel.appendChild(docsHeader);
+
+        // Docs content area with file tree and viewer
+        const docsContent = document.createElement('div');
+        this._applyStyles(docsContent, {
+            display: 'flex',
+            flex: '1',
+            overflow: 'hidden'
+        });
+
+        // File tree sidebar
+        const fileTree = document.createElement('div');
+        fileTree.className = 'tc-docs-filetree';
+        this._applyStyles(fileTree, {
+            flex: '0 0 250px',
+            background: '#f6f8fa',
+            borderRight: '1px solid #e1e4e8',
+            overflowY: 'auto',
+            padding: '16px'
+        });
+
+        // Document viewer
+        const docViewer = document.createElement('div');
+        docViewer.className = 'tc-docs-viewer';
+        this._applyStyles(docViewer, {
+            flex: '1',
+            overflowY: 'auto',
+            padding: '24px'
+        });
+
+        // Show loading state
+        docViewer.innerHTML = '<p style="color: #586069;">Select a document from the tree to view it.</p>';
+
+        // Load and render file tree
+        try {
+            const response = await fetch('/docs/index.jsonld');
+            if (response.ok) {
+                const index = await response.json();
+                this._renderFileTree(fileTree, index, docViewer);
+            } else {
+                fileTree.innerHTML = '<p style="color: #999; padding: 8px;">No documentation available</p>';
+            }
+        } catch (err) {
+            console.error('Failed to load docs index:', err);
+            fileTree.innerHTML = '<p style="color: #999; padding: 8px;">Failed to load documentation</p>';
+        }
+
+        docsContent.appendChild(fileTree);
+        docsContent.appendChild(docViewer);
+        docsPanel.appendChild(docsContent);
+        overlay.appendChild(docsPanel);
+        this._root.appendChild(overlay);
+    }
+
+    _renderFileTree(container, index, viewer) {
+        // Clear container
+        container.innerHTML = '';
+
+        // Add title
+        const title = document.createElement('h3');
+        title.textContent = 'Documents';
+        this._applyStyles(title, {
+            margin: '0 0 12px 0',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            textTransform: 'uppercase',
+            color: '#586069'
+        });
+        container.appendChild(title);
+
+        // Check if index has itemListElement (schema.org ItemList structure)
+        const items = index.itemListElement || [];
+        
+        if (items.length === 0) {
+            const noDocsMsg = document.createElement('p');
+            noDocsMsg.textContent = 'No documents found';
+            this._applyStyles(noDocsMsg, {
+                color: '#999',
+                fontSize: '13px'
+            });
+            container.appendChild(noDocsMsg);
+            return;
+        }
+
+        // Create file tree list
+        const list = document.createElement('ul');
+        this._applyStyles(list, {
+            listStyle: 'none',
+            padding: '0',
+            margin: '0'
+        });
+
+        items.forEach(item => {
+            const listItem = document.createElement('li');
+            this._applyStyles(listItem, {
+                marginBottom: '4px'
+            });
+
+            const link = document.createElement('button');
+            link.textContent = `📄 ${item.name || item.item?.name || 'Untitled'}`;
+            link.title = item.description || item.item?.description || '';
+            this._applyStyles(link, {
+                width: '100%',
+                padding: '8px 12px',
+                background: 'transparent',
+                border: 'none',
+                borderRadius: '4px',
+                textAlign: 'left',
+                fontSize: '13px',
+                cursor: 'pointer',
+                transition: 'background 0.2s',
+                color: '#24292e'
+            });
+            
+            link.addEventListener('mouseenter', () => {
+                link.style.background = '#fff';
+            });
+            link.addEventListener('mouseleave', () => {
+                link.style.background = 'transparent';
+            });
+            
+            link.addEventListener('click', async () => {
+                // Get the URL from the item
+                const url = item.url || item.item?.url || item['@id'];
+                if (url) {
+                    await this._loadDocInViewer(viewer, url);
+                }
+            });
+
+            listItem.appendChild(link);
+            list.appendChild(listItem);
+        });
+
+        container.appendChild(list);
+    }
+
+    async _loadDocInViewer(viewer, url) {
+        // Show loading state
+        viewer.innerHTML = '<p style="color: #586069;">Loading...</p>';
+
+        try {
+            // Extract slug from URL - handle both /docs/slug and full URLs
+            let slug = url;
+            if (url.includes('/docs/')) {
+                slug = url.split('/docs/').pop().split(/[?#]/)[0];
+            }
+
+            // Load the HTML version of the document
+            const response = await fetch(`/docs/${slug}`);
+            if (!response.ok) {
+                viewer.innerHTML = '<p style="color: #d73a49;">Failed to load document</p>';
+                return;
+            }
+
+            const html = await response.text();
+            
+            // Create a container for the rendered content
+            const contentDiv = document.createElement('div');
+            this._applyStyles(contentDiv, {
+                lineHeight: '1.6',
+                color: '#24292e'
+            });
+
+            // Parse the HTML and extract the main content
+            // Note: HTML is pre-sanitized by the server using bluemonday library
+            // DOMParser provides additional isolation from direct innerHTML assignment
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Look for the main content (typically in a main, article, or body tag)
+            const mainContent = doc.querySelector('main') || doc.querySelector('article') || doc.querySelector('body');
+            
+            if (mainContent) {
+                // Clone the sanitized content from our own documentation server
+                contentDiv.innerHTML = mainContent.innerHTML;
+            } else {
+                contentDiv.innerHTML = html;
+            }
+
+            viewer.innerHTML = '';
+            viewer.appendChild(contentDiv);
+        } catch (err) {
+            console.error('Failed to load document:', err);
+            viewer.innerHTML = '<p style="color: #d73a49;">Error loading document</p>';
+        }
+    }
+
+    _hideDocsBrowser() {
+        const overlay = this._root.querySelector('.tc-docs-overlay');
         if (overlay) {
             overlay.remove();
         }
