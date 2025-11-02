@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
@@ -563,7 +564,8 @@ func (s *Server) handleSaveMarkdown(w http.ResponseWriter, r *http.Request) {
 	}
 	if userInfo.UserName != "" {
 		author["name"] = userInfo.UserName
-		author["url"] = fmt.Sprintf("https://github.com/%s", userInfo.UserName)
+		// URL-encode the username to prevent URL injection
+		author["url"] = fmt.Sprintf("https://github.com/%s", url.PathEscape(userInfo.UserName))
 	}
 	if userInfo.GitHubID != "" {
 		author["id"] = fmt.Sprintf("github:%s", userInfo.GitHubID)
