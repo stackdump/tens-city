@@ -1596,7 +1596,6 @@ class TensCity extends HTMLElement {
         }
     }
 
-
     async _showLatestPosts() {
         // Create overlay for modal
         const overlay = document.createElement('div');
