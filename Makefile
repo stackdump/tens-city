@@ -85,7 +85,7 @@ tidy: ## Tidy Go dependencies
 
 # Run webserver (requires build first)
 run-webserver: webserver ## Build and run webserver
-	./webserver -addr :8080 -store $(STORE_DIR) -public public
+	./webserver -addr :8080 -store $(STORE_DIR)
 
 # Run seal example (requires build first)
 run-seal: seal ## Build and run seal with example file
