@@ -85,7 +85,7 @@ func TestHandleCheckOwnership(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/api/ownership/"+tt.cid, nil)
-			
+
 			// Add authentication header if required
 			if tt.includeAuth {
 				token := createTestToken(tt.userID, "test@example.com", tt.userName, tt.githubID)

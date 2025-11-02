@@ -142,9 +142,9 @@ func TestSaveMultipleTimes(t *testing.T) {
 // TestCanonicalJSONMarshaling tests the canonical JSON marshaling directly
 func TestCanonicalJSONMarshaling(t *testing.T) {
 	obj := map[string]interface{}{
-		"z":        "last",
-		"a":        "first",
-		"m":        "middle",
+		"z": "last",
+		"a": "first",
+		"m": "middle",
 		"nested": map[string]interface{}{
 			"b": 2,
 			"a": 1,
