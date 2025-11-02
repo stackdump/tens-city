@@ -66,6 +66,16 @@ func initCachingLoader() {
 
 		cachingLoader.AddDocument("https://pflow.xyz/schema", pflowContext)
 
+		// Add a minimal schema.org context for offline use
+		// This is a simplified version that serves as a placeholder
+		// The actual schema.org context is very large, so we use a minimal stub
+		schemaOrgContext := map[string]interface{}{
+			"@context": map[string]interface{}{
+				"@vocab": "https://schema.org/",
+			},
+		}
+		cachingLoader.AddDocument("https://schema.org", schemaOrgContext)
+
 		cachedLoader = cachingLoader
 	})
 }

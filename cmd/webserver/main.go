@@ -492,6 +492,109 @@ func (s *Server) handleDeleteObject(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// MarkdownSaveRequest represents a request to save markdown content
+type MarkdownSaveRequest struct {
+	Frontmatter map[string]interface{} `json:"frontmatter"`
+	Content     string                 `json:"content"`
+	Slug        string                 `json:"slug"`
+}
+
+// Handler for POST /api/docs/save - save markdown document with frontmatter
+func (s *Server) handleSaveMarkdown(w http.ResponseWriter, r *http.Request) {
+	if s.handleCORS(w, r) {
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract and validate authentication token
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "Authentication required", http.StatusUnauthorized)
+		return
+	}
+
+	userInfo, err := auth.ExtractUserFromToken(authHeader)
+	if err != nil {
+		log.Printf("Authentication failed: %v", err)
+		http.Error(w, "Invalid authentication token", http.StatusUnauthorized)
+		return
+	}
+
+	// Limit request body size
+	r.Body = http.MaxBytesReader(w, r.Body, s.maxContentSize)
+
+	var req MarkdownSaveRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Validate required fields
+	if req.Slug == "" {
+		http.Error(w, "Slug is required", http.StatusBadRequest)
+		return
+	}
+
+	// Build JSON-LD document from frontmatter
+	// Add required schema.org fields
+	jsonld := map[string]interface{}{
+		"@context": "https://schema.org",
+		"@type":    "Article",
+	}
+
+	// Merge frontmatter into JSON-LD
+	for k, v := range req.Frontmatter {
+		jsonld[k] = v
+	}
+
+	// Ensure we have required fields
+	if _, ok := jsonld["headline"]; !ok {
+		if title, ok := jsonld["title"]; ok {
+			jsonld["headline"] = title
+		}
+	}
+
+	// Add URL based on slug
+	jsonld["url"] = fmt.Sprintf("%s/docs/%s", r.Host, req.Slug)
+
+	// Serialize to JSON using canonical encoding
+	raw, err := canonical.MarshalJSON(jsonld)
+	if err != nil {
+		http.Error(w, "Failed to serialize JSON", http.StatusInternalServerError)
+		return
+	}
+
+	// Compute CID
+	cid, canonicalData, err := seal.SealJSONLD(raw)
+	if err != nil {
+		log.Printf("Error sealing JSON-LD: %v", err)
+		http.Error(w, "Failed to compute CID", http.StatusInternalServerError)
+		return
+	}
+
+	// Save to storage with author information
+	githubUser := userInfo.UserName
+	githubID := userInfo.GitHubID
+
+	if err := s.storage.SaveObjectWithAuthor(cid, raw, canonicalData, githubUser, githubID); err != nil {
+		log.Printf("Error saving object: %v", err)
+		http.Error(w, "Failed to save object", http.StatusInternalServerError)
+		return
+	}
+
+	// Return CID and success
+	response := map[string]string{
+		"cid":  cid,
+		"slug": req.Slug,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s", r.Method, r.URL.Path)
 
@@ -521,6 +624,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// API routes
 	if r.URL.Path == "/api/save" {
 		s.handleSave(w, r)
+		return
+	}
+	if r.URL.Path == "/api/docs/save" {
+		s.handleSaveMarkdown(w, r)
 		return
 	}
 	if strings.HasPrefix(r.URL.Path, "/api/ownership/") {
@@ -596,8 +703,8 @@ func main() {
 		log.Fatalf("Failed to access embedded public files: %v", err)
 	}
 
-	// Create document server
-	docServer := docserver.NewDocServer(*contentDir, *baseURL)
+	// Create document server with storage
+	docServer := docserver.NewDocServerWithStorage(*contentDir, *baseURL, storage)
 
 	server := NewServer(storage, publicSubFS, *enableCORS, maxContentSize, docServer)
 
