@@ -502,7 +502,7 @@ type MarkdownSaveRequest struct {
 	Slug        string                 `json:"slug"`
 }
 
-// Handler for POST /api/docs/save - save markdown document with frontmatter
+// Handler for POST /api/posts/save - save markdown document with frontmatter
 func (s *Server) handleSaveMarkdown(w http.ResponseWriter, r *http.Request) {
 	if s.handleCORS(w, r) {
 		return
@@ -584,7 +584,7 @@ func (s *Server) handleSaveMarkdown(w http.ResponseWriter, r *http.Request) {
 
 	// Add URL based on slug using configured base URL
 	// Note: slug should be URL-safe as it's validated elsewhere
-	jsonld["url"] = fmt.Sprintf("%s/docs/%s", s.baseURL, req.Slug)
+	jsonld["url"] = fmt.Sprintf("%s/posts/%s", s.baseURL, req.Slug)
 
 	// Serialize to JSON using canonical encoding
 	raw, err := canonical.MarshalJSON(jsonld)
@@ -623,18 +623,18 @@ func (s *Server) handleSaveMarkdown(w http.ResponseWriter, r *http.Request) {
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s", r.Method, r.URL.Path)
 
-	// Documentation routes (only if docServer is configured)
+	// Blog post routes (only if docServer is configured)
 	if s.docServer != nil {
-		if r.URL.Path == "/docs" {
+		if r.URL.Path == "/posts" {
 			s.docServer.HandleDocList(w, r)
 			return
 		}
-		if r.URL.Path == "/docs/index.jsonld" {
+		if r.URL.Path == "/posts/index.jsonld" {
 			s.docServer.HandleIndexJSONLD(w, r)
 			return
 		}
-		if strings.HasPrefix(r.URL.Path, "/docs/") {
-			slug := strings.TrimPrefix(r.URL.Path, "/docs/")
+		if strings.HasPrefix(r.URL.Path, "/posts/") {
+			slug := strings.TrimPrefix(r.URL.Path, "/posts/")
 			// Check for .jsonld extension
 			if strings.HasSuffix(slug, ".jsonld") {
 				slug = strings.TrimSuffix(slug, ".jsonld")
@@ -651,7 +651,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.handleSave(w, r)
 		return
 	}
-	if r.URL.Path == "/api/docs/save" {
+	if r.URL.Path == "/api/posts/save" {
 		s.handleSaveMarkdown(w, r)
 		return
 	}
@@ -673,8 +673,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// User routes
 	if strings.HasPrefix(r.URL.Path, "/u/") {
 		// Check for RSS feed request
-		if strings.HasSuffix(r.URL.Path, "/docs.rss") && s.docServer != nil {
-			// Extract username from /u/{user}/docs.rss
+		if strings.HasSuffix(r.URL.Path, "/posts.rss") && s.docServer != nil {
+			// Extract username from /u/{user}/posts.rss
 			parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/u/"), "/")
 			if len(parts) >= 1 && parts[0] != "" {
 				userName := parts[0]
@@ -717,7 +717,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func main() {
 	addr := flag.String("addr", ":8080", "Server address")
 	storeDir := flag.String("store", "data", "Filesystem store directory")
-	contentDir := flag.String("content", "content/docs", "Content directory for markdown documents")
+	contentDir := flag.String("content", "content/posts", "Content directory for markdown blog posts")
 	baseURL := flag.String("base-url", "http://localhost:8080", "Base URL for the server")
 	enableCORS := flag.Bool("cors", true, "Enable CORS headers")
 	maxContentMB := flag.Int("max-content-mb", 1, "Maximum content size in megabytes (default: 1MB)")

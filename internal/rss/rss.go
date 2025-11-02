@@ -90,9 +90,9 @@ func GenerateUserFeed(docs []*markdown.Document, userName, baseURL string) ([]by
 	for _, doc := range validDocs {
 		item := Item{
 			Title:       html.EscapeString(doc.Frontmatter.Title),
-			Link:        fmt.Sprintf("%s/docs/%s", baseURL, doc.Frontmatter.Slug),
+			Link:        fmt.Sprintf("%s/posts/%s", baseURL, doc.Frontmatter.Slug),
 			Description: html.EscapeString(doc.Frontmatter.Description),
-			GUID:        fmt.Sprintf("%s/docs/%s", baseURL, doc.Frontmatter.Slug),
+			GUID:        fmt.Sprintf("%s/posts/%s", baseURL, doc.Frontmatter.Slug),
 		}
 
 		// Parse and format publication date

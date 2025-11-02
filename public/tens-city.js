@@ -1201,9 +1201,9 @@ class TensCity extends HTMLElement {
             
             // Check if this looks like a URL field
             if (typeof value === 'string' && (key === 'url' || key === '@id' || key.endsWith('Url'))) {
-                // Check if it's a URL pointing to /docs/
-                if (value.includes('/docs/') && !value.endsWith('.jsonld')) {
-                    const slug = value.split('/docs/').pop().split(/[?#]/)[0];
+                // Check if it's a URL pointing to /posts/
+                if (value.includes('/posts/') && !value.endsWith('.jsonld')) {
+                    const slug = value.split('/posts/').pop().split(/[?#]/)[0];
                     if (slug && !links.includes(slug)) {
                         links.push(slug);
                     }
@@ -1218,12 +1218,12 @@ class TensCity extends HTMLElement {
 
     async _loadDocumentPreview(slug) {
         try {
-            const response = await fetch(`/docs/${slug}.jsonld`);
+            const response = await fetch(`/posts/${slug}.jsonld`);
             if (!response.ok) return null;
 
             const jsonld = await response.json();
             return {
-                url: `/docs/${slug}`,
+                url: `/posts/${slug}`,
                 title: jsonld.headline || jsonld.name || jsonld.title,
                 description: jsonld.description
             };
@@ -1698,7 +1698,7 @@ class TensCity extends HTMLElement {
 
         // Load and render file tree
         try {
-            const response = await fetch('/docs/index.jsonld');
+            const response = await fetch('/posts/index.jsonld');
             if (response.ok) {
                 const index = await response.json();
                 this._renderFileTree(fileTree, index, docViewer);
@@ -1804,14 +1804,14 @@ class TensCity extends HTMLElement {
         viewer.innerHTML = '<p style="color: #586069;">Loading...</p>';
 
         try {
-            // Extract slug from URL - handle both /docs/slug and full URLs
+            // Extract slug from URL - handle both /posts/slug and full URLs
             let slug = url;
-            if (url.includes('/docs/')) {
-                slug = url.split('/docs/').pop().split(/[?#]/)[0];
+            if (url.includes('/posts/')) {
+                slug = url.split('/posts/').pop().split(/[?#]/)[0];
             }
 
             // Load the HTML version of the document
-            const response = await fetch(`/docs/${slug}`);
+            const response = await fetch(`/posts/${slug}`);
             if (!response.ok) {
                 viewer.innerHTML = '<p style="color: #d73a49;">Failed to load document</p>';
                 return;
@@ -2072,10 +2072,10 @@ class TensCity extends HTMLElement {
                 return;
             }
 
-            console.log('Save: Sending markdown save request to /api/docs/save');
+            console.log('Save: Sending markdown save request to /api/posts/save');
 
-            // Send to /api/docs/save endpoint
-            const response = await fetch('/api/docs/save', {
+            // Send to /api/posts/save endpoint
+            const response = await fetch('/api/posts/save', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2101,7 +2101,7 @@ class TensCity extends HTMLElement {
             console.log('Save: Success! CID:', cid, 'Slug:', slug);
 
             // Show success message
-            alert(`Document saved successfully!\nCID: ${cid}\nSlug: ${slug}\nView at: /docs/${slug}`);
+            alert(`Document saved successfully!\nCID: ${cid}\nSlug: ${slug}\nView at: /posts/${slug}`);
 
         } catch (err) {
             console.error('Save: Exception occurred:', err);

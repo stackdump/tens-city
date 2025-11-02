@@ -127,7 +127,7 @@ func TestToJSONLD(t *testing.T) {
 		t.Error("Expected headline to match title")
 	}
 
-	if jsonld["url"] != "https://tens.city/docs/test-article" {
+	if jsonld["url"] != "https://tens.city/posts/test-article" {
 		t.Errorf("Expected correct URL, got %v", jsonld["url"])
 	}
 
