@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,14 +13,22 @@ import (
 	"sync"
 	"time"
 
+	"github.com/stackdump/tens-city/internal/canonical"
 	"github.com/stackdump/tens-city/internal/markdown"
+	"github.com/stackdump/tens-city/internal/seal"
 )
+
+// Storage interface for saving JSON-LD documents
+type Storage interface {
+	SaveObject(cid string, raw []byte, canonical []byte) error
+}
 
 // DocServer handles markdown document requests
 type DocServer struct {
 	contentDir string
 	baseURL    string
 	cache      *DocumentCache
+	storage    Storage
 }
 
 // DocumentCache caches rendered documents
@@ -34,6 +43,7 @@ type CachedDoc struct {
 	Doc      *markdown.Document
 	ETag     string
 	Modified time.Time
+	CID      string // CID of the JSON-LD representation
 }
 
 // CachedIndex represents the cached document index
@@ -45,9 +55,15 @@ type CachedIndex struct {
 
 // NewDocServer creates a new document server
 func NewDocServer(contentDir, baseURL string) *DocServer {
+	return NewDocServerWithStorage(contentDir, baseURL, nil)
+}
+
+// NewDocServerWithStorage creates a new document server with storage
+func NewDocServerWithStorage(contentDir, baseURL string, storage Storage) *DocServer {
 	return &DocServer{
 		contentDir: contentDir,
 		baseURL:    baseURL,
+		storage:    storage,
 		cache: &DocumentCache{
 			docs: make(map[string]*CachedDoc),
 		},
@@ -110,10 +126,36 @@ func (ds *DocServer) loadDocument(slug string) (*CachedDoc, error) {
 	// Generate ETag
 	etag := generateETag(doc.HTML)
 
+	// Convert to JSON-LD and compute CID if storage is available
+	var docCID string
+	if ds.storage != nil {
+		jsonld := doc.ToJSONLD(ds.baseURL)
+		
+		// Serialize to JSON using canonical encoding
+		raw, err := canonical.MarshalJSON(jsonld)
+		if err != nil {
+			log.Printf("Warning: failed to marshal JSON-LD for %s: %v", slug, err)
+		} else {
+			// Compute CID
+			cid, canonicalData, err := seal.SealJSONLD(raw)
+			if err != nil {
+				log.Printf("Warning: failed to seal JSON-LD for %s: %v", slug, err)
+			} else {
+				// Save to storage
+				if err := ds.storage.SaveObject(cid, raw, canonicalData); err != nil {
+					log.Printf("Warning: failed to save JSON-LD for %s: %v", slug, err)
+				} else {
+					docCID = cid
+				}
+			}
+		}
+	}
+
 	cached = &CachedDoc{
 		Doc:      doc,
 		ETag:     etag,
 		Modified: fileInfo.ModTime(),
+		CID:      docCID,
 	}
 
 	// Update cache
@@ -331,9 +373,17 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
         .nav { margin-bottom: 2rem; }
         .nav a { margin-right: 1rem; }
         .meta { color: #666; font-size: 0.9rem; margin-bottom: 2rem; }
-        .jsonld-toggle { margin-top: 2rem; padding: 1rem; background: #f9f9f9; border-radius: 4px; }
-        .jsonld-content { display: none; margin-top: 1rem; }
-        .jsonld-content.show { display: block; }
+        .footer { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e0e0e0; color: #666; font-size: 0.85rem; }
+        .cid-link { color: #0066cc; text-decoration: none; font-family: monospace; }
+        .cid-link:hover { text-decoration: underline; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%%; height: 100%%; overflow: auto; background-color: rgba(0,0,0,0.4); }
+        .modal-content { background-color: #fefefe; margin: 5%% auto; padding: 2rem; border: 1px solid #888; border-radius: 8px; width: 80%%; max-width: 900px; max-height: 80vh; overflow: auto; }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover, .close:focus { color: #000; }
+        .modal h2 { margin-top: 0; }
+        .modal pre { background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }
+        .modal-actions { margin-top: 1rem; }
+        .modal-actions a { margin-right: 1rem; }
     </style>
 </head>
 <body>
@@ -352,18 +402,56 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 
 	fmt.Fprintf(w, `
     </div>
-    %s
-    <div class="jsonld-toggle">
-        <button onclick="toggleJSONLD()">Toggle JSON-LD Preview</button>
-        <pre class="jsonld-content" id="jsonld"><code>%s</code></pre>
+    %s`, doc.HTML)
+
+	// Add footer with CID link if available
+	if cached.CID != "" {
+		escapedCID := html.EscapeString(cached.CID)
+		cidShort := ""
+		if len(cached.CID) > 8 {
+			cidShort = cached.CID[len(cached.CID)-8:]
+		} else {
+			cidShort = cached.CID
+		}
+		escapedCIDShort := html.EscapeString(cidShort)
+
+		fmt.Fprintf(w, `
+    <div class="footer">
+        JSON-LD CID: <a href="#" class="cid-link" onclick="showCIDModal(); return false;">...%s</a>
+        <a href="/o/%s" style="margin-left: 0.5rem;">→ Full document</a>
     </div>
+    <div id="cidModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCIDModal()">&times;</span>
+            <h2>JSON-LD Document</h2>
+            <p><strong>CID:</strong> <code>%s</code></p>
+            <div class="modal-actions">
+                <a href="/o/%s" target="_blank">View JSON-LD</a>
+                <a href="/docs/%s.jsonld" target="_blank">View Document JSON-LD</a>
+            </div>
+            <h3>Preview:</h3>
+            <pre><code>%s</code></pre>
+        </div>
+    </div>`, escapedCIDShort, escapedCID, escapedCID, escapedCID, escapedSlug, escapedJSONLD)
+	}
+
+	fmt.Fprintf(w, `
     <script>
-        function toggleJSONLD() {
-            document.getElementById('jsonld').classList.toggle('show');
+        function showCIDModal() {
+            document.getElementById('cidModal').style.display = 'block';
+        }
+        function closeCIDModal() {
+            document.getElementById('cidModal').style.display = 'none';
+        }
+        window.onclick = function(event) {
+            var modal = document.getElementById('cidModal');
+            if (event.target == modal) {
+                closeCIDModal();
+            }
         }
     </script>
 </body>
-</html>`, doc.HTML, escapedJSONLD)
+</html>`)
 }
 
 // HandleDocJSONLD handles GET /docs/:slug.jsonld - return JSON-LD only
