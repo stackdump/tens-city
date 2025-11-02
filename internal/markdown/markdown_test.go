@@ -3,6 +3,7 @@ package markdown
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -50,11 +51,11 @@ This is a test paragraph with **bold** and *italic* text.
 	}
 
 	// Check that HTML contains expected elements
-	if !contains(doc.HTML, "<h1") {
+	if !strings.Contains(doc.HTML, "<h1") {
 		t.Error("Expected HTML to contain h1 tag")
 	}
 
-	if !contains(doc.HTML, "<strong>bold</strong>") {
+	if !strings.Contains(doc.HTML, "<strong>bold</strong>") {
 		t.Error("Expected HTML to contain bold text")
 	}
 }
@@ -363,20 +364,4 @@ func TestBuildCollectionIndex(t *testing.T) {
 	if index["numberOfItems"] != 2 {
 		t.Errorf("Expected numberOfItems to be 2, got %v", index["numberOfItems"])
 	}
-}
-
-func contains(s, substr string) bool {
-	return len(s) > 0 && len(substr) > 0 && 
-		(s == substr || len(s) >= len(substr) && 
-		(s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || 
-		findInString(s, substr)))
-}
-
-func findInString(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }

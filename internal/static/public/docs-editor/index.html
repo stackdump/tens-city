@@ -279,8 +279,8 @@
             </div>
             
             <div class="editor-tabs">
-                <button class="tab active" onclick="switchTab('edit')">Edit</button>
-                <button class="tab" onclick="switchTab('preview')">Preview</button>
+                <button class="tab active" onclick="switchTab('edit', event)">Edit</button>
+                <button class="tab" onclick="switchTab('preview', event)">Preview</button>
             </div>
 
             <div class="editor-content" id="editView">
@@ -444,13 +444,13 @@
         function renderFileTree() {
             const tree = document.getElementById('fileTree');
             tree.innerHTML = documents.map((item, idx) => `
-                <li class="file-item" onclick="loadDocument('${item.item.url}')" data-idx="${idx}">
+                <li class="file-item" onclick="loadDocument('${item.item.url}', event)" data-idx="${idx}">
                     ${item.item.headline}
                 </li>
             `).join('');
         }
 
-        async function loadDocument(url) {
+        async function loadDocument(url, e) {
             try {
                 // Extract slug from URL
                 const slug = url.split('/').pop();
@@ -468,7 +468,7 @@
                 
                 // Highlight active file
                 document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active'));
-                event.target.classList.add('active');
+                e.target.classList.add('active');
             } catch (error) {
                 console.error('Failed to load document:', error);
                 showError('Failed to load document');
@@ -652,9 +652,9 @@
             document.getElementById('jsonldPreview').textContent = JSON.stringify(jsonld, null, 2);
         }
 
-        function switchTab(tab) {
+        function switchTab(tab, e) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
+            e.target.classList.add('active');
             
             if (tab === 'edit') {
                 document.getElementById('editView').style.display = 'grid';
