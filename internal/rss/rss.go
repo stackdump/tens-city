@@ -65,9 +65,10 @@ func GenerateUserFeed(docs []*markdown.Document, userName, baseURL string) ([]by
 		return dateI.After(dateJ)
 	})
 
-	// Limit to most recent 20 items
-	if len(validDocs) > 20 {
-		validDocs = validDocs[:20]
+	// Limit to most recent items
+	const maxRSSItems = 20
+	if len(validDocs) > maxRSSItems {
+		validDocs = validDocs[:maxRSSItems]
 	}
 
 	// Build RSS feed

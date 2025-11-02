@@ -358,21 +358,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 	authorURL := extractAuthorURL(doc.Frontmatter.Author)
 
 	// Extract username for RSS feed link
-	userName := ""
-	if authorURL != "" && strings.Contains(authorURL, "github.com/") {
-		// Extract just the username from GitHub URL
-		// Expected format: https://github.com/username or https://github.com/username/
-		parts := strings.Split(authorURL, "github.com/")
-		if len(parts) > 1 {
-			userPath := strings.TrimPrefix(parts[1], "/")
-			userPath = strings.TrimSuffix(userPath, "/")
-			// Extract just the username (first path segment)
-			pathParts := strings.Split(userPath, "/")
-			if len(pathParts) > 0 && pathParts[0] != "" {
-				userName = pathParts[0]
-			}
-		}
-	}
+	userName := extractGitHubUsername(authorURL)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	fmt.Fprintf(w, `<!DOCTYPE html>
@@ -635,19 +621,8 @@ func (ds *DocServer) HandleUserRSS(w http.ResponseWriter, r *http.Request, userN
 
 		// Check if the author matches the requested user
 		authorURL := extractAuthorURL(doc.Frontmatter.Author)
-		if authorURL != "" {
-			// Extract username from author URL for exact matching
-			if strings.Contains(authorURL, "github.com/") {
-				parts := strings.Split(authorURL, "github.com/")
-				if len(parts) > 1 {
-					userPath := strings.TrimPrefix(parts[1], "/")
-					userPath = strings.TrimSuffix(userPath, "/")
-					pathParts := strings.Split(userPath, "/")
-					if len(pathParts) > 0 && pathParts[0] == userName {
-						userDocs = append(userDocs, doc)
-					}
-				}
-			}
+		if extractGitHubUsername(authorURL) == userName {
+			userDocs = append(userDocs, doc)
 		}
 	}
 
@@ -685,5 +660,31 @@ func extractAuthorURL(author interface{}) string {
 			}
 		}
 	}
+	return ""
+}
+
+// extractGitHubUsername extracts the GitHub username from a GitHub profile URL
+// Returns empty string if the URL is not a valid GitHub profile URL
+func extractGitHubUsername(githubURL string) string {
+	if githubURL == "" || !strings.Contains(githubURL, "github.com/") {
+		return ""
+	}
+
+	// Extract just the username from GitHub URL
+	// Expected format: https://github.com/username or https://github.com/username/
+	parts := strings.Split(githubURL, "github.com/")
+	if len(parts) < 2 {
+		return ""
+	}
+
+	userPath := strings.TrimPrefix(parts[1], "/")
+	userPath = strings.TrimSuffix(userPath, "/")
+	
+	// Extract just the username (first path segment)
+	pathParts := strings.Split(userPath, "/")
+	if len(pathParts) > 0 && pathParts[0] != "" {
+		return pathParts[0]
+	}
+
 	return ""
 }
