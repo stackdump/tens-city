@@ -451,17 +451,19 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 	// Add CID modal if available
 	if cached.CID != "" {
 		escapedCID := html.EscapeString(cached.CID)
+		escapedJSONLD := html.EscapeString(string(jsonldBytes))
 		fmt.Fprintf(w, `
     <div id="cidModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeCIDModal()">&times;</span>
-            <h2>Content Identifier (CID)</h2>
+            <h2>JSON-LD</h2>
             <p><strong>CID:</strong> <code>%s</code></p>
-            <p style="margin-top: 1rem; color: #666; font-size: 0.9rem;">
-                This is the cryptographic hash that uniquely identifies this document's content.
-            </p>
+            <pre>%s</pre>
+            <div class="modal-actions">
+                <a href="/posts/%s.jsonld" target="_blank">View Full Object</a>
+            </div>
         </div>
-    </div>`, escapedCID)
+    </div>`, escapedCID, escapedJSONLD, escapedSlug)
 	}
 
 	fmt.Fprintf(w, `
