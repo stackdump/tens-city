@@ -218,7 +218,7 @@ func (ds *DocServer) loadIndex() (*CachedIndex, error) {
 	return cached, nil
 }
 
-// HandleDocList handles GET /docs - list all documents
+// HandleDocList handles GET /posts - list all posts
 func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -227,7 +227,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 
 	docs, err := markdown.ListDocuments(ds.contentDir)
 	if err != nil {
-		http.Error(w, "Failed to load documents", http.StatusInternalServerError)
+		http.Error(w, "Failed to load posts", http.StatusInternalServerError)
 		return
 	}
 
@@ -246,7 +246,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Documentation - Tens City</title>
+    <title>Blog Posts - Tens City</title>
     <style>
         body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; }
         h1 { color: #333; }
@@ -260,7 +260,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
     </style>
 </head>
 <body>
-    <h1>Documentation</h1>
+    <h1>Blog Posts</h1>
     <ul class="doc-list">
 `)
 
@@ -271,7 +271,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 		escapedDate := html.EscapeString(doc.Frontmatter.DatePublished)
 
 		fmt.Fprintf(w, `        <li class="doc-item">
-            <h2><a href="/docs/%s">%s</a></h2>
+            <h2><a href="/posts/%s">%s</a></h2>
 `, escapedSlug, escapedTitle)
 
 		if doc.Frontmatter.Description != "" {
@@ -285,12 +285,12 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, `    </ul>
-    <p><a href="/docs/index.jsonld">View as JSON-LD</a></p>
+    <p><a href="/posts/index.jsonld">View as JSON-LD</a></p>
 </body>
 </html>`)
 }
 
-// HandleDoc handles GET /docs/:slug - render a single document
+// HandleDoc handles GET /posts/:slug - render a single document
 func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug string) {
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -372,7 +372,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 	if userName != "" {
 		escapedUserName := html.EscapeString(userName)
 		fmt.Fprintf(w, `
-    <link rel="alternate" type="application/rss+xml" title="%s's Documents" href="%s/u/%s/docs.rss">`,
+    <link rel="alternate" type="application/rss+xml" title="%s's Posts" href="%s/u/%s/posts.rss">`,
 			escapedUserName, ds.baseURL, escapedUserName)
 	}
 
@@ -410,8 +410,8 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 </head>
 <body>
     <div class="nav">
-        <a href="/docs">← Back to Docs</a>
-        <a href="/docs/%s.jsonld">JSON-LD</a>
+        <a href="/posts">← Back to Posts</a>
+        <a href="/posts/%s.jsonld">JSON-LD</a>
     </div>
     <div class="meta">
         Published: %s`, string(jsonldBytes),
@@ -426,8 +426,8 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
     %s
     <div class="footer">
         <div class="footer-menu">
-            <a href="/docs">← All Docs</a>
-            <a href="/docs/%s.jsonld">JSON-LD</a>`, doc.HTML, escapedSlug)
+            <a href="/posts">← All Posts</a>
+            <a href="/posts/%s.jsonld">JSON-LD</a>`, doc.HTML, escapedSlug)
 
 	// Add CID link if available
 	if cached.CID != "" {
@@ -463,7 +463,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
             <p><strong>CID:</strong> <code>%s</code></p>
             <div class="modal-actions">
                 <a href="/o/%s" target="_blank">View JSON-LD</a>
-                <a href="/docs/%s.jsonld" target="_blank">View Document JSON-LD</a>
+                <a href="/posts/%s.jsonld" target="_blank">View Document JSON-LD</a>
             </div>
             <h3>Preview:</h3>
             <pre><code>%s</code></pre>
@@ -524,7 +524,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 </html>`)
 }
 
-// HandleDocJSONLD handles GET /docs/:slug.jsonld - return JSON-LD only
+// HandleDocJSONLD handles GET /posts/:slug.jsonld - return JSON-LD only
 func (ds *DocServer) HandleDocJSONLD(w http.ResponseWriter, r *http.Request, slug string) {
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -570,7 +570,7 @@ func (ds *DocServer) HandleDocJSONLD(w http.ResponseWriter, r *http.Request, slu
 	w.Write(data)
 }
 
-// HandleIndexJSONLD handles GET /docs/index.jsonld - return collection index
+// HandleIndexJSONLD handles GET /posts/index.jsonld - return collection index
 func (ds *DocServer) HandleIndexJSONLD(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -597,21 +597,21 @@ func (ds *DocServer) HandleIndexJSONLD(w http.ResponseWriter, r *http.Request) {
 	w.Write(cached.Data)
 }
 
-// HandleUserRSS handles GET /u/{user}/docs.rss - return RSS feed for user's documents
+// HandleUserRSS handles GET /u/{user}/posts.rss - return RSS feed for user's blog posts
 func (ds *DocServer) HandleUserRSS(w http.ResponseWriter, r *http.Request, userName string) {
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Load all documents
+	// Load all posts
 	docs, err := markdown.ListDocuments(ds.contentDir)
 	if err != nil {
-		http.Error(w, "Failed to load documents", http.StatusInternalServerError)
+		http.Error(w, "Failed to load posts", http.StatusInternalServerError)
 		return
 	}
 
-	// Filter documents by author
+	// Filter posts by author
 	var userDocs []*markdown.Document
 	for _, doc := range docs {
 		// Skip drafts

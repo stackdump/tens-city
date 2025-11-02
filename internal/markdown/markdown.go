@@ -149,8 +149,8 @@ func (d *Document) ToJSONLD(baseURL string) map[string]interface{} {
 
 	// Add URL if we have a slug
 	if fm.Slug != "" && baseURL != "" {
-		jsonld["url"] = fmt.Sprintf("%s/docs/%s", baseURL, fm.Slug)
-		jsonld["@id"] = fmt.Sprintf("%s/docs/%s", baseURL, fm.Slug)
+		jsonld["url"] = fmt.Sprintf("%s/posts/%s", baseURL, fm.Slug)
+		jsonld["@id"] = fmt.Sprintf("%s/posts/%s", baseURL, fm.Slug)
 	}
 
 	if fm.Image != "" {
@@ -261,7 +261,7 @@ func BuildCollectionIndex(docs []*Document, baseURL string) map[string]interface
 			"item": map[string]interface{}{
 				"@type":    "Article",
 				"headline": doc.Frontmatter.Title,
-				"url":      fmt.Sprintf("%s/docs/%s", baseURL, doc.Frontmatter.Slug),
+				"url":      fmt.Sprintf("%s/posts/%s", baseURL, doc.Frontmatter.Slug),
 			},
 		}
 
@@ -279,8 +279,8 @@ func BuildCollectionIndex(docs []*Document, baseURL string) map[string]interface
 	return map[string]interface{}{
 		"@context":        "https://schema.org",
 		"@type":           "CollectionPage",
-		"name":            "Documentation Index",
-		"description":     "Collection of documentation articles",
+		"name":            "Blog Posts Index",
+		"description":     "Collection of blog posts",
 		"dateModified":    now,
 		"numberOfItems":   len(items),
 		"itemListElement": items,

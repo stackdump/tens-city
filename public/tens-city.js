@@ -1201,9 +1201,9 @@ class TensCity extends HTMLElement {
             
             // Check if this looks like a URL field
             if (typeof value === 'string' && (key === 'url' || key === '@id' || key.endsWith('Url'))) {
-                // Check if it's a URL pointing to /docs/
-                if (value.includes('/docs/') && !value.endsWith('.jsonld')) {
-                    const slug = value.split('/docs/').pop().split(/[?#]/)[0];
+                // Check if it's a URL pointing to /posts/
+                if (value.includes('/posts/') && !value.endsWith('.jsonld')) {
+                    const slug = value.split('/posts/').pop().split(/[?#]/)[0];
                     if (slug && !links.includes(slug)) {
                         links.push(slug);
                     }
@@ -1218,12 +1218,12 @@ class TensCity extends HTMLElement {
 
     async _loadDocumentPreview(slug) {
         try {
-            const response = await fetch(`/docs/${slug}.jsonld`);
+            const response = await fetch(`/posts/${slug}.jsonld`);
             if (!response.ok) return null;
 
             const jsonld = await response.json();
             return {
-                url: `/docs/${slug}`,
+                url: `/posts/${slug}`,
                 title: jsonld.headline || jsonld.name || jsonld.title,
                 description: jsonld.description
             };
@@ -1341,9 +1341,9 @@ class TensCity extends HTMLElement {
         });
         menuItems.appendChild(helpItem);
 
-        // Documentation browser menu item
+        // Blog/Posts browser menu item
         const docsItem = document.createElement('button');
-        docsItem.textContent = '📚 Documentation';
+        docsItem.textContent = '📝 Blog';
         this._applyStyles(docsItem, {
             width: '100%',
             padding: '12px 24px',
@@ -1641,7 +1641,7 @@ class TensCity extends HTMLElement {
         });
 
         const docsTitle = document.createElement('h2');
-        docsTitle.textContent = 'Documentation Browser';
+        docsTitle.textContent = 'Blog Posts';
         this._applyStyles(docsTitle, {
             margin: '0',
             fontSize: '24px',
@@ -1694,20 +1694,20 @@ class TensCity extends HTMLElement {
         });
 
         // Show loading state
-        docViewer.innerHTML = '<p style="color: #586069;">Select a document from the tree to view it.</p>';
+        docViewer.innerHTML = '<p style="color: #586069;">Select a post from the list to view it.</p>';
 
         // Load and render file tree
         try {
-            const response = await fetch('/docs/index.jsonld');
+            const response = await fetch('/posts/index.jsonld');
             if (response.ok) {
                 const index = await response.json();
                 this._renderFileTree(fileTree, index, docViewer);
             } else {
-                fileTree.innerHTML = '<p style="color: #999; padding: 8px;">No documentation available</p>';
+                fileTree.innerHTML = '<p style="color: #999; padding: 8px;">No posts available</p>';
             }
         } catch (err) {
-            console.error('Failed to load docs index:', err);
-            fileTree.innerHTML = '<p style="color: #999; padding: 8px;">Failed to load documentation</p>';
+            console.error('Failed to load posts index:', err);
+            fileTree.innerHTML = '<p style="color: #999; padding: 8px;">Failed to load posts</p>';
         }
 
         docsContent.appendChild(fileTree);
@@ -1723,7 +1723,7 @@ class TensCity extends HTMLElement {
 
         // Add title
         const title = document.createElement('h3');
-        title.textContent = 'Documents';
+        title.textContent = 'Posts';
         this._applyStyles(title, {
             margin: '0 0 12px 0',
             fontSize: '14px',
@@ -1738,7 +1738,7 @@ class TensCity extends HTMLElement {
         
         if (items.length === 0) {
             const noDocsMsg = document.createElement('p');
-            noDocsMsg.textContent = 'No documents found';
+            noDocsMsg.textContent = 'No posts found';
             this._applyStyles(noDocsMsg, {
                 color: '#999',
                 fontSize: '13px'
@@ -1762,8 +1762,8 @@ class TensCity extends HTMLElement {
             });
 
             const link = document.createElement('button');
-            link.textContent = `📄 ${item.name || item.item?.name || 'Untitled'}`;
-            link.title = item.description || item.item?.description || '';
+            link.textContent = `📄 ${item.item?.headline || item.item?.name || item.name || 'Untitled'}`;
+            link.title = item.item?.description || item.description || '';
             this._applyStyles(link, {
                 width: '100%',
                 padding: '8px 12px',
@@ -1804,14 +1804,14 @@ class TensCity extends HTMLElement {
         viewer.innerHTML = '<p style="color: #586069;">Loading...</p>';
 
         try {
-            // Extract slug from URL - handle both /docs/slug and full URLs
+            // Extract slug from URL - handle both /posts/slug and full URLs
             let slug = url;
-            if (url.includes('/docs/')) {
-                slug = url.split('/docs/').pop().split(/[?#]/)[0];
+            if (url.includes('/posts/')) {
+                slug = url.split('/posts/').pop().split(/[?#]/)[0];
             }
 
             // Load the HTML version of the document
-            const response = await fetch(`/docs/${slug}`);
+            const response = await fetch(`/posts/${slug}`);
             if (!response.ok) {
                 viewer.innerHTML = '<p style="color: #d73a49;">Failed to load document</p>';
                 return;
@@ -2072,10 +2072,10 @@ class TensCity extends HTMLElement {
                 return;
             }
 
-            console.log('Save: Sending markdown save request to /api/docs/save');
+            console.log('Save: Sending markdown save request to /api/posts/save');
 
-            // Send to /api/docs/save endpoint
-            const response = await fetch('/api/docs/save', {
+            // Send to /api/posts/save endpoint
+            const response = await fetch('/api/posts/save', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2101,7 +2101,7 @@ class TensCity extends HTMLElement {
             console.log('Save: Success! CID:', cid, 'Slug:', slug);
 
             // Show success message
-            alert(`Document saved successfully!\nCID: ${cid}\nSlug: ${slug}\nView at: /docs/${slug}`);
+            alert(`Document saved successfully!\nCID: ${cid}\nSlug: ${slug}\nView at: /posts/${slug}`);
 
         } catch (err) {
             console.error('Save: Exception occurred:', err);
