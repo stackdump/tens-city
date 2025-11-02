@@ -33,15 +33,15 @@ type Storage interface {
 
 // FSStorage implements Storage using filesystem
 type FSStorage struct {
-store *store.FSStore
+	store *store.FSStore
 }
 
 func NewFSStorage(basePath string) *FSStorage {
-return &FSStorage{store: store.NewFSStore(basePath)}
+	return &FSStorage{store: store.NewFSStore(basePath)}
 }
 
 func (fs *FSStorage) GetObject(cid string) ([]byte, error) {
-return fs.store.ReadObject(cid)
+	return fs.store.ReadObject(cid)
 }
 
 func (fs *FSStorage) SaveObject(cid string, raw []byte, canonical []byte) error {
@@ -53,19 +53,19 @@ func (fs *FSStorage) SaveObjectWithAuthor(cid string, raw []byte, canonical []by
 }
 
 func (fs *FSStorage) GetLatest(user, slug string) (string, error) {
-return fs.store.ReadLatest(user, slug)
+	return fs.store.ReadLatest(user, slug)
 }
 
 func (fs *FSStorage) GetHistory(user, slug string) ([]store.HistoryEntry, error) {
-return fs.store.ReadHistory(user, slug)
+	return fs.store.ReadHistory(user, slug)
 }
 
 func (fs *FSStorage) UpdateLatest(user, slug, cid string) error {
-return fs.store.UpdateLatest(user, slug, cid)
+	return fs.store.UpdateLatest(user, slug, cid)
 }
 
 func (fs *FSStorage) AppendHistory(user, slug, cid string) error {
-return fs.store.AppendHistory(user, slug, cid)
+	return fs.store.AppendHistory(user, slug, cid)
 }
 
 func (fs *FSStorage) DeleteObject(cid string) error {
@@ -160,125 +160,123 @@ func validateKeys(doc map[string]interface{}) error {
 	return nil
 }
 
-
-
 type Server struct {
-storage        Storage
-publicFS       fs.FS
-enableCORS     bool
-maxContentSize int64 // Maximum content size in bytes
-docServer      *docserver.DocServer
+	storage        Storage
+	publicFS       fs.FS
+	enableCORS     bool
+	maxContentSize int64 // Maximum content size in bytes
+	docServer      *docserver.DocServer
 }
 
 func NewServer(storage Storage, publicFS fs.FS, enableCORS bool, maxContentSize int64, docServer *docserver.DocServer) *Server {
-return &Server{
-storage:        storage,
-publicFS:       publicFS,
-enableCORS:     enableCORS,
-maxContentSize: maxContentSize,
-docServer:      docServer,
-}
+	return &Server{
+		storage:        storage,
+		publicFS:       publicFS,
+		enableCORS:     enableCORS,
+		maxContentSize: maxContentSize,
+		docServer:      docServer,
+	}
 }
 
 func (s *Server) handleCORS(w http.ResponseWriter, r *http.Request) bool {
-if s.enableCORS {
-w.Header().Set("Access-Control-Allow-Origin", "*")
-w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	if s.enableCORS {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
-if r.Method == "OPTIONS" {
-w.WriteHeader(http.StatusOK)
-return true
-}
-}
-return false
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return true
+		}
+	}
+	return false
 }
 
 // Handler for /o/{cid} - get object by CID
 func (s *Server) handleGetObject(w http.ResponseWriter, r *http.Request) {
-if s.handleCORS(w, r) {
-return
-}
+	if s.handleCORS(w, r) {
+		return
+	}
 
-// Extract CID from path
-parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/o/"), "/")
-if len(parts) == 0 || parts[0] == "" {
-http.Error(w, "CID required", http.StatusBadRequest)
-return
-}
-cid := parts[0]
+	// Extract CID from path
+	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/o/"), "/")
+	if len(parts) == 0 || parts[0] == "" {
+		http.Error(w, "CID required", http.StatusBadRequest)
+		return
+	}
+	cid := parts[0]
 
-data, err := s.storage.GetObject(cid)
-if err != nil {
-if os.IsNotExist(err) {
-http.Error(w, "Object not found", http.StatusNotFound)
-return
-}
-log.Printf("Error getting object %s: %v", cid, err)
-http.Error(w, "Internal server error", http.StatusInternalServerError)
-return
-}
+	data, err := s.storage.GetObject(cid)
+	if err != nil {
+		if os.IsNotExist(err) {
+			http.Error(w, "Object not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("Error getting object %s: %v", cid, err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 
-w.Header().Set("Content-Type", "application/ld+json")
-w.Write(data)
+	w.Header().Set("Content-Type", "application/ld+json")
+	w.Write(data)
 }
 
 // Handler for /u/{user}/g/{slug}/latest - get latest CID
 func (s *Server) handleGetLatest(w http.ResponseWriter, r *http.Request) {
-if s.handleCORS(w, r) {
-return
-}
+	if s.handleCORS(w, r) {
+		return
+	}
 
-parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/u/"), "/")
-if len(parts) < 4 || parts[0] == "" || parts[2] == "" {
-http.Error(w, "Invalid path", http.StatusBadRequest)
-return
-}
-user := parts[0]
-slug := parts[2]
+	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/u/"), "/")
+	if len(parts) < 4 || parts[0] == "" || parts[2] == "" {
+		http.Error(w, "Invalid path", http.StatusBadRequest)
+		return
+	}
+	user := parts[0]
+	slug := parts[2]
 
-cid, err := s.storage.GetLatest(user, slug)
-if err != nil {
-if os.IsNotExist(err) {
-http.Error(w, "Not found", http.StatusNotFound)
-return
-}
-log.Printf("Error getting latest for %s/%s: %v", user, slug, err)
-http.Error(w, "Internal server error", http.StatusInternalServerError)
-return
-}
+	cid, err := s.storage.GetLatest(user, slug)
+	if err != nil {
+		if os.IsNotExist(err) {
+			http.Error(w, "Not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("Error getting latest for %s/%s: %v", user, slug, err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 
-w.Header().Set("Content-Type", "text/plain")
-w.Write([]byte(cid))
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte(cid))
 }
 
 // Handler for /u/{user}/g/{slug}/_history - get history
 func (s *Server) handleGetHistory(w http.ResponseWriter, r *http.Request) {
-if s.handleCORS(w, r) {
-return
-}
+	if s.handleCORS(w, r) {
+		return
+	}
 
-parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/u/"), "/")
-if len(parts) < 4 || parts[0] == "" || parts[2] == "" {
-http.Error(w, "Invalid path", http.StatusBadRequest)
-return
-}
-user := parts[0]
-slug := parts[2]
+	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/u/"), "/")
+	if len(parts) < 4 || parts[0] == "" || parts[2] == "" {
+		http.Error(w, "Invalid path", http.StatusBadRequest)
+		return
+	}
+	user := parts[0]
+	slug := parts[2]
 
-history, err := s.storage.GetHistory(user, slug)
-if err != nil {
-if os.IsNotExist(err) {
-http.Error(w, "Not found", http.StatusNotFound)
-return
-}
-log.Printf("Error getting history for %s/%s: %v", user, slug, err)
-http.Error(w, "Internal server error", http.StatusInternalServerError)
-return
-}
+	history, err := s.storage.GetHistory(user, slug)
+	if err != nil {
+		if os.IsNotExist(err) {
+			http.Error(w, "Not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("Error getting history for %s/%s: %v", user, slug, err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 
-w.Header().Set("Content-Type", "application/json")
-json.NewEncoder(w).Encode(history)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(history)
 }
 
 // Handler for GET /api/ownership/{cid} - check if current user owns the object
@@ -365,7 +363,7 @@ func (s *Server) handleSave(w http.ResponseWriter, r *http.Request) {
 
 	// Limit request body size to prevent abuse
 	r.Body = http.MaxBytesReader(w, r.Body, s.maxContentSize)
-	
+
 	var doc map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&doc); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
@@ -396,7 +394,7 @@ func (s *Server) handleSave(w http.ResponseWriter, r *http.Request) {
 	// Save to storage with author information
 	githubUser := userInfo.UserName
 	githubID := userInfo.GitHubID
-	
+
 	// Don't use email as username fallback since it would create invalid GitHub URLs
 	// The storage layer will handle empty username appropriately
 
@@ -410,8 +408,8 @@ func (s *Server) handleSave(w http.ResponseWriter, r *http.Request) {
 	response := map[string]string{
 		"cid": cid,
 	}
-w.Header().Set("Content-Type", "application/json")
-json.NewEncoder(w).Encode(response)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 // Handler for DELETE /o/{cid} - delete object by CID (author only)
@@ -495,117 +493,117 @@ func (s *Server) handleDeleteObject(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-log.Printf("%s %s", r.Method, r.URL.Path)
+	log.Printf("%s %s", r.Method, r.URL.Path)
 
-// Documentation routes (only if docServer is configured)
-if s.docServer != nil {
-	if r.URL.Path == "/docs" {
-		s.docServer.HandleDocList(w, r)
+	// Documentation routes (only if docServer is configured)
+	if s.docServer != nil {
+		if r.URL.Path == "/docs" {
+			s.docServer.HandleDocList(w, r)
+			return
+		}
+		if r.URL.Path == "/docs/index.jsonld" {
+			s.docServer.HandleIndexJSONLD(w, r)
+			return
+		}
+		if strings.HasPrefix(r.URL.Path, "/docs/") {
+			slug := strings.TrimPrefix(r.URL.Path, "/docs/")
+			// Check for .jsonld extension
+			if strings.HasSuffix(slug, ".jsonld") {
+				slug = strings.TrimSuffix(slug, ".jsonld")
+				s.docServer.HandleDocJSONLD(w, r, slug)
+			} else {
+				s.docServer.HandleDoc(w, r, slug)
+			}
+			return
+		}
+	}
+
+	// API routes
+	if r.URL.Path == "/api/save" {
+		s.handleSave(w, r)
 		return
 	}
-	if r.URL.Path == "/docs/index.jsonld" {
-		s.docServer.HandleIndexJSONLD(w, r)
+	if strings.HasPrefix(r.URL.Path, "/api/ownership/") {
+		s.handleCheckOwnership(w, r)
 		return
 	}
-	if strings.HasPrefix(r.URL.Path, "/docs/") {
-		slug := strings.TrimPrefix(r.URL.Path, "/docs/")
-		// Check for .jsonld extension
-		if strings.HasSuffix(slug, ".jsonld") {
-			slug = strings.TrimSuffix(slug, ".jsonld")
-			s.docServer.HandleDocJSONLD(w, r, slug)
+
+	// Object routes
+	if strings.HasPrefix(r.URL.Path, "/o/") {
+		if r.Method == http.MethodDelete {
+			s.handleDeleteObject(w, r)
 		} else {
-			s.docServer.HandleDoc(w, r, slug)
+			s.handleGetObject(w, r)
 		}
 		return
 	}
-}
 
-// API routes
-if r.URL.Path == "/api/save" {
-s.handleSave(w, r)
-return
-}
-if strings.HasPrefix(r.URL.Path, "/api/ownership/") {
-s.handleCheckOwnership(w, r)
-return
-}
-
-// Object routes
-if strings.HasPrefix(r.URL.Path, "/o/") {
-	if r.Method == http.MethodDelete {
-		s.handleDeleteObject(w, r)
-	} else {
-		s.handleGetObject(w, r)
+	// User routes
+	if strings.HasPrefix(r.URL.Path, "/u/") {
+		if strings.Contains(r.URL.Path, "/latest") {
+			s.handleGetLatest(w, r)
+			return
+		}
+		if strings.Contains(r.URL.Path, "/_history") {
+			s.handleGetHistory(w, r)
+			return
+		}
 	}
-	return
-}
 
-// User routes
-if strings.HasPrefix(r.URL.Path, "/u/") {
-if strings.Contains(r.URL.Path, "/latest") {
-s.handleGetLatest(w, r)
-return
-}
-if strings.Contains(r.URL.Path, "/_history") {
-s.handleGetHistory(w, r)
-return
-}
-}
+	// Serve static files from embedded filesystem
+	if s.publicFS != nil {
+		// For root path, serve index.html
+		if r.URL.Path == "/" {
+			data, err := fs.ReadFile(s.publicFS, "index.html")
+			if err != nil {
+				http.Error(w, "Not found", http.StatusNotFound)
+				return
+			}
+			w.Header().Set("Content-Type", "text/html")
+			w.Write(data)
+			return
+		}
 
-// Serve static files from embedded filesystem
-if s.publicFS != nil {
-// For root path, serve index.html
-if r.URL.Path == "/" {
-data, err := fs.ReadFile(s.publicFS, "index.html")
-if err != nil {
-http.Error(w, "Not found", http.StatusNotFound)
-return
-}
-w.Header().Set("Content-Type", "text/html")
-w.Write(data)
-return
-}
+		// Serve other static files
+		http.FileServer(http.FS(s.publicFS)).ServeHTTP(w, r)
+		return
+	}
 
-// Serve other static files
-http.FileServer(http.FS(s.publicFS)).ServeHTTP(w, r)
-return
-}
-
-http.NotFound(w, r)
+	http.NotFound(w, r)
 }
 
 func main() {
-addr := flag.String("addr", ":8080", "Server address")
-storeDir := flag.String("store", "data", "Filesystem store directory")
-contentDir := flag.String("content", "content/docs", "Content directory for markdown documents")
-baseURL := flag.String("base-url", "http://localhost:8080", "Base URL for the server")
-enableCORS := flag.Bool("cors", true, "Enable CORS headers")
-maxContentMB := flag.Int("max-content-mb", 1, "Maximum content size in megabytes (default: 1MB)")
-flag.Parse()
+	addr := flag.String("addr", ":8080", "Server address")
+	storeDir := flag.String("store", "data", "Filesystem store directory")
+	contentDir := flag.String("content", "content/docs", "Content directory for markdown documents")
+	baseURL := flag.String("base-url", "http://localhost:8080", "Base URL for the server")
+	enableCORS := flag.Bool("cors", true, "Enable CORS headers")
+	maxContentMB := flag.Int("max-content-mb", 1, "Maximum content size in megabytes (default: 1MB)")
+	flag.Parse()
 
-// Convert MB to bytes
-maxContentSize := int64(*maxContentMB) * 1024 * 1024
+	// Convert MB to bytes
+	maxContentSize := int64(*maxContentMB) * 1024 * 1024
 
-log.Printf("Using filesystem storage: %s", *storeDir)
-log.Printf("Content directory: %s", *contentDir)
-log.Printf("Base URL: %s", *baseURL)
-log.Printf("Maximum content size: %d MB (%d bytes)", *maxContentMB, maxContentSize)
-storage := NewFSStorage(*storeDir)
+	log.Printf("Using filesystem storage: %s", *storeDir)
+	log.Printf("Content directory: %s", *contentDir)
+	log.Printf("Base URL: %s", *baseURL)
+	log.Printf("Maximum content size: %d MB (%d bytes)", *maxContentMB, maxContentSize)
+	storage := NewFSStorage(*storeDir)
 
-// Get the embedded public filesystem
-publicSubFS, err := static.Public()
-if err != nil {
-log.Fatalf("Failed to access embedded public files: %v", err)
-}
+	// Get the embedded public filesystem
+	publicSubFS, err := static.Public()
+	if err != nil {
+		log.Fatalf("Failed to access embedded public files: %v", err)
+	}
 
-// Create document server
-docServer := docserver.NewDocServer(*contentDir, *baseURL)
+	// Create document server
+	docServer := docserver.NewDocServer(*contentDir, *baseURL)
 
-server := NewServer(storage, publicSubFS, *enableCORS, maxContentSize, docServer)
+	server := NewServer(storage, publicSubFS, *enableCORS, maxContentSize, docServer)
 
-log.Printf("Starting server on %s", *addr)
-log.Println("Using embedded public files")
-if err := http.ListenAndServe(*addr, server); err != nil {
-log.Fatalf("Server failed: %v", err)
-}
+	log.Printf("Starting server on %s", *addr)
+	log.Println("Using embedded public files")
+	if err := http.ListenAndServe(*addr, server); err != nil {
+		log.Fatalf("Server failed: %v", err)
+	}
 }

@@ -226,16 +226,16 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 		escapedTitle := html.EscapeString(doc.Frontmatter.Title)
 		escapedDescription := html.EscapeString(doc.Frontmatter.Description)
 		escapedDate := html.EscapeString(doc.Frontmatter.DatePublished)
-		
+
 		fmt.Fprintf(w, `        <li class="doc-item">
             <h2><a href="/docs/%s">%s</a></h2>
 `, escapedSlug, escapedTitle)
-		
+
 		if doc.Frontmatter.Description != "" {
 			fmt.Fprintf(w, `            <p class="doc-description">%s</p>
 `, escapedDescription)
 		}
-		
+
 		fmt.Fprintf(w, `            <div class="doc-meta">Published: %s</div>
         </li>
 `, escapedDate)
@@ -343,8 +343,8 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
     </div>
     <div class="meta">
         Published: %s
-`, escapedLang, escapedTitle, string(jsonldBytes), 
-   escapedSlug, escapedDatePublished)
+`, escapedLang, escapedTitle, string(jsonldBytes),
+		escapedSlug, escapedDatePublished)
 
 	if doc.Frontmatter.DateModified != "" {
 		fmt.Fprintf(w, ` | Modified: %s`, escapedDateModified)

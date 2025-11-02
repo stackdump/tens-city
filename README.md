@@ -122,10 +122,45 @@ Generate or import Ethereum keystore files for signing.
 ./keygen -out my-key.keystore -pass mypassword
 ```
 
-## 5. Quick Start
+## 5. Development with Makefile
+
+The project includes a Makefile to streamline common development tasks:
+
+```bash
+# Build all binaries
+make build
+
+# Run tests
+make test
+
+# Format, vet, test, and build (full dev workflow)
+make dev
+
+# Clean build artifacts
+make clean
+
+# See all available targets
+make help
+```
+
+**Common Makefile targets:**
+- `make build` - Build all binaries (seal, keygen, webserver)
+- `make test` - Run all tests
+- `make fmt` - Format Go code
+- `make vet` - Run go vet
+- `make check` - Format, vet, and test
+- `make clean` - Clean build artifacts
+- `make run-webserver` - Build and run webserver
+- `make run-seal` - Build and run seal with example
+
+## 6. Quick Start
 
 1. Build the tools:
    ```bash
+   # Using Makefile (recommended)
+   make build
+   
+   # Or manually with Go
    go build -o seal ./cmd/seal
    go build -o webserver ./cmd/webserver
    ```

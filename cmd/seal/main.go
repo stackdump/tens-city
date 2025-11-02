@@ -23,12 +23,12 @@ func main() {
 	user := flag.String("user", "", "optional user login (for updating /u/{login}/g/{slug}/latest)")
 	gist := flag.String("gist", "", "optional gist slug (used with --user to update latest and history)")
 	pretty := flag.Bool("pretty", false, "write canonicalized normalized n-quads to a human-readable file alongside the object")
-	
+
 	// Ethereum signing flags
 	keystore := flag.String("keystore", "", "path to Ethereum keystore file (encrypted JSON)")
 	privkey := flag.String("privkey", "", "hex-encoded private key (less secure, for testing only)")
 	usePersonalSign := flag.Bool("personal-sign", true, "use personal_sign (EIP-191) for signing (default true)")
-	
+
 	flag.Parse()
 
 	var data []byte
@@ -182,7 +182,7 @@ func signCanonicalBytes(canonicalBytes []byte, keystorePath, privkeyHex string, 
 // Falls back to regular input if terminal is not available.
 func readPassphrase(prompt string) (string, error) {
 	fmt.Print(prompt)
-	
+
 	// Try to read from terminal without echo
 	if terminal.IsTerminal(int(syscall.Stdin)) {
 		passBytes, err := terminal.ReadPassword(int(syscall.Stdin))
@@ -192,7 +192,7 @@ func readPassphrase(prompt string) (string, error) {
 		}
 		return strings.TrimSpace(string(passBytes)), nil
 	}
-	
+
 	// Fallback to regular input for non-terminal (e.g., piped input)
 	reader := bufio.NewReader(os.Stdin)
 	pass, err := reader.ReadString('\n')

@@ -75,7 +75,7 @@ func TestHandleDeleteObject(t *testing.T) {
 			}
 
 			req := httptest.NewRequest("DELETE", "/o/"+tt.cid, nil)
-			
+
 			// Add authentication header if user info is provided
 			if tt.userID != "" {
 				token := createTestToken(tt.userID, "test@example.com", tt.userName, tt.githubID)
@@ -143,13 +143,13 @@ func TestGetObjectAuthor(t *testing.T) {
 	storage := NewFSStorage(tmpDir)
 
 	tests := []struct {
-		name           string
-		cid            string
-		saveUser       string
-		saveID         string
-		expectedUser   string
-		expectedID     string
-		expectError    bool
+		name         string
+		cid          string
+		saveUser     string
+		saveID       string
+		expectedUser string
+		expectedID   string
+		expectError  bool
 	}{
 		{
 			name:         "Object with full author info",
@@ -229,7 +229,7 @@ func TestDeleteObject(t *testing.T) {
 	cid := "test-delete-store"
 	testData := []byte(`{"@context":"test","name":"test"}`)
 	canonical := []byte(`canonical data`)
-	
+
 	if err := storage.SaveObject(cid, testData, canonical); err != nil {
 		t.Fatalf("Failed to save object: %v", err)
 	}
@@ -310,7 +310,7 @@ func TestSaveWithValidation(t *testing.T) {
 			body, _ := json.Marshal(tt.doc)
 			req := httptest.NewRequest("POST", "/api/save", bytes.NewReader(body))
 			req.Header.Set("Content-Type", "application/json")
-			
+
 			// Add authentication
 			token := createTestToken("user123", "test@example.com", "testuser", "12345")
 			req.Header.Set("Authorization", "Bearer "+token)
@@ -339,7 +339,7 @@ func TestContentSizeLimit(t *testing.T) {
 		"@context": "http://schema.org",
 		"@type":    "Person",
 	}
-	
+
 	// Add a large string to exceed 1KB
 	largeString := make([]byte, 2000)
 	for i := range largeString {
@@ -350,7 +350,7 @@ func TestContentSizeLimit(t *testing.T) {
 	body, _ := json.Marshal(largeDoc)
 	req := httptest.NewRequest("POST", "/api/save", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
-	
+
 	// Add authentication
 	token := createTestToken("user123", "test@example.com", "testuser", "12345")
 	req.Header.Set("Authorization", "Bearer "+token)

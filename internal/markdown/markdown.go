@@ -72,7 +72,7 @@ func ParseDocumentFromBytes(content []byte, filePath string) (*Document, error) 
 	}
 
 	markdownContent := string(matches[2])
-	
+
 	// Render markdown to HTML
 	var buf bytes.Buffer
 	md := goldmark.New(
@@ -122,11 +122,11 @@ func generateSlug(filename string) string {
 // ToJSONLD converts frontmatter to schema.org JSON-LD
 func (d *Document) ToJSONLD(baseURL string) map[string]interface{} {
 	fm := d.Frontmatter
-	
+
 	jsonld := map[string]interface{}{
-		"@context": "https://schema.org",
-		"@type":    "Article",
-		"headline": fm.Title,
+		"@context":   "https://schema.org",
+		"@type":      "Article",
+		"headline":   fm.Title,
 		"inLanguage": fm.Lang,
 	}
 
@@ -194,7 +194,7 @@ func normalizeAuthor(author interface{}) interface{} {
 // normalizePersonOrOrg converts a person/org map to schema.org format
 func normalizePersonOrOrg(m map[string]interface{}) map[string]interface{} {
 	person := make(map[string]interface{})
-	
+
 	// Determine type
 	personType := "Person"
 	if t, ok := m["type"].(string); ok && t == "Organization" {
@@ -247,7 +247,7 @@ func ListDocuments(contentDir string) ([]*Document, error) {
 // BuildCollectionIndex creates a schema.org CollectionPage index
 func BuildCollectionIndex(docs []*Document, baseURL string) map[string]interface{} {
 	now := time.Now().Format(time.RFC3339)
-	
+
 	items := make([]interface{}, 0)
 	for _, doc := range docs {
 		// Skip drafts in the public index
@@ -277,12 +277,12 @@ func BuildCollectionIndex(docs []*Document, baseURL string) map[string]interface
 	}
 
 	return map[string]interface{}{
-		"@context":         "https://schema.org",
-		"@type":            "CollectionPage",
-		"name":             "Documentation Index",
-		"description":      "Collection of documentation articles",
-		"dateModified":     now,
-		"numberOfItems":    len(items),
+		"@context":        "https://schema.org",
+		"@type":           "CollectionPage",
+		"name":            "Documentation Index",
+		"description":     "Collection of documentation articles",
+		"dateModified":    now,
+		"numberOfItems":   len(items),
 		"itemListElement": items,
 	}
 }
@@ -301,12 +301,12 @@ func ValidateFrontmatter(fm Frontmatter) error {
 	if fm.Lang == "" {
 		return fmt.Errorf("lang is required")
 	}
-	
+
 	// Validate date format
 	if _, err := time.Parse(time.RFC3339, fm.DatePublished); err != nil {
 		return fmt.Errorf("datePublished must be in RFC3339 format: %w", err)
 	}
-	
+
 	if fm.DateModified != "" {
 		if _, err := time.Parse(time.RFC3339, fm.DateModified); err != nil {
 			return fmt.Errorf("dateModified must be in RFC3339 format: %w", err)
