@@ -635,14 +635,75 @@ class TensCity extends HTMLElement {
             display: 'flex',
             flexDirection: 'column',
             padding: '24px',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            gap: '12px'
         });
 
+        // Document preview panel (initially hidden)
+        const previewPanel = document.createElement('div');
+        previewPanel.className = 'tc-doc-preview-panel';
+        previewPanel.id = 'tc-doc-preview-panel';
+        this._applyStyles(previewPanel, {
+            display: 'none',
+            background: '#fff',
+            borderRadius: '6px',
+            border: '1px solid #e1e4e8',
+            maxHeight: '300px',
+            overflow: 'hidden',
+            flexDirection: 'column',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        });
+
+        const previewHeader = document.createElement('div');
+        this._applyStyles(previewHeader, {
+            padding: '8px 16px',
+            background: '#f5f5f5',
+            borderBottom: '1px solid #e1e4e8',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontWeight: '600',
+            fontSize: '14px'
+        });
+
+        const previewTitle = document.createElement('span');
+        previewTitle.textContent = 'Linked Documents';
+        previewHeader.appendChild(previewTitle);
+
+        const closePreviewBtn = document.createElement('button');
+        closePreviewBtn.textContent = '×';
+        this._applyStyles(closePreviewBtn, {
+            background: 'transparent',
+            border: 'none',
+            fontSize: '24px',
+            cursor: 'pointer',
+            padding: '0',
+            lineHeight: '1',
+            color: '#586069'
+        });
+        closePreviewBtn.addEventListener('click', () => {
+            previewPanel.style.display = 'none';
+        });
+        previewHeader.appendChild(closePreviewBtn);
+
+        previewPanel.appendChild(previewHeader);
+
+        const previewContent = document.createElement('div');
+        previewContent.id = 'tc-doc-preview-content';
+        this._applyStyles(previewContent, {
+            padding: '16px',
+            overflowY: 'auto',
+            flex: '1'
+        });
+        previewPanel.appendChild(previewContent);
+
+        editorContainer.appendChild(previewPanel);
+
+        // Editor wrapper
         const editorWrapper = document.createElement('div');
         editorWrapper.className = 'tc-editor-wrapper';
         this._applyStyles(editorWrapper, {
-            width: '100%',
-            height: '100%',
+            flex: '1',
             background: '#fff',
             borderRadius: '6px',
             border: '1px solid #e1e4e8',
@@ -917,6 +978,7 @@ class TensCity extends HTMLElement {
         editor.session.on('change', () => {
             this._updateScriptTag();
             this._updatePermalinkAnchor();
+            this._detectAndShowDocumentLinks();
         });
 
         this._aceEditor = editor;
@@ -936,6 +998,139 @@ class TensCity extends HTMLElement {
             s.onerror = (e) => reject(e);
             document.head.appendChild(s);
         });
+    }
+
+    async _detectAndShowDocumentLinks() {
+        // Only detect links in JSON-LD mode
+        if (this._editorMode !== 'jsonld' || !this._aceEditor) return;
+
+        const previewPanel = document.getElementById('tc-doc-preview-panel');
+        const previewContent = document.getElementById('tc-doc-preview-content');
+        
+        if (!previewPanel || !previewContent) return;
+
+        try {
+            const editorContent = this._aceEditor.session.getValue();
+            const data = JSON.parse(editorContent);
+
+            // Extract URLs that might be links to our hosted documents
+            const docLinks = this._extractDocumentLinks(data);
+
+            if (docLinks.length === 0) {
+                previewPanel.style.display = 'none';
+                return;
+            }
+
+            // Show preview panel
+            previewPanel.style.display = 'flex';
+
+            // Load and display previews for each linked document
+            previewContent.innerHTML = '<p style="color: #999; margin: 0;">Loading previews...</p>';
+
+            const previews = await Promise.all(
+                docLinks.map(link => this._loadDocumentPreview(link))
+            );
+
+            // Display previews
+            previewContent.innerHTML = '';
+            previews.forEach((preview, idx) => {
+                if (preview) {
+                    const previewItem = document.createElement('div');
+                    this._applyStyles(previewItem, {
+                        marginBottom: idx < previews.length - 1 ? '16px' : '0',
+                        paddingBottom: idx < previews.length - 1 ? '16px' : '0',
+                        borderBottom: idx < previews.length - 1 ? '1px solid #e1e4e8' : 'none'
+                    });
+
+                    const title = document.createElement('h4');
+                    this._applyStyles(title, {
+                        margin: '0 0 8px 0',
+                        fontSize: '14px',
+                        fontWeight: '600'
+                    });
+
+                    const link = document.createElement('a');
+                    link.href = preview.url;
+                    link.target = '_blank';
+                    link.textContent = preview.title || preview.url;
+                    this._applyStyles(link, {
+                        color: '#0066cc',
+                        textDecoration: 'none'
+                    });
+                    link.addEventListener('mouseenter', () => {
+                        link.style.textDecoration = 'underline';
+                    });
+                    link.addEventListener('mouseleave', () => {
+                        link.style.textDecoration = 'none';
+                    });
+                    title.appendChild(link);
+                    previewItem.appendChild(title);
+
+                    if (preview.description) {
+                        const desc = document.createElement('p');
+                        desc.textContent = preview.description;
+                        this._applyStyles(desc, {
+                            margin: '0',
+                            fontSize: '13px',
+                            color: '#586069',
+                            lineHeight: '1.5'
+                        });
+                        previewItem.appendChild(desc);
+                    }
+
+                    previewContent.appendChild(previewItem);
+                }
+            });
+
+            if (previewContent.innerHTML === '') {
+                previewContent.innerHTML = '<p style="color: #999; margin: 0;">No previews available.</p>';
+            }
+
+        } catch (err) {
+            // Invalid JSON or other error - hide preview panel
+            previewPanel.style.display = 'none';
+        }
+    }
+
+    _extractDocumentLinks(obj, links = []) {
+        // Recursively extract URLs that might point to our hosted documents
+        if (typeof obj !== 'object' || obj === null) return links;
+
+        for (const key in obj) {
+            const value = obj[key];
+            
+            // Check if this looks like a URL field
+            if (typeof value === 'string' && (key === 'url' || key === '@id' || key.endsWith('Url'))) {
+                // Check if it's a URL pointing to /docs/
+                if (value.includes('/docs/') && !value.endsWith('.jsonld')) {
+                    const slug = value.split('/docs/').pop().split(/[?#]/)[0];
+                    if (slug && !links.includes(slug)) {
+                        links.push(slug);
+                    }
+                }
+            } else if (typeof value === 'object') {
+                this._extractDocumentLinks(value, links);
+            }
+        }
+
+        return links;
+    }
+
+    async _loadDocumentPreview(slug) {
+        try {
+            const response = await fetch(`/docs/${slug}.jsonld`);
+            if (!response.ok) return null;
+
+            const jsonld = await response.json();
+            return {
+                url: `/docs/${slug}`,
+                title: jsonld.headline || jsonld.name || jsonld.title,
+                description: jsonld.description
+            };
+        } catch (err) {
+            console.error(`Failed to load preview for ${slug}:`, err);
+            return null;
+        }
     }
 
     _toggleMenu() {
