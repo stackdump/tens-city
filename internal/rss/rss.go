@@ -36,7 +36,7 @@ type Item struct {
 	GUID        string `xml:"guid"`
 }
 
-// GenerateUserFeed generates an RSS feed for a user's documents
+// GenerateUserFeed generates an RSS feed for a user's blog posts
 func GenerateUserFeed(docs []*markdown.Document, userName, baseURL string) ([]byte, error) {
 	// Filter and sort documents by publication date (newest first)
 	var validDocs []*markdown.Document
@@ -73,9 +73,9 @@ func GenerateUserFeed(docs []*markdown.Document, userName, baseURL string) ([]by
 
 	// Build RSS feed
 	channel := &Channel{
-		Title:       fmt.Sprintf("%s's Documents - Tens City", html.EscapeString(userName)),
+		Title:       fmt.Sprintf("%s's Blog Posts - Tens City", html.EscapeString(userName)),
 		Link:        fmt.Sprintf("%s/u/%s", baseURL, userName),
-		Description: fmt.Sprintf("Latest documents from %s", html.EscapeString(userName)),
+		Description: fmt.Sprintf("Latest blog posts from %s", html.EscapeString(userName)),
 		Language:    "en",
 	}
 

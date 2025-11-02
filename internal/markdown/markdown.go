@@ -279,8 +279,8 @@ func BuildCollectionIndex(docs []*Document, baseURL string) map[string]interface
 	return map[string]interface{}{
 		"@context":        "https://schema.org",
 		"@type":           "CollectionPage",
-		"name":            "Documentation Index",
-		"description":     "Collection of documentation articles",
+		"name":            "Blog Posts Index",
+		"description":     "Collection of blog posts",
 		"dateModified":    now,
 		"numberOfItems":   len(items),
 		"itemListElement": items,

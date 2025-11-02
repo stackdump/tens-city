@@ -218,7 +218,7 @@ func (ds *DocServer) loadIndex() (*CachedIndex, error) {
 	return cached, nil
 }
 
-// HandleDocList handles GET /docs - list all documents
+// HandleDocList handles GET /docs - list all posts
 func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -227,7 +227,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 
 	docs, err := markdown.ListDocuments(ds.contentDir)
 	if err != nil {
-		http.Error(w, "Failed to load documents", http.StatusInternalServerError)
+		http.Error(w, "Failed to load posts", http.StatusInternalServerError)
 		return
 	}
 
@@ -246,7 +246,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Documentation - Tens City</title>
+    <title>Blog Posts - Tens City</title>
     <style>
         body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; }
         h1 { color: #333; }
@@ -260,7 +260,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
     </style>
 </head>
 <body>
-    <h1>Documentation</h1>
+    <h1>Blog Posts</h1>
     <ul class="doc-list">
 `)
 
@@ -372,7 +372,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 	if userName != "" {
 		escapedUserName := html.EscapeString(userName)
 		fmt.Fprintf(w, `
-    <link rel="alternate" type="application/rss+xml" title="%s's Documents" href="%s/u/%s/docs.rss">`,
+    <link rel="alternate" type="application/rss+xml" title="%s's Posts" href="%s/u/%s/docs.rss">`,
 			escapedUserName, ds.baseURL, escapedUserName)
 	}
 
@@ -410,7 +410,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 </head>
 <body>
     <div class="nav">
-        <a href="/docs">← Back to Docs</a>
+        <a href="/docs">← Back to Posts</a>
         <a href="/docs/%s.jsonld">JSON-LD</a>
     </div>
     <div class="meta">
@@ -426,7 +426,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
     %s
     <div class="footer">
         <div class="footer-menu">
-            <a href="/docs">← All Docs</a>
+            <a href="/docs">← All Posts</a>
             <a href="/docs/%s.jsonld">JSON-LD</a>`, doc.HTML, escapedSlug)
 
 	// Add CID link if available
@@ -597,21 +597,21 @@ func (ds *DocServer) HandleIndexJSONLD(w http.ResponseWriter, r *http.Request) {
 	w.Write(cached.Data)
 }
 
-// HandleUserRSS handles GET /u/{user}/docs.rss - return RSS feed for user's documents
+// HandleUserRSS handles GET /u/{user}/docs.rss - return RSS feed for user's blog posts
 func (ds *DocServer) HandleUserRSS(w http.ResponseWriter, r *http.Request, userName string) {
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Load all documents
+	// Load all posts
 	docs, err := markdown.ListDocuments(ds.contentDir)
 	if err != nil {
-		http.Error(w, "Failed to load documents", http.StatusInternalServerError)
+		http.Error(w, "Failed to load posts", http.StatusInternalServerError)
 		return
 	}
 
-	// Filter documents by author
+	// Filter posts by author
 	var userDocs []*markdown.Document
 	for _, doc := range docs {
 		// Skip drafts

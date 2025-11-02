@@ -1341,9 +1341,9 @@ class TensCity extends HTMLElement {
         });
         menuItems.appendChild(helpItem);
 
-        // Documentation browser menu item
+        // Blog/Posts browser menu item
         const docsItem = document.createElement('button');
-        docsItem.textContent = '📚 Documentation';
+        docsItem.textContent = '📝 Blog';
         this._applyStyles(docsItem, {
             width: '100%',
             padding: '12px 24px',
@@ -1641,7 +1641,7 @@ class TensCity extends HTMLElement {
         });
 
         const docsTitle = document.createElement('h2');
-        docsTitle.textContent = 'Documentation Browser';
+        docsTitle.textContent = 'Blog Posts';
         this._applyStyles(docsTitle, {
             margin: '0',
             fontSize: '24px',
@@ -1694,7 +1694,7 @@ class TensCity extends HTMLElement {
         });
 
         // Show loading state
-        docViewer.innerHTML = '<p style="color: #586069;">Select a document from the tree to view it.</p>';
+        docViewer.innerHTML = '<p style="color: #586069;">Select a post from the list to view it.</p>';
 
         // Load and render file tree
         try {
@@ -1703,11 +1703,11 @@ class TensCity extends HTMLElement {
                 const index = await response.json();
                 this._renderFileTree(fileTree, index, docViewer);
             } else {
-                fileTree.innerHTML = '<p style="color: #999; padding: 8px;">No documentation available</p>';
+                fileTree.innerHTML = '<p style="color: #999; padding: 8px;">No posts available</p>';
             }
         } catch (err) {
-            console.error('Failed to load docs index:', err);
-            fileTree.innerHTML = '<p style="color: #999; padding: 8px;">Failed to load documentation</p>';
+            console.error('Failed to load posts index:', err);
+            fileTree.innerHTML = '<p style="color: #999; padding: 8px;">Failed to load posts</p>';
         }
 
         docsContent.appendChild(fileTree);
@@ -1723,7 +1723,7 @@ class TensCity extends HTMLElement {
 
         // Add title
         const title = document.createElement('h3');
-        title.textContent = 'Documents';
+        title.textContent = 'Posts';
         this._applyStyles(title, {
             margin: '0 0 12px 0',
             fontSize: '14px',
@@ -1738,7 +1738,7 @@ class TensCity extends HTMLElement {
         
         if (items.length === 0) {
             const noDocsMsg = document.createElement('p');
-            noDocsMsg.textContent = 'No documents found';
+            noDocsMsg.textContent = 'No posts found';
             this._applyStyles(noDocsMsg, {
                 color: '#999',
                 fontSize: '13px'
@@ -1762,8 +1762,8 @@ class TensCity extends HTMLElement {
             });
 
             const link = document.createElement('button');
-            link.textContent = `📄 ${item.name || item.item?.name || 'Untitled'}`;
-            link.title = item.description || item.item?.description || '';
+            link.textContent = `📄 ${item.item?.headline || item.item?.name || item.name || 'Untitled'}`;
+            link.title = item.item?.description || item.description || '';
             this._applyStyles(link, {
                 width: '100%',
                 padding: '8px 12px',
