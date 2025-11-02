@@ -18,6 +18,7 @@ func TestHandleSaveMarkdown(t *testing.T) {
 	tmpDir := t.TempDir()
 	storage := NewFSStorage(tmpDir)
 	server := NewServer(storage, nil, false, 1024*1024, nil)
+	server.baseURL = "http://localhost:8080" // Set base URL for tests
 
 	// Set JWT secret for testing
 	os.Setenv("SUPABASE_JWT_SECRET", "test-secret-key-for-testing-only")

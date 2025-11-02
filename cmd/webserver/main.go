@@ -166,6 +166,7 @@ type Server struct {
 	enableCORS     bool
 	maxContentSize int64 // Maximum content size in bytes
 	docServer      *docserver.DocServer
+	baseURL        string // Base URL for the server
 }
 
 func NewServer(storage Storage, publicFS fs.FS, enableCORS bool, maxContentSize int64, docServer *docserver.DocServer) *Server {
@@ -175,6 +176,7 @@ func NewServer(storage Storage, publicFS fs.FS, enableCORS bool, maxContentSize 
 		enableCORS:     enableCORS,
 		maxContentSize: maxContentSize,
 		docServer:      docServer,
+		baseURL:        "http://localhost:8080", // default
 	}
 }
 
@@ -558,8 +560,8 @@ func (s *Server) handleSaveMarkdown(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Add URL based on slug
-	jsonld["url"] = fmt.Sprintf("%s/docs/%s", r.Host, req.Slug)
+	// Add URL based on slug using configured base URL
+	jsonld["url"] = fmt.Sprintf("%s/docs/%s", s.baseURL, req.Slug)
 
 	// Serialize to JSON using canonical encoding
 	raw, err := canonical.MarshalJSON(jsonld)
@@ -707,6 +709,7 @@ func main() {
 	docServer := docserver.NewDocServerWithStorage(*contentDir, *baseURL, storage)
 
 	server := NewServer(storage, publicSubFS, *enableCORS, maxContentSize, docServer)
+	server.baseURL = *baseURL // Set the base URL from command line flag
 
 	log.Printf("Starting server on %s", *addr)
 	log.Println("Using embedded public files")
