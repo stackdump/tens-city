@@ -1,4 +1,3 @@
-```markdown
 # Sealing pipeline (tens.city) — implementation notes
 
 What this delivers
@@ -67,4 +66,3 @@ Security & determinism
 Limitations
 - The simple FSStore is not production-grade (no concurrency locks, no atomic updates). Replace with a transactional DB or object store for production.
 - Signature verification is available programmatically but not yet exposed via CLI. Add a verify command if needed.
-```
