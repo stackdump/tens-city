@@ -53,5 +53,3 @@ Objects are tied to their creators:
 - Only the author can delete an object
 - Author information is publicly visible in the object metadata
 - GitHub ID provides stronger verification than username alone
-
-For implementation details, see [authentication.md](../docs/authentication.md).
