@@ -176,7 +176,7 @@ func NewServer(storage Storage, publicFS fs.FS, enableCORS bool, maxContentSize 
 		enableCORS:     enableCORS,
 		maxContentSize: maxContentSize,
 		docServer:      docServer,
-		baseURL:        "http://localhost:8080", // default
+		baseURL:        "", // Will be set from command line flag
 	}
 }
 
@@ -561,6 +561,7 @@ func (s *Server) handleSaveMarkdown(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Add URL based on slug using configured base URL
+	// Note: slug should be URL-safe as it's validated elsewhere
 	jsonld["url"] = fmt.Sprintf("%s/docs/%s", s.baseURL, req.Slug)
 
 	// Serialize to JSON using canonical encoding
