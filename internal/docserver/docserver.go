@@ -352,7 +352,6 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 	escapedLang := html.EscapeString(doc.Frontmatter.Lang)
 	escapedDatePublished := html.EscapeString(doc.Frontmatter.DatePublished)
 	escapedDateModified := html.EscapeString(doc.Frontmatter.DateModified)
-	escapedJSONLD := html.EscapeString(string(jsonldBytes))
 
 	// Extract author URL from frontmatter for edit link comparison
 	authorURL := extractAuthorURL(doc.Frontmatter.Author)
@@ -431,7 +430,6 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 
 	// Add CID link if available
 	if cached.CID != "" {
-		escapedCID := html.EscapeString(cached.CID)
 		cidShort := ""
 		if len(cached.CID) > 8 {
 			cidShort = cached.CID[len(cached.CID)-8:]
@@ -441,8 +439,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 		escapedCIDShort := html.EscapeString(cidShort)
 
 		fmt.Fprintf(w, `
-            <a href="#" class="cid-link" onclick="showCIDModal(); return false;">CID: ...%s</a>
-            <a href="/o/%s">Full Object</a>`, escapedCIDShort, escapedCID)
+            <a href="#" class="cid-link" onclick="showCIDModal(); return false;">CID: ...%s</a>`, escapedCIDShort)
 	}
 
 	// Add edit link (will be shown/hidden by JavaScript based on authorship)
@@ -459,16 +456,13 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
     <div id="cidModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeCIDModal()">&times;</span>
-            <h2>JSON-LD Document</h2>
+            <h2>Content Identifier (CID)</h2>
             <p><strong>CID:</strong> <code>%s</code></p>
-            <div class="modal-actions">
-                <a href="/o/%s" target="_blank">View JSON-LD</a>
-                <a href="/posts/%s.jsonld" target="_blank">View Document JSON-LD</a>
-            </div>
-            <h3>Preview:</h3>
-            <pre><code>%s</code></pre>
+            <p style="margin-top: 1rem; color: #666; font-size: 0.9rem;">
+                This is the cryptographic hash that uniquely identifies this document's content.
+            </p>
         </div>
-    </div>`, escapedCID, escapedCID, escapedSlug, escapedJSONLD)
+    </div>`, escapedCID)
 	}
 
 	fmt.Fprintf(w, `
