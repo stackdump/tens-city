@@ -672,6 +672,16 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// User routes
 	if strings.HasPrefix(r.URL.Path, "/u/") {
+		// Check for RSS feed request
+		if strings.HasSuffix(r.URL.Path, "/docs.rss") && s.docServer != nil {
+			// Extract username from /u/{user}/docs.rss
+			parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/u/"), "/")
+			if len(parts) >= 1 && parts[0] != "" {
+				userName := parts[0]
+				s.docServer.HandleUserRSS(w, r, userName)
+				return
+			}
+		}
 		if strings.Contains(r.URL.Path, "/latest") {
 			s.handleGetLatest(w, r)
 			return
