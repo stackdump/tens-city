@@ -130,7 +130,7 @@ func (ds *DocServer) loadDocument(slug string) (*CachedDoc, error) {
 	var docCID string
 	if ds.storage != nil {
 		jsonld := doc.ToJSONLD(ds.baseURL)
-		
+
 		// Serialize to JSON using canonical encoding
 		raw, err := canonical.MarshalJSON(jsonld)
 		if err != nil {
