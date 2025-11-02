@@ -478,7 +478,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
             if (event.target == modal) {
                 closeCIDModal();
             }
-        }
+        };
 
         // Check if user is authenticated and is the author
         (function() {
