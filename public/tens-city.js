@@ -1345,10 +1345,10 @@ class TensCity extends HTMLElement {
         });
         menuItems.appendChild(helpItem);
 
-        // Blog/Posts browser menu item
-        const docsItem = document.createElement('button');
-        docsItem.textContent = '📝 Blog';
-        this._applyStyles(docsItem, {
+        // Latest Posts menu item
+        const postsItem = document.createElement('button');
+        postsItem.textContent = '📰 Latest Posts';
+        this._applyStyles(postsItem, {
             width: '100%',
             padding: '12px 24px',
             background: 'transparent',
@@ -1358,17 +1358,17 @@ class TensCity extends HTMLElement {
             cursor: 'pointer',
             transition: 'background 0.2s'
         });
-        docsItem.addEventListener('mouseenter', () => {
-            docsItem.style.background = '#f6f8fa';
+        postsItem.addEventListener('mouseenter', () => {
+            postsItem.style.background = '#f6f8fa';
         });
-        docsItem.addEventListener('mouseleave', () => {
-            docsItem.style.background = 'transparent';
+        postsItem.addEventListener('mouseleave', () => {
+            postsItem.style.background = 'transparent';
         });
-        docsItem.addEventListener('click', () => {
+        postsItem.addEventListener('click', () => {
             this._toggleMenu();
-            this._showDocsBrowser();
+            this._showLatestPosts();
         });
-        menuItems.appendChild(docsItem);
+        menuItems.appendChild(postsItem);
 
         // GitHub repository link
         const githubItem = document.createElement('a');
@@ -1860,6 +1860,227 @@ class TensCity extends HTMLElement {
 
     _hideDocsBrowser() {
         const overlay = this._root.querySelector('.tc-docs-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
+    }
+
+    async _showLatestPosts() {
+        // Create overlay for modal
+        const overlay = document.createElement('div');
+        overlay.className = 'tc-posts-overlay';
+        this._applyStyles(overlay, {
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            width: '100%',
+            height: '100%',
+            background: 'rgba(0, 0, 0, 0.5)',
+            zIndex: '1000',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '24px'
+        });
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                this._hideLatestPosts();
+            }
+        });
+
+        // Create modal panel
+        const postsPanel = document.createElement('div');
+        postsPanel.className = 'tc-posts-panel';
+        this._applyStyles(postsPanel, {
+            background: '#fff',
+            maxWidth: '800px',
+            width: '100%',
+            maxHeight: '90vh',
+            borderRadius: '8px',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+        });
+
+        // Header
+        const postsHeader = document.createElement('div');
+        this._applyStyles(postsHeader, {
+            padding: '20px 24px',
+            borderBottom: '1px solid #e1e4e8',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+        });
+
+        const postsTitle = document.createElement('h2');
+        postsTitle.textContent = 'Latest Posts';
+        this._applyStyles(postsTitle, {
+            margin: '0',
+            fontSize: '24px',
+            fontWeight: 'bold'
+        });
+        postsHeader.appendChild(postsTitle);
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '×';
+        this._applyStyles(closeBtn, {
+            background: 'transparent',
+            border: 'none',
+            fontSize: '32px',
+            cursor: 'pointer',
+            padding: '0',
+            lineHeight: '1',
+            color: '#586069'
+        });
+        closeBtn.addEventListener('click', () => this._hideLatestPosts());
+        postsHeader.appendChild(closeBtn);
+
+        postsPanel.appendChild(postsHeader);
+
+        // Content area
+        const postsContent = document.createElement('div');
+        postsContent.className = 'tc-posts-content';
+        this._applyStyles(postsContent, {
+            flex: '1',
+            overflowY: 'auto',
+            padding: '24px'
+        });
+
+        // Show loading state
+        postsContent.innerHTML = '<p style="color: #586069;">Loading latest posts...</p>';
+
+        // Load and render posts
+        try {
+            const response = await fetch('/posts/index.jsonld');
+            if (response.ok) {
+                const index = await response.json();
+                this._renderLatestPosts(postsContent, index);
+            } else {
+                postsContent.innerHTML = '<p style="color: #999;">No posts available</p>';
+            }
+        } catch (err) {
+            console.error('Failed to load posts index:', err);
+            postsContent.innerHTML = '<p style="color: #d73a49;">Failed to load posts</p>';
+        }
+
+        postsPanel.appendChild(postsContent);
+        overlay.appendChild(postsPanel);
+        this._root.appendChild(overlay);
+    }
+
+    _renderLatestPosts(container, index) {
+        // Clear container
+        container.innerHTML = '';
+
+        // Get posts from index
+        const items = index.itemListElement || [];
+        
+        if (items.length === 0) {
+            container.innerHTML = '<p style="color: #999;">No posts found</p>';
+            return;
+        }
+
+        // Create card-based layout for posts
+        items.forEach((item, idx) => {
+            const post = item.item || item;
+            const postCard = document.createElement('div');
+            this._applyStyles(postCard, {
+                marginBottom: idx < items.length - 1 ? '16px' : '0',
+                padding: '20px',
+                background: '#f6f8fa',
+                borderRadius: '6px',
+                border: '1px solid #e1e4e8',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+            });
+
+            postCard.addEventListener('mouseenter', () => {
+                postCard.style.background = '#e1e4e8';
+                postCard.style.transform = 'translateY(-2px)';
+                postCard.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+            });
+            postCard.addEventListener('mouseleave', () => {
+                postCard.style.background = '#f6f8fa';
+                postCard.style.transform = 'translateY(0)';
+                postCard.style.boxShadow = 'none';
+            });
+
+            const title = document.createElement('h3');
+            title.textContent = post.headline || post.name || 'Untitled';
+            this._applyStyles(title, {
+                margin: '0 0 8px 0',
+                fontSize: '18px',
+                fontWeight: '600',
+                color: '#24292e'
+            });
+            postCard.appendChild(title);
+
+            if (post.description) {
+                const desc = document.createElement('p');
+                desc.textContent = post.description;
+                this._applyStyles(desc, {
+                    margin: '0 0 12px 0',
+                    fontSize: '14px',
+                    color: '#586069',
+                    lineHeight: '1.5'
+                });
+                postCard.appendChild(desc);
+            }
+
+            // Add date if available
+            if (post.datePublished) {
+                const date = document.createElement('div');
+                const dateObj = new Date(post.datePublished);
+                date.textContent = `📅 ${dateObj.toLocaleDateString()}`;
+                this._applyStyles(date, {
+                    fontSize: '12px',
+                    color: '#6a737d',
+                    marginBottom: '8px'
+                });
+                postCard.appendChild(date);
+            }
+
+            // Add "Read more" link
+            const readMore = document.createElement('a');
+            const url = item.url || post.url || post['@id'];
+            if (url) {
+                // Extract slug from URL
+                let slug = url;
+                if (url.includes('/posts/')) {
+                    slug = url.split('/posts/').pop().split(/[?#]/)[0];
+                }
+                readMore.href = `/posts/${slug}`;
+                readMore.target = '_blank';
+                readMore.textContent = 'Read more →';
+                this._applyStyles(readMore, {
+                    fontSize: '14px',
+                    color: '#0366d6',
+                    textDecoration: 'none',
+                    fontWeight: '500'
+                });
+                readMore.addEventListener('mouseenter', () => {
+                    readMore.style.textDecoration = 'underline';
+                });
+                readMore.addEventListener('mouseleave', () => {
+                    readMore.style.textDecoration = 'none';
+                });
+                postCard.appendChild(readMore);
+
+                // Make the whole card clickable
+                postCard.addEventListener('click', (e) => {
+                    if (e.target !== readMore) {
+                        window.open(`/posts/${slug}`, '_blank');
+                    }
+                });
+            }
+
+            container.appendChild(postCard);
+        });
+    }
+
+    _hideLatestPosts() {
+        const overlay = this._root.querySelector('.tc-posts-overlay');
         if (overlay) {
             overlay.remove();
         }
