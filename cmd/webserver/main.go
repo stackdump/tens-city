@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
@@ -548,9 +549,30 @@ func (s *Server) handleSaveMarkdown(w http.ResponseWriter, r *http.Request) {
 		"@type":    "Article",
 	}
 
-	// Merge frontmatter into JSON-LD
+	// Merge frontmatter into JSON-LD, but exclude author field
+	// (it will be enforced server-side from the authenticated user)
 	for k, v := range req.Frontmatter {
-		jsonld[k] = v
+		if k != "author" {
+			jsonld[k] = v
+		}
+	}
+
+	// Enforce author field from authenticated user (server-side only)
+	// This prevents users from setting arbitrary author information
+	author := map[string]interface{}{
+		"@type": "Person",
+	}
+	if userInfo.UserName != "" {
+		author["name"] = userInfo.UserName
+		// URL-encode the username to prevent URL injection
+		author["url"] = fmt.Sprintf("https://github.com/%s", url.PathEscape(userInfo.UserName))
+	}
+	if userInfo.GitHubID != "" {
+		author["id"] = fmt.Sprintf("github:%s", userInfo.GitHubID)
+	}
+	// Only set author if we have at least username or GitHub ID
+	if userInfo.UserName != "" || userInfo.GitHubID != "" {
+		jsonld["author"] = author
 	}
 
 	// Ensure we have required fields

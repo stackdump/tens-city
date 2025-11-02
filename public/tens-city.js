@@ -914,8 +914,8 @@ class TensCity extends HTMLElement {
         form.appendChild(createField('Slug', 'fm-slug', 'text', false, 'url-friendly-slug'));
         form.appendChild(createField('Date Published', 'fm-datePublished', 'datetime-local', true));
         form.appendChild(createField('Date Modified', 'fm-dateModified', 'datetime-local', false));
-        form.appendChild(createField('Author Name', 'fm-author-name', 'text', true, 'Author name'));
-        form.appendChild(createField('Author URL', 'fm-author-url', 'url', false, 'https://example.com'));
+
+        // Note: Author fields removed - author is automatically set server-side from authenticated user
 
         // Set default date
         const now = new Date().toISOString().slice(0, 16);
@@ -1491,8 +1491,6 @@ class TensCity extends HTMLElement {
                 form.querySelector('#fm-title').value = '';
                 form.querySelector('#fm-description').value = '';
                 form.querySelector('#fm-slug').value = '';
-                form.querySelector('#fm-author-name').value = '';
-                form.querySelector('#fm-author-url').value = '';
                 const now = new Date().toISOString().slice(0, 16);
                 form.querySelector('#fm-datePublished').value = now;
                 form.querySelector('#fm-dateModified').value = '';
@@ -1668,29 +1666,22 @@ class TensCity extends HTMLElement {
             const slug = form.querySelector('#fm-slug').value;
             const datePublished = form.querySelector('#fm-datePublished').value;
             const dateModified = form.querySelector('#fm-dateModified').value;
-            const authorName = form.querySelector('#fm-author-name').value;
-            const authorUrl = form.querySelector('#fm-author-url').value;
 
-            // Validate required fields
-            if (!title || !datePublished || !authorName || !slug) {
-                alert('Please fill in all required fields (Title, Date Published, Author Name, Slug)');
+            // Validate required fields (author is no longer required from client)
+            if (!title || !datePublished || !slug) {
+                alert('Please fill in all required fields (Title, Date Published, Slug)');
                 return;
             }
 
-            // Build frontmatter
+            // Build frontmatter (author will be set server-side from authenticated user)
             const frontmatter = {
                 title: title,
                 datePublished: new Date(datePublished).toISOString(),
-                author: {
-                    name: authorName,
-                    type: 'Person'
-                },
                 lang: 'en'
             };
 
             if (description) frontmatter.description = description;
             if (dateModified) frontmatter.dateModified = new Date(dateModified).toISOString();
-            if (authorUrl) frontmatter.author.url = authorUrl;
 
             const markdown = this._markdownEditor.value;
 
