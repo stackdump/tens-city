@@ -360,9 +360,17 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 	// Extract username for RSS feed link
 	userName := ""
 	if authorURL != "" && strings.Contains(authorURL, "github.com/") {
+		// Extract just the username from GitHub URL
+		// Expected format: https://github.com/username or https://github.com/username/
 		parts := strings.Split(authorURL, "github.com/")
 		if len(parts) > 1 {
-			userName = strings.TrimSuffix(parts[1], "/")
+			userPath := strings.TrimPrefix(parts[1], "/")
+			userPath = strings.TrimSuffix(userPath, "/")
+			// Extract just the username (first path segment)
+			pathParts := strings.Split(userPath, "/")
+			if len(pathParts) > 0 && pathParts[0] != "" {
+				userName = pathParts[0]
+			}
 		}
 	}
 
@@ -500,7 +508,8 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
             const authorURL = editLink.getAttribute('data-author-url');
             if (!authorURL) return;
 
-            // Get user info from localStorage (set by the main app)
+            // Get user info from localStorage (set by the Supabase web client in public/tens-city.js)
+            // The key format is 'sb-{project-ref}-auth-token' from Supabase client configuration
             const userStr = localStorage.getItem('sb-gquccmagslcoytktmcfa-auth-token');
             if (!userStr) return;
 
@@ -626,8 +635,19 @@ func (ds *DocServer) HandleUserRSS(w http.ResponseWriter, r *http.Request, userN
 
 		// Check if the author matches the requested user
 		authorURL := extractAuthorURL(doc.Frontmatter.Author)
-		if authorURL != "" && strings.Contains(authorURL, "github.com/"+userName) {
-			userDocs = append(userDocs, doc)
+		if authorURL != "" {
+			// Extract username from author URL for exact matching
+			if strings.Contains(authorURL, "github.com/") {
+				parts := strings.Split(authorURL, "github.com/")
+				if len(parts) > 1 {
+					userPath := strings.TrimPrefix(parts[1], "/")
+					userPath = strings.TrimSuffix(userPath, "/")
+					pathParts := strings.Split(userPath, "/")
+					if len(pathParts) > 0 && pathParts[0] == userName {
+						userDocs = append(userDocs, doc)
+					}
+				}
+			}
 		}
 	}
 
