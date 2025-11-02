@@ -1345,10 +1345,10 @@ class TensCity extends HTMLElement {
         });
         menuItems.appendChild(helpItem);
 
-        // Documentation browser menu item
-        const docsItem = document.createElement('button');
-        docsItem.textContent = '📚 Documentation';
-        this._applyStyles(docsItem, {
+        // Latest Posts menu item
+        const postsItem = document.createElement('button');
+        postsItem.textContent = '📰 Latest Posts';
+        this._applyStyles(postsItem, {
             width: '100%',
             padding: '12px 24px',
             background: 'transparent',
@@ -1358,17 +1358,17 @@ class TensCity extends HTMLElement {
             cursor: 'pointer',
             transition: 'background 0.2s'
         });
-        docsItem.addEventListener('mouseenter', () => {
-            docsItem.style.background = '#f6f8fa';
+        postsItem.addEventListener('mouseenter', () => {
+            postsItem.style.background = '#f6f8fa';
         });
-        docsItem.addEventListener('mouseleave', () => {
-            docsItem.style.background = 'transparent';
+        postsItem.addEventListener('mouseleave', () => {
+            postsItem.style.background = 'transparent';
         });
-        docsItem.addEventListener('click', () => {
+        postsItem.addEventListener('click', () => {
             this._toggleMenu();
-            this._showDocsBrowser();
+            this._showLatestPosts();
         });
-        menuItems.appendChild(docsItem);
+        menuItems.appendChild(postsItem);
 
         // GitHub repository link
         const githubItem = document.createElement('a');
@@ -1596,10 +1596,10 @@ class TensCity extends HTMLElement {
         }
     }
 
-    async _showDocsBrowser() {
-        // Create docs browser overlay
+    async _showLatestPosts() {
+        // Create overlay for modal
         const overlay = document.createElement('div');
-        overlay.className = 'tc-docs-overlay';
+        overlay.className = 'tc-posts-overlay';
         this._applyStyles(overlay, {
             position: 'fixed',
             top: '0',
@@ -1615,16 +1615,16 @@ class TensCity extends HTMLElement {
         });
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
-                this._hideDocsBrowser();
+                this._hideLatestPosts();
             }
         });
 
-        // Create docs browser panel
-        const docsPanel = document.createElement('div');
-        docsPanel.className = 'tc-docs-panel';
-        this._applyStyles(docsPanel, {
+        // Create modal panel
+        const postsPanel = document.createElement('div');
+        postsPanel.className = 'tc-posts-panel';
+        this._applyStyles(postsPanel, {
             background: '#fff',
-            maxWidth: '900px',
+            maxWidth: '800px',
             width: '100%',
             maxHeight: '90vh',
             borderRadius: '8px',
@@ -1634,9 +1634,9 @@ class TensCity extends HTMLElement {
             overflow: 'hidden'
         });
 
-        // Docs header
-        const docsHeader = document.createElement('div');
-        this._applyStyles(docsHeader, {
+        // Header
+        const postsHeader = document.createElement('div');
+        this._applyStyles(postsHeader, {
             padding: '20px 24px',
             borderBottom: '1px solid #e1e4e8',
             display: 'flex',
@@ -1644,14 +1644,14 @@ class TensCity extends HTMLElement {
             alignItems: 'center'
         });
 
-        const docsTitle = document.createElement('h2');
-        docsTitle.textContent = 'Documentation Browser';
-        this._applyStyles(docsTitle, {
+        const postsTitle = document.createElement('h2');
+        postsTitle.textContent = 'Latest Posts';
+        this._applyStyles(postsTitle, {
             margin: '0',
             fontSize: '24px',
             fontWeight: 'bold'
         });
-        docsHeader.appendChild(docsTitle);
+        postsHeader.appendChild(postsTitle);
 
         const closeBtn = document.createElement('button');
         closeBtn.textContent = '×';
@@ -1664,198 +1664,154 @@ class TensCity extends HTMLElement {
             lineHeight: '1',
             color: '#586069'
         });
-        closeBtn.addEventListener('click', () => this._hideDocsBrowser());
-        docsHeader.appendChild(closeBtn);
+        closeBtn.addEventListener('click', () => this._hideLatestPosts());
+        postsHeader.appendChild(closeBtn);
 
-        docsPanel.appendChild(docsHeader);
+        postsPanel.appendChild(postsHeader);
 
-        // Docs content area with file tree and viewer
-        const docsContent = document.createElement('div');
-        this._applyStyles(docsContent, {
-            display: 'flex',
-            flex: '1',
-            overflow: 'hidden'
-        });
-
-        // File tree sidebar
-        const fileTree = document.createElement('div');
-        fileTree.className = 'tc-docs-filetree';
-        this._applyStyles(fileTree, {
-            flex: '0 0 250px',
-            background: '#f6f8fa',
-            borderRight: '1px solid #e1e4e8',
-            overflowY: 'auto',
-            padding: '16px'
-        });
-
-        // Document viewer
-        const docViewer = document.createElement('div');
-        docViewer.className = 'tc-docs-viewer';
-        this._applyStyles(docViewer, {
+        // Content area
+        const postsContent = document.createElement('div');
+        postsContent.className = 'tc-posts-content';
+        this._applyStyles(postsContent, {
             flex: '1',
             overflowY: 'auto',
             padding: '24px'
         });
 
         // Show loading state
-        docViewer.innerHTML = '<p style="color: #586069;">Select a document from the tree to view it.</p>';
+        postsContent.innerHTML = '<p style="color: #586069;">Loading latest posts...</p>';
 
-        // Load and render file tree
+        // Load and render posts
         try {
-            const response = await fetch('/docs/index.jsonld');
+            const response = await fetch('/posts/index.jsonld');
             if (response.ok) {
                 const index = await response.json();
-                this._renderFileTree(fileTree, index, docViewer);
+                this._renderLatestPosts(postsContent, index);
             } else {
-                fileTree.innerHTML = '<p style="color: #999; padding: 8px;">No documentation available</p>';
+                postsContent.innerHTML = '<p style="color: #999;">No posts available</p>';
             }
         } catch (err) {
-            console.error('Failed to load docs index:', err);
-            fileTree.innerHTML = '<p style="color: #999; padding: 8px;">Failed to load documentation</p>';
+            console.error('Failed to load posts index:', err);
+            postsContent.innerHTML = '<p style="color: #d73a49;">Failed to load posts</p>';
         }
 
-        docsContent.appendChild(fileTree);
-        docsContent.appendChild(docViewer);
-        docsPanel.appendChild(docsContent);
-        overlay.appendChild(docsPanel);
+        postsPanel.appendChild(postsContent);
+        overlay.appendChild(postsPanel);
         this._root.appendChild(overlay);
     }
 
-    _renderFileTree(container, index, viewer) {
+    _renderLatestPosts(container, index) {
         // Clear container
         container.innerHTML = '';
 
-        // Add title
-        const title = document.createElement('h3');
-        title.textContent = 'Documents';
-        this._applyStyles(title, {
-            margin: '0 0 12px 0',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            textTransform: 'uppercase',
-            color: '#586069'
-        });
-        container.appendChild(title);
-
-        // Check if index has itemListElement (schema.org ItemList structure)
+        // Get posts from index
         const items = index.itemListElement || [];
         
         if (items.length === 0) {
-            const noDocsMsg = document.createElement('p');
-            noDocsMsg.textContent = 'No documents found';
-            this._applyStyles(noDocsMsg, {
-                color: '#999',
-                fontSize: '13px'
-            });
-            container.appendChild(noDocsMsg);
+            container.innerHTML = '<p style="color: #999;">No posts found</p>';
             return;
         }
 
-        // Create file tree list
-        const list = document.createElement('ul');
-        this._applyStyles(list, {
-            listStyle: 'none',
-            padding: '0',
-            margin: '0'
-        });
-
-        items.forEach(item => {
-            const listItem = document.createElement('li');
-            this._applyStyles(listItem, {
-                marginBottom: '4px'
-            });
-
-            const link = document.createElement('button');
-            link.textContent = `📄 ${item.name || item.item?.name || 'Untitled'}`;
-            link.title = item.description || item.item?.description || '';
-            this._applyStyles(link, {
-                width: '100%',
-                padding: '8px 12px',
-                background: 'transparent',
-                border: 'none',
-                borderRadius: '4px',
-                textAlign: 'left',
-                fontSize: '13px',
+        // Create card-based layout for posts
+        items.forEach((item, idx) => {
+            const post = item.item || item;
+            const postCard = document.createElement('div');
+            this._applyStyles(postCard, {
+                marginBottom: idx < items.length - 1 ? '16px' : '0',
+                padding: '20px',
+                background: '#f6f8fa',
+                borderRadius: '6px',
+                border: '1px solid #e1e4e8',
                 cursor: 'pointer',
-                transition: 'background 0.2s',
+                transition: 'all 0.2s'
+            });
+
+            postCard.addEventListener('mouseenter', () => {
+                postCard.style.background = '#e1e4e8';
+                postCard.style.transform = 'translateY(-2px)';
+                postCard.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+            });
+            postCard.addEventListener('mouseleave', () => {
+                postCard.style.background = '#f6f8fa';
+                postCard.style.transform = 'translateY(0)';
+                postCard.style.boxShadow = 'none';
+            });
+
+            const title = document.createElement('h3');
+            title.textContent = post.headline || post.name || 'Untitled';
+            this._applyStyles(title, {
+                margin: '0 0 8px 0',
+                fontSize: '18px',
+                fontWeight: '600',
                 color: '#24292e'
             });
-            
-            link.addEventListener('mouseenter', () => {
-                link.style.background = '#fff';
-            });
-            link.addEventListener('mouseleave', () => {
-                link.style.background = 'transparent';
-            });
-            
-            link.addEventListener('click', async () => {
-                // Get the URL from the item
-                const url = item.url || item.item?.url || item['@id'];
-                if (url) {
-                    await this._loadDocInViewer(viewer, url);
+            postCard.appendChild(title);
+
+            if (post.description) {
+                const desc = document.createElement('p');
+                desc.textContent = post.description;
+                this._applyStyles(desc, {
+                    margin: '0 0 12px 0',
+                    fontSize: '14px',
+                    color: '#586069',
+                    lineHeight: '1.5'
+                });
+                postCard.appendChild(desc);
+            }
+
+            // Add date if available
+            if (post.datePublished) {
+                const date = document.createElement('div');
+                const dateObj = new Date(post.datePublished);
+                date.textContent = `📅 ${dateObj.toLocaleDateString()}`;
+                this._applyStyles(date, {
+                    fontSize: '12px',
+                    color: '#6a737d',
+                    marginBottom: '8px'
+                });
+                postCard.appendChild(date);
+            }
+
+            // Add "Read more" link
+            const readMore = document.createElement('a');
+            const url = item.url || post.url || post['@id'];
+            if (url) {
+                // Extract slug from URL
+                let slug = url;
+                if (url.includes('/posts/')) {
+                    slug = url.split('/posts/').pop().split(/[?#]/)[0];
                 }
-            });
+                readMore.href = `/posts/${slug}`;
+                readMore.target = '_blank';
+                readMore.textContent = 'Read more →';
+                this._applyStyles(readMore, {
+                    fontSize: '14px',
+                    color: '#0366d6',
+                    textDecoration: 'none',
+                    fontWeight: '500'
+                });
+                readMore.addEventListener('mouseenter', () => {
+                    readMore.style.textDecoration = 'underline';
+                });
+                readMore.addEventListener('mouseleave', () => {
+                    readMore.style.textDecoration = 'none';
+                });
+                postCard.appendChild(readMore);
 
-            listItem.appendChild(link);
-            list.appendChild(listItem);
+                // Make the whole card clickable
+                postCard.addEventListener('click', (e) => {
+                    if (e.target !== readMore) {
+                        window.open(`/posts/${slug}`, '_blank');
+                    }
+                });
+            }
+
+            container.appendChild(postCard);
         });
-
-        container.appendChild(list);
     }
 
-    async _loadDocInViewer(viewer, url) {
-        // Show loading state
-        viewer.innerHTML = '<p style="color: #586069;">Loading...</p>';
-
-        try {
-            // Extract slug from URL - handle both /docs/slug and full URLs
-            let slug = url;
-            if (url.includes('/docs/')) {
-                slug = url.split('/docs/').pop().split(/[?#]/)[0];
-            }
-
-            // Load the HTML version of the document
-            const response = await fetch(`/docs/${slug}`);
-            if (!response.ok) {
-                viewer.innerHTML = '<p style="color: #d73a49;">Failed to load document</p>';
-                return;
-            }
-
-            const html = await response.text();
-            
-            // Create a container for the rendered content
-            const contentDiv = document.createElement('div');
-            this._applyStyles(contentDiv, {
-                lineHeight: '1.6',
-                color: '#24292e'
-            });
-
-            // Parse the HTML and extract the main content
-            // Note: HTML is pre-sanitized by the server using bluemonday library
-            // DOMParser provides additional isolation from direct innerHTML assignment
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            
-            // Look for the main content (typically in a main, article, or body tag)
-            const mainContent = doc.querySelector('main') || doc.querySelector('article') || doc.querySelector('body');
-            
-            if (mainContent) {
-                // Clone the sanitized content from our own documentation server
-                contentDiv.innerHTML = mainContent.innerHTML;
-            } else {
-                contentDiv.innerHTML = html;
-            }
-
-            viewer.innerHTML = '';
-            viewer.appendChild(contentDiv);
-        } catch (err) {
-            console.error('Failed to load document:', err);
-            viewer.innerHTML = '<p style="color: #d73a49;">Error loading document</p>';
-        }
-    }
-
-    _hideDocsBrowser() {
-        const overlay = this._root.querySelector('.tc-docs-overlay');
+    _hideLatestPosts() {
+        const overlay = this._root.querySelector('.tc-posts-overlay');
         if (overlay) {
             overlay.remove();
         }
