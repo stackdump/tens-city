@@ -15,6 +15,7 @@ import (
 
 	"github.com/stackdump/tens-city/internal/canonical"
 	"github.com/stackdump/tens-city/internal/markdown"
+	"github.com/stackdump/tens-city/internal/rss"
 	"github.com/stackdump/tens-city/internal/seal"
 )
 
@@ -353,13 +354,35 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 	escapedDateModified := html.EscapeString(doc.Frontmatter.DateModified)
 	escapedJSONLD := html.EscapeString(string(jsonldBytes))
 
+	// Extract author URL from frontmatter for edit link comparison
+	authorURL := extractAuthorURL(doc.Frontmatter.Author)
+
+	// Extract username for RSS feed link
+	userName := ""
+	if authorURL != "" && strings.Contains(authorURL, "github.com/") {
+		parts := strings.Split(authorURL, "github.com/")
+		if len(parts) > 1 {
+			userName = strings.TrimSuffix(parts[1], "/")
+		}
+	}
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	fmt.Fprintf(w, `<!DOCTYPE html>
 <html lang="%s">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>%s - Tens City</title>
+    <title>%s - Tens City</title>`, escapedLang, escapedTitle)
+
+	// Add RSS autodiscovery link if we have a username
+	if userName != "" {
+		escapedUserName := html.EscapeString(userName)
+		fmt.Fprintf(w, `
+    <link rel="alternate" type="application/rss+xml" title="%s's Documents" href="%s/u/%s/docs.rss">`,
+			escapedUserName, ds.baseURL, escapedUserName)
+	}
+
+	fmt.Fprintf(w, `
     <script type="application/ld+json">
     %s
     </script>
@@ -374,6 +397,11 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
         .nav a { margin-right: 1rem; }
         .meta { color: #666; font-size: 0.9rem; margin-bottom: 2rem; }
         .footer { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e0e0e0; color: #666; font-size: 0.85rem; }
+        .footer-menu { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 1rem; }
+        .footer-menu a { color: #0066cc; text-decoration: none; }
+        .footer-menu a:hover { text-decoration: underline; }
+        .footer-edit { display: none; }
+        .footer-edit.visible { display: inline; }
         .cid-link { color: #0066cc; text-decoration: none; font-family: monospace; }
         .cid-link:hover { text-decoration: underline; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%%; height: 100%%; overflow: auto; background-color: rgba(0,0,0,0.4); }
@@ -392,8 +420,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
         <a href="/docs/%s.jsonld">JSON-LD</a>
     </div>
     <div class="meta">
-        Published: %s
-`, escapedLang, escapedTitle, string(jsonldBytes),
+        Published: %s`, string(jsonldBytes),
 		escapedSlug, escapedDatePublished)
 
 	if doc.Frontmatter.DateModified != "" {
@@ -402,9 +429,13 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 
 	fmt.Fprintf(w, `
     </div>
-    %s`, doc.HTML)
+    %s
+    <div class="footer">
+        <div class="footer-menu">
+            <a href="/docs">← All Docs</a>
+            <a href="/docs/%s.jsonld">JSON-LD</a>`, doc.HTML, escapedSlug)
 
-	// Add footer with CID link if available
+	// Add CID link if available
 	if cached.CID != "" {
 		escapedCID := html.EscapeString(cached.CID)
 		cidShort := ""
@@ -416,10 +447,21 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 		escapedCIDShort := html.EscapeString(cidShort)
 
 		fmt.Fprintf(w, `
-    <div class="footer">
-        JSON-LD CID: <a href="#" class="cid-link" onclick="showCIDModal(); return false;">...%s</a>
-        <a href="/o/%s" style="margin-left: 0.5rem;">→ Full document</a>
-    </div>
+            <a href="#" class="cid-link" onclick="showCIDModal(); return false;">CID: ...%s</a>
+            <a href="/o/%s">Full Object</a>`, escapedCIDShort, escapedCID)
+	}
+
+	// Add edit link (will be shown/hidden by JavaScript based on authorship)
+	escapedAuthorURL := html.EscapeString(authorURL)
+	fmt.Fprintf(w, `
+            <a href="#" class="footer-edit" id="editLink" data-author-url="%s">✏️ Edit</a>
+        </div>
+    </div>`, escapedAuthorURL)
+
+	// Add CID modal if available
+	if cached.CID != "" {
+		escapedCID := html.EscapeString(cached.CID)
+		fmt.Fprintf(w, `
     <div id="cidModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeCIDModal()">&times;</span>
@@ -432,7 +474,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
             <h3>Preview:</h3>
             <pre><code>%s</code></pre>
         </div>
-    </div>`, escapedCIDShort, escapedCID, escapedCID, escapedCID, escapedSlug, escapedJSONLD)
+    </div>`, escapedCID, escapedCID, escapedSlug, escapedJSONLD)
 	}
 
 	fmt.Fprintf(w, `
@@ -449,6 +491,39 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
                 closeCIDModal();
             }
         }
+
+        // Check if user is authenticated and is the author
+        (function() {
+            const editLink = document.getElementById('editLink');
+            if (!editLink) return;
+            
+            const authorURL = editLink.getAttribute('data-author-url');
+            if (!authorURL) return;
+
+            // Get user info from localStorage (set by the main app)
+            const userStr = localStorage.getItem('sb-gquccmagslcoytktmcfa-auth-token');
+            if (!userStr) return;
+
+            try {
+                const authData = JSON.parse(userStr);
+                if (!authData || !authData.user) return;
+
+                const user = authData.user;
+                const userMetadata = user.user_metadata || {};
+                const userName = userMetadata.user_name || '';
+                
+                // Check if the user's GitHub URL matches the author URL
+                if (userName && authorURL.includes('github.com/' + userName)) {
+                    editLink.classList.add('visible');
+                    // For now, edit link redirects to GitHub (can be customized later)
+                    editLink.href = authorURL;
+                    editLink.target = '_blank';
+                    editLink.title = 'Edit on GitHub';
+                }
+            } catch (e) {
+                console.error('Failed to parse user auth data:', e);
+            }
+        })();
     </script>
 </body>
 </html>`)
@@ -527,8 +602,68 @@ func (ds *DocServer) HandleIndexJSONLD(w http.ResponseWriter, r *http.Request) {
 	w.Write(cached.Data)
 }
 
+// HandleUserRSS handles GET /u/{user}/docs.rss - return RSS feed for user's documents
+func (ds *DocServer) HandleUserRSS(w http.ResponseWriter, r *http.Request, userName string) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Load all documents
+	docs, err := markdown.ListDocuments(ds.contentDir)
+	if err != nil {
+		http.Error(w, "Failed to load documents", http.StatusInternalServerError)
+		return
+	}
+
+	// Filter documents by author
+	var userDocs []*markdown.Document
+	for _, doc := range docs {
+		// Skip drafts
+		if doc.Frontmatter.Draft {
+			continue
+		}
+
+		// Check if the author matches the requested user
+		authorURL := extractAuthorURL(doc.Frontmatter.Author)
+		if authorURL != "" && strings.Contains(authorURL, "github.com/"+userName) {
+			userDocs = append(userDocs, doc)
+		}
+	}
+
+	// Generate RSS feed
+	feedData, err := rss.GenerateUserFeed(userDocs, userName, ds.baseURL)
+	if err != nil {
+		http.Error(w, "Failed to generate RSS feed", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/rss+xml; charset=utf-8")
+	w.Write(feedData)
+}
+
 // generateETag generates an ETag from content
 func generateETag(content string) string {
 	hash := md5.Sum([]byte(content))
 	return fmt.Sprintf(`"%x"`, hash)
+}
+
+// extractAuthorURL extracts the author's URL from frontmatter
+func extractAuthorURL(author interface{}) string {
+	switch a := author.(type) {
+	case map[string]interface{}:
+		if url, ok := a["url"].(string); ok {
+			return url
+		}
+	case []interface{}:
+		// For multiple authors, return the first author's URL
+		if len(a) > 0 {
+			if m, ok := a[0].(map[string]interface{}); ok {
+				if url, ok := m["url"].(string); ok {
+					return url
+				}
+			}
+		}
+	}
+	return ""
 }
