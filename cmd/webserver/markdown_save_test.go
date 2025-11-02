@@ -272,7 +272,7 @@ func TestHandleSaveMarkdown(t *testing.T) {
 		authorIdentifier, hasIdentifier := author["identifier"].(string)
 		authorURL, hasURL := author["url"].(string)
 		expectedURL := "https://github.com/authenticateduser"
-		
+
 		if hasIdentifier && authorIdentifier != expectedURL {
 			t.Errorf("Expected author identifier to be '%s', got %v", expectedURL, authorIdentifier)
 		} else if hasURL && authorURL != expectedURL {

@@ -50,7 +50,7 @@ func GenerateUserFeed(docs []*markdown.Document, userName, baseURL string) ([]by
 	sort.Slice(validDocs, func(i, j int) bool {
 		dateI, errI := time.Parse(time.RFC3339, validDocs[i].Frontmatter.DatePublished)
 		dateJ, errJ := time.Parse(time.RFC3339, validDocs[j].Frontmatter.DatePublished)
-		
+
 		// Handle parse errors: put invalid dates at the end
 		if errI != nil && errJ != nil {
 			return false // Both invalid, maintain original order
@@ -61,7 +61,7 @@ func GenerateUserFeed(docs []*markdown.Document, userName, baseURL string) ([]by
 		if errJ != nil {
 			return true // j is invalid, put i before it
 		}
-		
+
 		return dateI.After(dateJ)
 	})
 

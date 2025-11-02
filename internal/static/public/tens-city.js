@@ -2317,24 +2317,23 @@ class TensCity extends HTMLElement {
                 const url = new URL(window.location.origin + window.location.pathname);
                 url.searchParams.set('data', encodeURIComponent(canonical));
                 
-                // Update anchor href
+                // Update anchor href and clear any custom title
                 this._permalinkAnchor.href = url.toString();
+                this._permalinkAnchor.title = 'Link to current data';
                 console.log('Permalink: Updated permalink anchor with current editor content');
             } catch (err) {
                 // If JSON is invalid, set href to # to prevent navigation
                 this._permalinkAnchor.href = '#';
+                this._permalinkAnchor.title = 'Fix JSON errors to enable permalink';
                 console.log('Permalink: Invalid JSON, permalink disabled');
             }
         } else {
-            // Markdown mode: link to saved CID or post slug if available
+            // Markdown mode: link to saved CID if available
             if (this._lastSavedCid) {
                 // Link to the immutable object by CID
                 this._permalinkAnchor.href = `/o/${this._lastSavedCid}`;
+                this._permalinkAnchor.title = 'Link to saved object';
                 console.log('Permalink: Updated to saved object CID:', this._lastSavedCid);
-            } else if (this._lastSavedSlug) {
-                // Fallback to post slug if we have it
-                this._permalinkAnchor.href = `/posts/${this._lastSavedSlug}`;
-                console.log('Permalink: Updated to post slug:', this._lastSavedSlug);
             } else {
                 // No saved content yet - disable permalink
                 this._permalinkAnchor.href = '#';
