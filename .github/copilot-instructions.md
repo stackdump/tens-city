@@ -175,8 +175,8 @@ When making changes:
 ## Resources
 
 - [Project README](../README.md)
-- [Markdown Documentation Guide](../docs/MARKDOWN_DOCS.md)
-- [JSON-LD Script Tag Features](../docs/JSONLD_SCRIPT_TAG.md)
+- [Markdown Documentation Guide](../docs/markdown-docs.md)
+- [JSON-LD Script Tag Features](../docs/jsonld-script-tag.md)
 - [Testing Guide](../TESTING.md)
 - [Makefile Help](../Makefile) - Run `make help`
 

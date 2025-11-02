@@ -48,4 +48,4 @@ When you edit JSON-LD in the ACE editor, the embedded script tag automatically u
 
 The permalink anchor dynamically updates with the editor content, making it easy to share your work.
 
-For more details, see the [full documentation](../docs/JSONLD_SCRIPT_TAG.md).
+For more details, see the [full documentation](../docs/jsonld-script-tag.md).

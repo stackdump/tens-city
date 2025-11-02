@@ -12,7 +12,7 @@ The web application is a single-page app for managing JSON-LD objects with GitHu
 - Dynamic permalink anchor that updates with editor content
 - Share and load JSON-LD via URL parameters
 
-For details on the JSON-LD script tag and permalink features, see [docs/JSONLD_SCRIPT_TAG.md](docs/JSONLD_SCRIPT_TAG.md).
+For details on the JSON-LD script tag and permalink features, see [docs/jsonld-script-tag.md](docs/jsonld-script-tag.md).
 
 ## Documentation System
 
@@ -27,7 +27,7 @@ Tens City includes a comprehensive markdown documentation system with YAML front
 - **Collection index** - `/docs/index.jsonld` with all published documents
 - **Draft support** - Hide work-in-progress documents
 
-See [docs/MARKDOWN_DOCS.md](docs/MARKDOWN_DOCS.md) for complete documentation.
+See [docs/markdown-docs.md](docs/markdown-docs.md) for complete documentation.
 
 ### Quick Start
 ```bash

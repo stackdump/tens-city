@@ -54,4 +54,4 @@ Objects are tied to their creators:
 - Author information is publicly visible in the object metadata
 - GitHub ID provides stronger verification than username alone
 
-For implementation details, see [AUTHENTICATION.md](../docs/AUTHENTICATION.md).
+For implementation details, see [authentication.md](../docs/authentication.md).

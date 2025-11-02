@@ -28,8 +28,8 @@ The primary entry point for users. Should include:
 
 ### Technical Documentation (`docs/`)
 Detailed documentation files:
-- `docs/MARKDOWN_DOCS.md` - Documentation system guide
-- `docs/JSONLD_SCRIPT_TAG.md` - JSON-LD script tag features
+- `docs/markdown-docs.md` - Documentation system guide
+- `docs/jsonld-script-tag.md` - JSON-LD script tag features
 - Architecture decisions and design rationale
 - API reference documentation
 
