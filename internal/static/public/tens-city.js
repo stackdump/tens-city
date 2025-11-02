@@ -40,6 +40,11 @@ class TensCity extends HTMLElement {
         this._pendingPermalinkData = null; // Store permalink data before authentication
         this._appShown = false; // Track whether app has been initialized to prevent race condition where _showApp() is called multiple times
         this._ownershipCache = {}; // Cache ownership checks to avoid redundant API calls
+        this._editorMode = 'jsonld'; // 'jsonld' or 'markdown'
+        this._markdownEditor = null;
+        this._markdownPreview = null;
+        this._frontmatterForm = null;
+        this._docTags = [];
     }
 
     connectedCallback() {
@@ -277,9 +282,9 @@ class TensCity extends HTMLElement {
         helpText.appendChild(document.createElement('br'));
         helpText.appendChild(document.createTextNode('See '));
         const link = document.createElement('a');
-        link.href = 'README.md';
+        link.href = 'readme.md';
         link.target = '_blank';
-        link.textContent = 'README.md';
+        link.textContent = 'readme.md';
         helpText.appendChild(link);
         helpText.appendChild(document.createTextNode(' for setup instructions.'));
         errorContainer.appendChild(helpText);
@@ -556,9 +561,19 @@ class TensCity extends HTMLElement {
             return btn;
         };
 
+        // Editor mode toggle
+        const modeToggle = makeButton(
+            this._editorMode === 'jsonld' ? '📝 Switch to Markdown' : '📋 Switch to JSON-LD',
+            'Toggle between JSON-LD and Markdown editors',
+            () => this._toggleEditorMode()
+        );
+        modeToggle.id = 'tc-mode-toggle';
+        toolbar.appendChild(modeToggle);
+
         // Add Save button only if user is authenticated
         if (this._user) {
             const saveBtn = makeButton('💾 Save', 'Save to create CID and update URL', () => this._saveData());
+            saveBtn.id = 'tc-save-btn';
             toolbar.appendChild(saveBtn);
         }
 
@@ -605,6 +620,14 @@ class TensCity extends HTMLElement {
     }
 
     async _createEditor() {
+        if (this._editorMode === 'jsonld') {
+            await this._createJSONLDEditor();
+        } else {
+            await this._createMarkdownEditor();
+        }
+    }
+
+    async _createJSONLDEditor() {
         const editorContainer = document.createElement('div');
         editorContainer.className = 'tc-editor-container';
         this._applyStyles(editorContainer, {
@@ -643,6 +666,227 @@ class TensCity extends HTMLElement {
 
         // Initialize ACE editor
         await this._initAceEditor(editorDiv);
+    }
+
+    async _createMarkdownEditor() {
+        // Load marked library for markdown preview
+        await this._loadScript('https://cdn.jsdelivr.net/npm/marked@11.0.0/marked.min.js', 'marked');
+
+        const editorContainer = document.createElement('div');
+        editorContainer.className = 'tc-editor-container';
+        this._applyStyles(editorContainer, {
+            flex: '1 1 auto',
+            display: 'flex',
+            flexDirection: 'row',
+            gap: '24px',
+            padding: '24px',
+            overflow: 'hidden'
+        });
+
+        // Left side: Markdown editor and preview
+        const leftPane = document.createElement('div');
+        this._applyStyles(leftPane, {
+            flex: '1 1 60%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+            overflow: 'hidden'
+        });
+
+        // Markdown editor
+        const editorWrapper = document.createElement('div');
+        this._applyStyles(editorWrapper, {
+            flex: '1 1 50%',
+            background: '#fff',
+            borderRadius: '6px',
+            border: '1px solid #e1e4e8',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        });
+
+        const editorHeader = document.createElement('div');
+        editorHeader.textContent = 'Markdown Content';
+        this._applyStyles(editorHeader, {
+            padding: '8px 16px',
+            background: '#f5f5f5',
+            borderBottom: '1px solid #e1e4e8',
+            fontWeight: '600',
+            fontSize: '14px'
+        });
+        editorWrapper.appendChild(editorHeader);
+
+        this._markdownEditor = document.createElement('textarea');
+        this._applyStyles(this._markdownEditor, {
+            flex: '1',
+            width: '100%',
+            border: 'none',
+            resize: 'none',
+            fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
+            fontSize: '14px',
+            padding: '16px'
+        });
+        this._markdownEditor.placeholder = 'Write your markdown content here...';
+        this._markdownEditor.addEventListener('input', () => this._updateMarkdownPreview());
+        editorWrapper.appendChild(this._markdownEditor);
+
+        leftPane.appendChild(editorWrapper);
+
+        // Preview pane
+        const previewWrapper = document.createElement('div');
+        this._applyStyles(previewWrapper, {
+            flex: '1 1 50%',
+            background: '#fff',
+            borderRadius: '6px',
+            border: '1px solid #e1e4e8',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        });
+
+        const previewHeader = document.createElement('div');
+        previewHeader.textContent = 'Preview';
+        this._applyStyles(previewHeader, {
+            padding: '8px 16px',
+            background: '#f5f5f5',
+            borderBottom: '1px solid #e1e4e8',
+            fontWeight: '600',
+            fontSize: '14px'
+        });
+        previewWrapper.appendChild(previewHeader);
+
+        this._markdownPreview = document.createElement('div');
+        this._applyStyles(this._markdownPreview, {
+            flex: '1',
+            padding: '16px',
+            overflowY: 'auto',
+            lineHeight: '1.6'
+        });
+        this._markdownPreview.innerHTML = '<p style="color: #999;">Preview will appear here...</p>';
+        previewWrapper.appendChild(this._markdownPreview);
+
+        leftPane.appendChild(previewWrapper);
+        editorContainer.appendChild(leftPane);
+
+        // Right side: Frontmatter form
+        this._frontmatterForm = this._createFrontmatterForm();
+        editorContainer.appendChild(this._frontmatterForm);
+
+        this._appContainer.appendChild(editorContainer);
+    }
+
+    _createFrontmatterForm() {
+        const form = document.createElement('div');
+        form.className = 'tc-frontmatter-form';
+        this._applyStyles(form, {
+            flex: '0 0 300px',
+            background: '#f5f5f5',
+            borderRadius: '6px',
+            border: '1px solid #e1e4e8',
+            padding: '16px',
+            overflowY: 'auto',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        });
+
+        const title = document.createElement('h3');
+        title.textContent = 'Document Metadata';
+        this._applyStyles(title, {
+            marginTop: '0',
+            marginBottom: '16px',
+            fontSize: '16px',
+            fontWeight: 'bold'
+        });
+        form.appendChild(title);
+
+        // Helper to create form fields
+        const createField = (label, id, type = 'text', required = false, placeholder = '') => {
+            const group = document.createElement('div');
+            this._applyStyles(group, {
+                marginBottom: '12px'
+            });
+
+            const labelEl = document.createElement('label');
+            labelEl.textContent = label + (required ? ' *' : '');
+            labelEl.htmlFor = id;
+            this._applyStyles(labelEl, {
+                display: 'block',
+                marginBottom: '4px',
+                fontSize: '13px',
+                fontWeight: '600'
+            });
+            group.appendChild(labelEl);
+
+            let input;
+            if (type === 'textarea') {
+                input = document.createElement('textarea');
+                this._applyStyles(input, {
+                    minHeight: '60px',
+                    resize: 'vertical'
+                });
+            } else {
+                input = document.createElement('input');
+                input.type = type;
+            }
+            
+            input.id = id;
+            input.placeholder = placeholder;
+            if (required) input.required = true;
+            this._applyStyles(input, {
+                width: '100%',
+                padding: '6px 8px',
+                border: '1px solid #e1e4e8',
+                borderRadius: '4px',
+                fontSize: '13px',
+                fontFamily: 'inherit'
+            });
+            group.appendChild(input);
+
+            return group;
+        };
+
+        form.appendChild(createField('Title', 'fm-title', 'text', true, 'Document title'));
+        form.appendChild(createField('Description', 'fm-description', 'textarea', false, 'Short description'));
+        form.appendChild(createField('Slug', 'fm-slug', 'text', false, 'url-friendly-slug'));
+        form.appendChild(createField('Date Published', 'fm-datePublished', 'datetime-local', true));
+        form.appendChild(createField('Date Modified', 'fm-dateModified', 'datetime-local', false));
+        form.appendChild(createField('Author Name', 'fm-author-name', 'text', true, 'Author name'));
+        form.appendChild(createField('Author URL', 'fm-author-url', 'url', false, 'https://example.com'));
+
+        // Set default date
+        const now = new Date().toISOString().slice(0, 16);
+        form.querySelector('#fm-datePublished').value = now;
+
+        // Auto-generate slug from title
+        form.querySelector('#fm-title').addEventListener('input', (e) => {
+            const slugField = form.querySelector('#fm-slug');
+            if (!slugField.value) {
+                slugField.value = this._generateSlug(e.target.value);
+            }
+        });
+
+        return form;
+    }
+
+    _generateSlug(text) {
+        return text
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '');
+    }
+
+    _updateMarkdownPreview() {
+        if (!this._markdownEditor || !this._markdownPreview) return;
+        
+        const markdown = this._markdownEditor.value;
+        if (markdown && window.marked) {
+            this._markdownPreview.innerHTML = window.marked.parse(markdown);
+        } else {
+            this._markdownPreview.innerHTML = '<p style="color: #999;">Preview will appear here...</p>';
+        }
     }
 
     async _initAceEditor(container) {
@@ -940,28 +1184,32 @@ class TensCity extends HTMLElement {
         // Build help content
         const sections = [
             {
-                title: 'What is JSON-LD?',
-                content: 'JSON-LD (JavaScript Object Notation for Linked Data) is a lightweight format for expressing structured data using JSON. It allows you to add semantic meaning to your data by linking it to vocabularies and schemas. Tens City uses JSON-LD to create machine-readable, semantically rich data objects that can be shared and linked across the web.',
+                title: 'What is Tens City?',
+                content: 'Tens City is a content-addressable storage system for JSON-LD documents. Create, save, and share structured data with cryptographic integrity using Content Identifiers (CIDs).',
                 link: {
-                    text: 'Learn more about structured data at schema.org',
+                    text: 'Learn more at GitHub',
+                    url: 'https://github.com/stackdump/tens-city'
+                }
+            },
+            {
+                title: 'What is JSON-LD?',
+                content: 'JSON-LD (JavaScript Object Notation for Linked Data) is a format for expressing structured data using JSON with semantic meaning. It uses vocabularies like schema.org to create machine-readable data that can be shared across the web.',
+                link: {
+                    text: 'Learn more at schema.org',
                     url: 'https://schema.org'
                 }
             },
             {
-                title: 'GitHub Authentication',
-                content: 'Tens City uses GitHub OAuth for authentication. When you click "Login with GitHub", you\'ll be redirected to GitHub to authorize the application. After authorization, you\'ll be redirected back to Tens City with your GitHub identity. This allows the application to associate your data with your GitHub username.'
-            },
-            {
-                title: 'User Namespaces and Slugs',
-                content: 'Each user has their own namespace based on their GitHub username. Within that namespace, you can create "slugs" - unique identifiers for your JSON-LD objects. For example, if your GitHub username is "alice" and you create a slug called "my-project", your objects will be accessible at /u/alice/g/my-project/latest. This provides a human-readable way to organize and access your data.'
+                title: 'Authentication',
+                content: 'Use GitHub OAuth to authenticate and save your work. After logging in, your JSON-LD documents will be associated with your GitHub identity, allowing you to delete your own saved objects.'
             },
             {
                 title: 'Saving Your Work',
-                content: 'To save your JSON-LD document, click the "Save" button in the toolbar. This will:\n\n• Validate that your JSON has an @context field (required for JSON-LD)\n• Send the data to the server to create a content-addressed identifier (CID)\n• Update the URL to ?cid=... without reloading the page\n\nYou must be logged in to save. You can view data from ?data= and ?cid= URLs without logging in.'
+                content: 'Click the Save button to:\n\n• Validate your JSON-LD (requires @context field)\n• Generate a content-addressed identifier (CID)\n• Store the object permanently\n• Update the URL to ?cid=...\n\nYou must be logged in to save. Anyone can view saved objects via ?cid= URLs.'
             },
             {
                 title: 'Using the Editor',
-                content: 'The editor allows you to create and edit JSON-LD documents. Use the Clear button to reset the editor. The Permalink button creates a shareable link with your current editor content. The editor automatically updates the embedded <script type="application/ld+json"> tag in the page as you type.'
+                content: 'The editor provides:\n\n• Syntax highlighting for JSON\n• Clear button to reset content\n• Permalink button to share current data\n• Auto-updating <script type="application/ld+json"> tag\n• Delete button (visible only for objects you own)'
             }
         ];
 
@@ -1025,8 +1273,45 @@ class TensCity extends HTMLElement {
     }
 
     _clearEditor() {
-        if (!this._aceEditor) return;
-        this._aceEditor.session.setValue('{\n  "@context": "https://pflow.xyz/schema",\n  "@type": "Object"\n}');
+        if (this._editorMode === 'jsonld' && this._aceEditor) {
+            this._aceEditor.session.setValue('{\n  "@context": "https://pflow.xyz/schema",\n  "@type": "Object"\n}');
+        } else if (this._editorMode === 'markdown' && this._markdownEditor) {
+            this._markdownEditor.value = '';
+            this._docTags = [];
+            const form = this._frontmatterForm;
+            if (form) {
+                form.querySelector('#fm-title').value = '';
+                form.querySelector('#fm-description').value = '';
+                form.querySelector('#fm-slug').value = '';
+                form.querySelector('#fm-author-name').value = '';
+                form.querySelector('#fm-author-url').value = '';
+                const now = new Date().toISOString().slice(0, 16);
+                form.querySelector('#fm-datePublished').value = now;
+                form.querySelector('#fm-dateModified').value = '';
+            }
+            this._updateMarkdownPreview();
+        }
+    }
+
+    _toggleEditorMode() {
+        // Switch between jsonld and markdown modes
+        this._editorMode = this._editorMode === 'jsonld' ? 'markdown' : 'jsonld';
+        
+        // Update toggle button text
+        const toggleBtn = this._root.querySelector('#tc-mode-toggle');
+        if (toggleBtn) {
+            toggleBtn.textContent = this._editorMode === 'jsonld' ? '📝 Switch to Markdown' : '📋 Switch to JSON-LD';
+        }
+
+        // Show/hide appropriate editor
+        const editorContainer = this._appContainer.querySelector('.tc-editor-container');
+        if (!editorContainer) return;
+
+        // Remove existing editor
+        editorContainer.remove();
+
+        // Recreate appropriate editor
+        this._createEditor();
     }
 
     _loadFromScriptTag() {
@@ -1077,6 +1362,14 @@ class TensCity extends HTMLElement {
             return;
         }
 
+        if (this._editorMode === 'jsonld') {
+            await this._saveJSONLD();
+        } else {
+            await this._saveMarkdown();
+        }
+    }
+
+    async _saveJSONLD() {
         if (!this._aceEditor) {
             console.error('Save: Editor not initialized');
             return;
@@ -1148,6 +1441,93 @@ class TensCity extends HTMLElement {
             // Show success message
             alert(`Saved successfully! CID: ${cid}`);
             
+        } catch (err) {
+            console.error('Save: Exception occurred:', err);
+            alert(`Save failed: ${err.message}`);
+        }
+    }
+
+    async _saveMarkdown() {
+        if (!this._markdownEditor || !this._frontmatterForm) {
+            console.error('Save: Markdown editor not initialized');
+            return;
+        }
+
+        try {
+            // Get form data
+            const form = this._frontmatterForm;
+            const title = form.querySelector('#fm-title').value;
+            const description = form.querySelector('#fm-description').value;
+            const slug = form.querySelector('#fm-slug').value;
+            const datePublished = form.querySelector('#fm-datePublished').value;
+            const dateModified = form.querySelector('#fm-dateModified').value;
+            const authorName = form.querySelector('#fm-author-name').value;
+            const authorUrl = form.querySelector('#fm-author-url').value;
+
+            // Validate required fields
+            if (!title || !datePublished || !authorName || !slug) {
+                alert('Please fill in all required fields (Title, Date Published, Author Name, Slug)');
+                return;
+            }
+
+            // Build frontmatter
+            const frontmatter = {
+                title: title,
+                datePublished: new Date(datePublished).toISOString(),
+                author: {
+                    name: authorName,
+                    type: 'Person'
+                },
+                lang: 'en'
+            };
+
+            if (description) frontmatter.description = description;
+            if (dateModified) frontmatter.dateModified = new Date(dateModified).toISOString();
+            if (authorUrl) frontmatter.author.url = authorUrl;
+
+            const markdown = this._markdownEditor.value;
+
+            // Get the session token for authentication
+            const { data: { session } } = await this._supabase.auth.getSession();
+            const authToken = session?.access_token;
+            
+            if (!authToken) {
+                console.error('Save: No auth token available');
+                alert('Authentication token not available. Please log in again.');
+                return;
+            }
+
+            console.log('Save: Sending markdown save request to /api/docs/save');
+
+            // Send to /api/docs/save endpoint
+            const response = await fetch('/api/docs/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`,
+                },
+                body: JSON.stringify({
+                    slug: slug,
+                    markdown: markdown,
+                    frontmatter: frontmatter
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Save: Failed with status', response.status, errorText);
+                alert(`Save failed: ${response.statusText}`);
+                return;
+            }
+
+            const result = await response.json();
+            const cid = result.cid;
+
+            console.log('Save: Success! CID:', cid, 'Slug:', slug);
+
+            // Show success message
+            alert(`Document saved successfully!\nCID: ${cid}\nSlug: ${slug}\nView at: /docs/${slug}`);
+
         } catch (err) {
             console.error('Save: Exception occurred:', err);
             alert(`Save failed: ${err.message}`);
