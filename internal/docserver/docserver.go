@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -221,18 +222,23 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 `)
 
 	for _, doc := range publicDocs {
+		escapedSlug := html.EscapeString(doc.Frontmatter.Slug)
+		escapedTitle := html.EscapeString(doc.Frontmatter.Title)
+		escapedDescription := html.EscapeString(doc.Frontmatter.Description)
+		escapedDate := html.EscapeString(doc.Frontmatter.DatePublished)
+		
 		fmt.Fprintf(w, `        <li class="doc-item">
             <h2><a href="/docs/%s">%s</a></h2>
-`, doc.Frontmatter.Slug, doc.Frontmatter.Title)
+`, escapedSlug, escapedTitle)
 		
 		if doc.Frontmatter.Description != "" {
 			fmt.Fprintf(w, `            <p class="doc-description">%s</p>
-`, doc.Frontmatter.Description)
+`, escapedDescription)
 		}
 		
 		fmt.Fprintf(w, `            <div class="doc-meta">Published: %s</div>
         </li>
-`, doc.Frontmatter.DatePublished)
+`, escapedDate)
 	}
 
 	fmt.Fprintf(w, `    </ul>
@@ -297,6 +303,14 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 	jsonld := doc.ToJSONLD(ds.baseURL)
 	jsonldBytes, _ := json.MarshalIndent(jsonld, "    ", "  ")
 
+	// HTML-escape user-provided values
+	escapedSlug := html.EscapeString(slug)
+	escapedTitle := html.EscapeString(doc.Frontmatter.Title)
+	escapedLang := html.EscapeString(doc.Frontmatter.Lang)
+	escapedDatePublished := html.EscapeString(doc.Frontmatter.DatePublished)
+	escapedDateModified := html.EscapeString(doc.Frontmatter.DateModified)
+	escapedJSONLD := html.EscapeString(string(jsonldBytes))
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	fmt.Fprintf(w, `<!DOCTYPE html>
 <html lang="%s">
@@ -329,11 +343,11 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
     </div>
     <div class="meta">
         Published: %s
-`, doc.Frontmatter.Lang, doc.Frontmatter.Title, string(jsonldBytes), 
-   slug, doc.Frontmatter.DatePublished)
+`, escapedLang, escapedTitle, string(jsonldBytes), 
+   escapedSlug, escapedDatePublished)
 
 	if doc.Frontmatter.DateModified != "" {
-		fmt.Fprintf(w, ` | Modified: %s`, doc.Frontmatter.DateModified)
+		fmt.Fprintf(w, ` | Modified: %s`, escapedDateModified)
 	}
 
 	fmt.Fprintf(w, `
@@ -349,7 +363,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
         }
     </script>
 </body>
-</html>`, doc.HTML, string(jsonldBytes))
+</html>`, doc.HTML, escapedJSONLD)
 }
 
 // HandleDocJSONLD handles GET /docs/:slug.jsonld - return JSON-LD only
