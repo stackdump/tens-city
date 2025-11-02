@@ -277,9 +277,9 @@ class TensCity extends HTMLElement {
         helpText.appendChild(document.createElement('br'));
         helpText.appendChild(document.createTextNode('See '));
         const link = document.createElement('a');
-        link.href = 'README.md';
+        link.href = 'readme.md';
         link.target = '_blank';
-        link.textContent = 'README.md';
+        link.textContent = 'readme.md';
         helpText.appendChild(link);
         helpText.appendChild(document.createTextNode(' for setup instructions.'));
         errorContainer.appendChild(helpText);
@@ -940,28 +940,32 @@ class TensCity extends HTMLElement {
         // Build help content
         const sections = [
             {
-                title: 'What is JSON-LD?',
-                content: 'JSON-LD (JavaScript Object Notation for Linked Data) is a lightweight format for expressing structured data using JSON. It allows you to add semantic meaning to your data by linking it to vocabularies and schemas. Tens City uses JSON-LD to create machine-readable, semantically rich data objects that can be shared and linked across the web.',
+                title: 'What is Tens City?',
+                content: 'Tens City is a content-addressable storage system for JSON-LD documents. Create, save, and share structured data with cryptographic integrity using Content Identifiers (CIDs).',
                 link: {
-                    text: 'Learn more about structured data at schema.org',
+                    text: 'Learn more at GitHub',
+                    url: 'https://github.com/stackdump/tens-city'
+                }
+            },
+            {
+                title: 'What is JSON-LD?',
+                content: 'JSON-LD (JavaScript Object Notation for Linked Data) is a format for expressing structured data using JSON with semantic meaning. It uses vocabularies like schema.org to create machine-readable data that can be shared across the web.',
+                link: {
+                    text: 'Learn more at schema.org',
                     url: 'https://schema.org'
                 }
             },
             {
-                title: 'GitHub Authentication',
-                content: 'Tens City uses GitHub OAuth for authentication. When you click "Login with GitHub", you\'ll be redirected to GitHub to authorize the application. After authorization, you\'ll be redirected back to Tens City with your GitHub identity. This allows the application to associate your data with your GitHub username.'
-            },
-            {
-                title: 'User Namespaces and Slugs',
-                content: 'Each user has their own namespace based on their GitHub username. Within that namespace, you can create "slugs" - unique identifiers for your JSON-LD objects. For example, if your GitHub username is "alice" and you create a slug called "my-project", your objects will be accessible at /u/alice/g/my-project/latest. This provides a human-readable way to organize and access your data.'
+                title: 'Authentication',
+                content: 'Use GitHub OAuth to authenticate and save your work. After logging in, your JSON-LD documents will be associated with your GitHub identity, allowing you to delete your own saved objects.'
             },
             {
                 title: 'Saving Your Work',
-                content: 'To save your JSON-LD document, click the "Save" button in the toolbar. This will:\n\n• Validate that your JSON has an @context field (required for JSON-LD)\n• Send the data to the server to create a content-addressed identifier (CID)\n• Update the URL to ?cid=... without reloading the page\n\nYou must be logged in to save. You can view data from ?data= and ?cid= URLs without logging in.'
+                content: 'Click the Save button to:\n\n• Validate your JSON-LD (requires @context field)\n• Generate a content-addressed identifier (CID)\n• Store the object permanently\n• Update the URL to ?cid=...\n\nYou must be logged in to save. Anyone can view saved objects via ?cid= URLs.'
             },
             {
                 title: 'Using the Editor',
-                content: 'The editor allows you to create and edit JSON-LD documents. Use the Clear button to reset the editor. The Permalink button creates a shareable link with your current editor content. The editor automatically updates the embedded <script type="application/ld+json"> tag in the page as you type.'
+                content: 'The editor provides:\n\n• Syntax highlighting for JSON\n• Clear button to reset content\n• Permalink button to share current data\n• Auto-updating <script type="application/ld+json"> tag\n• Delete button (visible only for objects you own)'
             }
         ];
 

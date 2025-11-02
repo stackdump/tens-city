@@ -1,4 +1,3 @@
-```markdown
 # Sealing pipeline (tens.city) — implementation notes
 
 What this delivers
@@ -14,7 +13,7 @@ Files added
 - cmd/seal/main.go — CLI entry to run the sealing pipeline.
 - internal/seal/seal.go — canonicalization + CID calculation implementation.
 - internal/store/store.go — simple filesystem-backed persistence for objects and pointers.
-- docs/SEALING_PIPELINE.md — this document.
+- docs/sealing-pipeline.md — this document.
 
 How to try locally
 1. Build:
@@ -47,7 +46,7 @@ The seal CLI now supports cryptographic signing of sealed objects using Ethereum
 - Use `-privkey <hex>` to sign with a raw private key (testing only)
 - Signatures are stored at `data/o/signatures/{cid}.json`
 - Supports both personal_sign (EIP-191) and raw signing modes
-- See `docs/ETHEREUM_SIGNING.md` for detailed documentation
+- See `docs/ethereum-signing.md` for detailed documentation
 
 Notes and next steps
 - This is an intentionally small, dependency-light starter. Integrate into your HTTP server and apcore adapter by:
@@ -67,4 +66,3 @@ Security & determinism
 Limitations
 - The simple FSStore is not production-grade (no concurrency locks, no atomic updates). Replace with a transactional DB or object store for production.
 - Signature verification is available programmatically but not yet exposed via CLI. Add a verify command if needed.
-```
