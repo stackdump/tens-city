@@ -1,0 +1,120 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://tens.city/schemas/frontmatter.schema.json",
+  "title": "Document Frontmatter Schema",
+  "description": "JSON Schema for validating YAML frontmatter in markdown documents",
+  "type": "object",
+  "required": ["title", "datePublished", "author", "lang"],
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "The title of the document",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "description": "A short description or summary of the document",
+      "maxLength": 500
+    },
+    "datePublished": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 date-time when the document was first published"
+    },
+    "dateModified": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 date-time when the document was last modified"
+    },
+    "author": {
+      "oneOf": [
+        { "$ref": "#/definitions/person" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/definitions/person" },
+          "minItems": 1
+        }
+      ],
+      "description": "The author or authors of the document"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "description": "Tags or keywords associated with the document"
+    },
+    "collection": {
+      "type": "string",
+      "description": "Collection or category this document belongs to"
+    },
+    "lang": {
+      "type": "string",
+      "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+      "description": "Language code (e.g., 'en', 'en-US')",
+      "default": "en"
+    },
+    "draft": {
+      "type": "boolean",
+      "description": "Whether this document is a draft (hidden from public index)",
+      "default": false
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "URL-friendly slug for the document"
+    },
+    "image": {
+      "type": "string",
+      "format": "uri",
+      "description": "Featured image URL"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "SEO keywords"
+    }
+  },
+  "definitions": {
+    "person": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Full name of the person",
+          "minLength": 1
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Email address (will be protected/hidden from public view)"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Personal or profile URL"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["Person", "Organization"],
+          "default": "Person",
+          "description": "Type of author (Person or Organization)"
+        },
+        "sameAs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          },
+          "description": "URLs to social media profiles or other identifiers"
+        }
+      }
+    }
+  }
+}

@@ -14,11 +14,31 @@ The web application is a single-page app for managing JSON-LD objects with GitHu
 
 For details on the JSON-LD script tag and permalink features, see [docs/JSONLD_SCRIPT_TAG.md](docs/JSONLD_SCRIPT_TAG.md).
 
+## Documentation System
+
+Tens City includes a comprehensive markdown documentation system with YAML frontmatter support and automatic schema.org JSON-LD mapping.
+
+### Features
+- **Markdown with YAML frontmatter** - Documents as source of truth
+- **Schema.org JSON-LD** - Automatic mapping to structured data
+- **Server-side rendering** - HTML generation with sanitization
+- **Caching** - ETag and Last-Modified support for performance
+- **Content negotiation** - Serve HTML or JSON-LD based on Accept header
+- **Collection index** - `/docs/index.jsonld` with all published documents
+- **Draft support** - Hide work-in-progress documents
+
+See [docs/MARKDOWN_DOCS.md](docs/MARKDOWN_DOCS.md) for complete documentation.
+
 ### Quick Start
 ```bash
-# Serve the public directory
-cd public
-python3 -m http.server 8080
+# Start server with documentation enabled
+./webserver -addr :8080 -store data -content content/docs -base-url http://localhost:8080
+
+# Access documentation
+# List: http://localhost:8080/docs
+# Index: http://localhost:8080/docs/index.jsonld
+# Document: http://localhost:8080/docs/getting-started
+# JSON-LD: http://localhost:8080/docs/getting-started.jsonld
 ```
 
 ## 1. Ethos: tent city

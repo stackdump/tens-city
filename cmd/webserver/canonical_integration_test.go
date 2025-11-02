@@ -15,7 +15,7 @@ import (
 func TestSaveWithDifferentKeyOrder(t *testing.T) {
 	tmpDir := t.TempDir()
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, nil, false, 1*1024*1024)
+	server := NewServer(storage, nil, false, 1*1024*1024, nil)
 
 	// Create test auth token
 	authToken := createTestToken("test-user-123", "test@example.com", "testuser", "123456")
@@ -88,7 +88,7 @@ func TestSaveWithDifferentKeyOrder(t *testing.T) {
 func TestSaveMultipleTimes(t *testing.T) {
 	tmpDir := t.TempDir()
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, nil, false, 1*1024*1024)
+	server := NewServer(storage, nil, false, 1*1024*1024, nil)
 
 	// Create test auth token
 	authToken := createTestToken("test-user-123", "test@example.com", "testuser", "123456")

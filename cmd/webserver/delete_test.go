@@ -23,7 +23,7 @@ func TestHandleDeleteObject(t *testing.T) {
 		t.Fatalf("Failed to save object: %v", err)
 	}
 
-	server := NewServer(storage, nil, false, 1*1024*1024)
+	server := NewServer(storage, nil, false, 1*1024*1024, nil)
 
 	tests := []struct {
 		name           string
@@ -116,7 +116,7 @@ func TestHandleDeleteObjectByUsername(t *testing.T) {
 		t.Fatalf("Failed to save object: %v", err)
 	}
 
-	server := NewServer(storage, nil, false, 1*1024*1024)
+	server := NewServer(storage, nil, false, 1*1024*1024, nil)
 
 	// Test that author can delete by username when GitHub ID is not available
 	token := createTestToken("user123", "test@example.com", githubUser, "")
@@ -260,7 +260,7 @@ func TestDeleteObject(t *testing.T) {
 func TestSaveWithValidation(t *testing.T) {
 	tmpDir := t.TempDir()
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, nil, false, 1*1024*1024)
+	server := NewServer(storage, nil, false, 1*1024*1024, nil)
 
 	tests := []struct {
 		name           string
@@ -332,7 +332,7 @@ func TestContentSizeLimit(t *testing.T) {
 	tmpDir := t.TempDir()
 	storage := NewFSStorage(tmpDir)
 	// Set a very small content size limit for testing (1KB)
-	server := NewServer(storage, nil, false, 1024)
+	server := NewServer(storage, nil, false, 1024, nil)
 
 	// Create a document that exceeds the size limit
 	largeDoc := map[string]interface{}{
