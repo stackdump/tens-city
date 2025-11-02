@@ -1,12 +1,12 @@
 package main
 
 import (
-"bytes"
-"encoding/json"
-"io"
-"net/http"
-"net/http/httptest"
-"testing"
+	"bytes"
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 )
 
 // TestEndToEndWorkflow tests the complete workflow:
@@ -52,42 +52,42 @@ func TestEndToEndWorkflow(t *testing.T) {
 	cid := saveResponse["cid"]
 	if cid == "" {
 		t.Fatal("No CID in response")
-}
+	}
 
-t.Logf("Saved document with CID: %s", cid)
+	t.Logf("Saved document with CID: %s", cid)
 
-// Step 2: Retrieve the document by CID
-req = httptest.NewRequest("GET", "/o/"+cid, nil)
-w = httptest.NewRecorder()
+	// Step 2: Retrieve the document by CID
+	req = httptest.NewRequest("GET", "/o/"+cid, nil)
+	w = httptest.NewRecorder()
 
-server.ServeHTTP(w, req)
+	server.ServeHTTP(w, req)
 
-if w.Code != http.StatusOK {
-t.Fatalf("Expected status 200, got %d", w.Code)
-}
+	if w.Code != http.StatusOK {
+		t.Fatalf("Expected status 200, got %d", w.Code)
+	}
 
-// Step 3: Verify the content
-var retrievedDoc map[string]interface{}
-body, _ = io.ReadAll(w.Body)
-if err := json.Unmarshal(body, &retrievedDoc); err != nil {
-t.Fatalf("Failed to unmarshal retrieved document: %v", err)
-}
+	// Step 3: Verify the content
+	var retrievedDoc map[string]interface{}
+	body, _ = io.ReadAll(w.Body)
+	if err := json.Unmarshal(body, &retrievedDoc); err != nil {
+		t.Fatalf("Failed to unmarshal retrieved document: %v", err)
+	}
 
-// Verify @id was injected
-if id, ok := retrievedDoc["@id"].(string); !ok || id != "ipfs://"+cid {
-t.Errorf("Expected @id to be ipfs://%s, got %v", cid, retrievedDoc["@id"])
-}
+	// Verify @id was injected
+	if id, ok := retrievedDoc["@id"].(string); !ok || id != "ipfs://"+cid {
+		t.Errorf("Expected @id to be ipfs://%s, got %v", cid, retrievedDoc["@id"])
+	}
 
-// Verify original fields
-if name, ok := retrievedDoc["name"].(string); !ok || name != "Integration Test Document" {
-t.Errorf("Expected name 'Integration Test Document', got %v", retrievedDoc["name"])
-}
+	// Verify original fields
+	if name, ok := retrievedDoc["name"].(string); !ok || name != "Integration Test Document" {
+		t.Errorf("Expected name 'Integration Test Document', got %v", retrievedDoc["name"])
+	}
 
-if docType, ok := retrievedDoc["@type"].(string); !ok || docType != "TestDocument" {
-t.Errorf("Expected @type 'TestDocument', got %v", retrievedDoc["@type"])
-}
+	if docType, ok := retrievedDoc["@type"].(string); !ok || docType != "TestDocument" {
+		t.Errorf("Expected @type 'TestDocument', got %v", retrievedDoc["@type"])
+	}
 
-t.Log("End-to-end workflow test passed successfully!")
+	t.Log("End-to-end workflow test passed successfully!")
 }
 
 // TestWorkflowWithMultipleObjects tests saving and retrieving multiple objects
@@ -133,32 +133,32 @@ func TestWorkflowWithMultipleObjects(t *testing.T) {
 			t.Fatalf("Failed to save document %d: status %d", i, w.Code)
 		}
 
-var response map[string]string
-json.NewDecoder(w.Body).Decode(&response)
-cids[i] = response["cid"]
-t.Logf("Saved document %d with CID: %s", i+1, cids[i])
-}
+		var response map[string]string
+		json.NewDecoder(w.Body).Decode(&response)
+		cids[i] = response["cid"]
+		t.Logf("Saved document %d with CID: %s", i+1, cids[i])
+	}
 
-// Retrieve and verify all documents
-for i, cid := range cids {
-req := httptest.NewRequest("GET", "/o/"+cid, nil)
-w := httptest.NewRecorder()
+	// Retrieve and verify all documents
+	for i, cid := range cids {
+		req := httptest.NewRequest("GET", "/o/"+cid, nil)
+		w := httptest.NewRecorder()
 
-server.ServeHTTP(w, req)
+		server.ServeHTTP(w, req)
 
-if w.Code != http.StatusOK {
-t.Fatalf("Failed to retrieve document %d: status %d", i, w.Code)
-}
+		if w.Code != http.StatusOK {
+			t.Fatalf("Failed to retrieve document %d: status %d", i, w.Code)
+		}
 
-var retrieved map[string]interface{}
-body, _ := io.ReadAll(w.Body)
-json.Unmarshal(body, &retrieved)
+		var retrieved map[string]interface{}
+		body, _ := io.ReadAll(w.Body)
+		json.Unmarshal(body, &retrieved)
 
-expectedType := documents[i]["@type"]
-if retrieved["@type"] != expectedType {
-t.Errorf("Document %d: expected @type %v, got %v", i, expectedType, retrieved["@type"])
-}
-}
+		expectedType := documents[i]["@type"]
+		if retrieved["@type"] != expectedType {
+			t.Errorf("Document %d: expected @type %v, got %v", i, expectedType, retrieved["@type"])
+		}
+	}
 
-t.Logf("Successfully saved and retrieved %d documents", len(documents))
+	t.Logf("Successfully saved and retrieved %d documents", len(documents))
 }

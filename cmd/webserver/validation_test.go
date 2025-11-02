@@ -209,7 +209,7 @@ func TestValidateKeys(t *testing.T) {
 		{
 			name: "Keys with allowed whitespace",
 			doc: map[string]interface{}{
-				"name\twith\ttabs":   "value1",
+				"name\twith\ttabs":     "value1",
 				"name\nwith\nnewlines": "value2",
 			},
 			wantError: false,
