@@ -679,7 +679,7 @@ func extractGitHubUsername(githubURL string) string {
 
 	userPath := strings.TrimPrefix(parts[1], "/")
 	userPath = strings.TrimSuffix(userPath, "/")
-	
+
 	// Extract just the username (first path segment)
 	pathParts := strings.Split(userPath, "/")
 	if len(pathParts) > 0 && pathParts[0] != "" {

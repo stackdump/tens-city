@@ -45,6 +45,8 @@ class TensCity extends HTMLElement {
         this._markdownPreview = null;
         this._frontmatterForm = null;
         this._docTags = [];
+        this._lastSavedCid = null; // Store CID from last save for permalink in markdown mode
+        this._lastSavedSlug = null; // Store slug from last save for permalink in markdown mode
     }
 
     connectedCallback() {
@@ -651,6 +653,8 @@ class TensCity extends HTMLElement {
         } else {
             await this._createMarkdownEditor();
         }
+        // Update permalink after creating editor
+        this._updatePermalinkAnchor();
     }
 
     async _createJSONLDEditor() {
@@ -1873,12 +1877,20 @@ class TensCity extends HTMLElement {
                 form.querySelector('#fm-dateModified').value = '';
             }
             this._updateMarkdownPreview();
+            // Clear saved CID/slug when clearing markdown editor
+            this._lastSavedCid = null;
+            this._lastSavedSlug = null;
+            this._updatePermalinkAnchor();
         }
     }
 
     _toggleEditorMode() {
         // Switch between jsonld and markdown modes
         this._editorMode = this._editorMode === 'jsonld' ? 'markdown' : 'jsonld';
+        
+        // Clear saved CID/slug when switching modes
+        this._lastSavedCid = null;
+        this._lastSavedSlug = null;
         
         // Update toggle button text
         const toggleBtn = this._root.querySelector('#tc-mode-toggle');
@@ -2072,10 +2084,10 @@ class TensCity extends HTMLElement {
                 return;
             }
 
-            console.log('Save: Sending markdown save request to /api/docs/save');
+            console.log('Save: Sending markdown save request to /api/posts/save');
 
-            // Send to /api/docs/save endpoint
-            const response = await fetch('/api/docs/save', {
+            // Send to /api/posts/save endpoint
+            const response = await fetch('/api/posts/save', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2083,7 +2095,7 @@ class TensCity extends HTMLElement {
                 },
                 body: JSON.stringify({
                     slug: slug,
-                    markdown: markdown,
+                    content: markdown,
                     frontmatter: frontmatter
                 })
             });
@@ -2100,8 +2112,13 @@ class TensCity extends HTMLElement {
 
             console.log('Save: Success! CID:', cid, 'Slug:', slug);
 
+            // Store for permalink
+            this._lastSavedCid = cid;
+            this._lastSavedSlug = slug;
+            this._updatePermalinkAnchor();
+
             // Show success message
-            alert(`Document saved successfully!\nCID: ${cid}\nSlug: ${slug}\nView at: /docs/${slug}`);
+            alert(`Document saved successfully!\nCID: ${cid}\nSlug: ${slug}\nView at: /posts/${slug}`);
 
         } catch (err) {
             console.error('Save: Exception occurred:', err);
@@ -2284,25 +2301,45 @@ class TensCity extends HTMLElement {
     }
 
     _updatePermalinkAnchor() {
-        if (!this._aceEditor || !this._permalinkAnchor) return;
+        if (!this._permalinkAnchor) return;
 
-        try {
-            const editorContent = this._aceEditor.session.getValue();
-            // Parse and canonicalize JSON to ensure consistent encoding
-            const parsed = JSON.parse(editorContent);
-            const canonical = canonicalJSON(parsed);
-
-            // Create URL with data parameter - use clean URL without existing query params
-            const url = new URL(window.location.origin + window.location.pathname);
-            url.searchParams.set('data', encodeURIComponent(canonical));
+        if (this._editorMode === 'jsonld') {
+            // JSON-LD mode: create permalink with data in URL
+            if (!this._aceEditor) return;
             
-            // Update anchor href
-            this._permalinkAnchor.href = url.toString();
-            console.log('Permalink: Updated permalink anchor with current editor content');
-        } catch (err) {
-            // If JSON is invalid, set href to # to prevent navigation
-            this._permalinkAnchor.href = '#';
-            console.log('Permalink: Invalid JSON, permalink disabled');
+            try {
+                const editorContent = this._aceEditor.session.getValue();
+                // Parse and canonicalize JSON to ensure consistent encoding
+                const parsed = JSON.parse(editorContent);
+                const canonical = canonicalJSON(parsed);
+
+                // Create URL with data parameter - use clean URL without existing query params
+                const url = new URL(window.location.origin + window.location.pathname);
+                url.searchParams.set('data', encodeURIComponent(canonical));
+                
+                // Update anchor href and clear any custom title
+                this._permalinkAnchor.href = url.toString();
+                this._permalinkAnchor.title = 'Link to current data';
+                console.log('Permalink: Updated permalink anchor with current editor content');
+            } catch (err) {
+                // If JSON is invalid, set href to # to prevent navigation
+                this._permalinkAnchor.href = '#';
+                this._permalinkAnchor.title = 'Fix JSON errors to enable permalink';
+                console.log('Permalink: Invalid JSON, permalink disabled');
+            }
+        } else {
+            // Markdown mode: link to saved CID if available
+            if (this._lastSavedCid) {
+                // Link to the immutable object by CID
+                this._permalinkAnchor.href = `/o/${this._lastSavedCid}`;
+                this._permalinkAnchor.title = 'Link to saved object';
+                console.log('Permalink: Updated to saved object CID:', this._lastSavedCid);
+            } else {
+                // No saved content yet - disable permalink
+                this._permalinkAnchor.href = '#';
+                this._permalinkAnchor.title = 'Save the post first to get a permalink';
+                console.log('Permalink: Disabled (no saved content)');
+            }
         }
     }
 
