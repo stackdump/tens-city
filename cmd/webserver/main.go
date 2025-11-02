@@ -12,6 +12,7 @@ import (
 
 	"github.com/stackdump/tens-city/internal/auth"
 	"github.com/stackdump/tens-city/internal/canonical"
+	"github.com/stackdump/tens-city/internal/docserver"
 	"github.com/stackdump/tens-city/internal/seal"
 	"github.com/stackdump/tens-city/internal/static"
 	"github.com/stackdump/tens-city/internal/store"
@@ -166,14 +167,16 @@ storage        Storage
 publicFS       fs.FS
 enableCORS     bool
 maxContentSize int64 // Maximum content size in bytes
+docServer      *docserver.DocServer
 }
 
-func NewServer(storage Storage, publicFS fs.FS, enableCORS bool, maxContentSize int64) *Server {
+func NewServer(storage Storage, publicFS fs.FS, enableCORS bool, maxContentSize int64, docServer *docserver.DocServer) *Server {
 return &Server{
 storage:        storage,
 publicFS:       publicFS,
 enableCORS:     enableCORS,
 maxContentSize: maxContentSize,
+docServer:      docServer,
 }
 }
 
@@ -494,6 +497,29 @@ func (s *Server) handleDeleteObject(w http.ResponseWriter, r *http.Request) {
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 log.Printf("%s %s", r.Method, r.URL.Path)
 
+// Documentation routes (only if docServer is configured)
+if s.docServer != nil {
+	if r.URL.Path == "/docs" {
+		s.docServer.HandleDocList(w, r)
+		return
+	}
+	if r.URL.Path == "/docs/index.jsonld" {
+		s.docServer.HandleIndexJSONLD(w, r)
+		return
+	}
+	if strings.HasPrefix(r.URL.Path, "/docs/") {
+		slug := strings.TrimPrefix(r.URL.Path, "/docs/")
+		// Check for .jsonld extension
+		if strings.HasSuffix(slug, ".jsonld") {
+			slug = strings.TrimSuffix(slug, ".jsonld")
+			s.docServer.HandleDocJSONLD(w, r, slug)
+		} else {
+			s.docServer.HandleDoc(w, r, slug)
+		}
+		return
+	}
+}
+
 // API routes
 if r.URL.Path == "/api/save" {
 s.handleSave(w, r)
@@ -551,6 +577,8 @@ http.NotFound(w, r)
 func main() {
 addr := flag.String("addr", ":8080", "Server address")
 storeDir := flag.String("store", "data", "Filesystem store directory")
+contentDir := flag.String("content", "content/docs", "Content directory for markdown documents")
+baseURL := flag.String("base-url", "http://localhost:8080", "Base URL for the server")
 enableCORS := flag.Bool("cors", true, "Enable CORS headers")
 maxContentMB := flag.Int("max-content-mb", 1, "Maximum content size in megabytes (default: 1MB)")
 flag.Parse()
@@ -559,6 +587,8 @@ flag.Parse()
 maxContentSize := int64(*maxContentMB) * 1024 * 1024
 
 log.Printf("Using filesystem storage: %s", *storeDir)
+log.Printf("Content directory: %s", *contentDir)
+log.Printf("Base URL: %s", *baseURL)
 log.Printf("Maximum content size: %d MB (%d bytes)", *maxContentMB, maxContentSize)
 storage := NewFSStorage(*storeDir)
 
@@ -568,7 +598,10 @@ if err != nil {
 log.Fatalf("Failed to access embedded public files: %v", err)
 }
 
-server := NewServer(storage, publicSubFS, *enableCORS, maxContentSize)
+// Create document server
+docServer := docserver.NewDocServer(*contentDir, *baseURL)
+
+server := NewServer(storage, publicSubFS, *enableCORS, maxContentSize, docServer)
 
 log.Printf("Starting server on %s", *addr)
 log.Println("Using embedded public files")

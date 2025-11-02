@@ -92,7 +92,7 @@ if err := storage.SaveObject(cid, testData, canonical); err != nil {
 t.Fatalf("Failed to save object: %v", err)
 }
 
-server := NewServer(storage, nil, false, 1*1024*1024)
+server := NewServer(storage, nil, false, 1*1024*1024, nil)
 
 // Test successful retrieval
 req := httptest.NewRequest("GET", "/o/"+cid, nil)
@@ -123,7 +123,7 @@ t.Errorf("Expected status 404, got %d", resp.StatusCode)
 func TestHandleSave(t *testing.T) {
 	tmpDir := t.TempDir()
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, nil, false, 1*1024*1024)
+	server := NewServer(storage, nil, false, 1*1024*1024, nil)
 
 	// Create test auth token
 	authToken := createTestToken("test-user-123", "test@example.com", "testuser", "123456")
@@ -235,7 +235,7 @@ if err := storage.UpdateLatest(user, slug, cid); err != nil {
 t.Fatalf("Failed to update latest: %v", err)
 }
 
-server := NewServer(storage, nil, false, 1*1024*1024)
+server := NewServer(storage, nil, false, 1*1024*1024, nil)
 
 req := httptest.NewRequest("GET", "/u/"+user+"/g/"+slug+"/latest", nil)
 w := httptest.NewRecorder()
@@ -269,7 +269,7 @@ if err := storage.AppendHistory(user, slug, cid2); err != nil {
 t.Fatalf("Failed to append history: %v", err)
 }
 
-server := NewServer(storage, nil, false, 1*1024*1024)
+server := NewServer(storage, nil, false, 1*1024*1024, nil)
 
 req := httptest.NewRequest("GET", "/u/"+user+"/g/"+slug+"/_history", nil)
 w := httptest.NewRecorder()
@@ -301,7 +301,7 @@ if err != nil {
 t.Fatalf("Failed to get public filesystem: %v", err)
 }
 
-server := NewServer(storage, publicFS, false, 1*1024*1024)
+server := NewServer(storage, publicFS, false, 1*1024*1024, nil)
 
 // Test serving index.html at root
 req := httptest.NewRequest("GET", "/", nil)
@@ -338,7 +338,7 @@ t.Error("Expected tens-city.js content")
 func TestCORSHeaders(t *testing.T) {
 tmpDir := t.TempDir()
 storage := NewFSStorage(tmpDir)
-server := NewServer(storage, nil, true, 1*1024*1024) // CORS enabled
+server := NewServer(storage, nil, true, 1*1024*1024, nil) // CORS enabled
 
 // Test OPTIONS request
 req := httptest.NewRequest("OPTIONS", "/api/save", nil)
