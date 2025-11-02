@@ -732,6 +732,8 @@ class TensCity extends HTMLElement {
     async _createMarkdownEditor() {
         // Load marked library for markdown preview
         await this._loadScript('https://cdn.jsdelivr.net/npm/marked@11.0.0/marked.min.js', 'marked');
+        // Load DOMPurify for HTML sanitization
+        await this._loadScript('https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js', 'DOMPurify');
 
         const editorContainer = document.createElement('div');
         editorContainer.className = 'tc-editor-container';
@@ -943,10 +945,21 @@ class TensCity extends HTMLElement {
         if (!this._markdownEditor || !this._markdownPreview) return;
         
         const markdown = this._markdownEditor.value;
-        if (markdown && window.marked) {
-            this._markdownPreview.innerHTML = window.marked.parse(markdown);
-        } else {
+        if (markdown && window.marked && window.DOMPurify) {
+            // Parse markdown and sanitize HTML output to prevent XSS
+            const html = window.marked.parse(markdown, {
+                breaks: true,
+                gfm: true,
+                headerIds: false,
+                mangle: false
+            });
+            
+            // Sanitize with DOMPurify before rendering
+            this._markdownPreview.innerHTML = window.DOMPurify.sanitize(html);
+        } else if (!markdown) {
             this._markdownPreview.innerHTML = '<p style="color: #999;">Preview will appear here...</p>';
+        } else {
+            this._markdownPreview.textContent = 'Loading preview...';
         }
     }
 
@@ -1498,12 +1511,11 @@ class TensCity extends HTMLElement {
             toggleBtn.textContent = this._editorMode === 'jsonld' ? '📝 Switch to Markdown' : '📋 Switch to JSON-LD';
         }
 
-        // Show/hide appropriate editor
+        // Remove existing editor container
         const editorContainer = this._appContainer.querySelector('.tc-editor-container');
-        if (!editorContainer) return;
-
-        // Remove existing editor
-        editorContainer.remove();
+        if (editorContainer) {
+            editorContainer.remove();
+        }
 
         // Recreate appropriate editor
         this._createEditor();
