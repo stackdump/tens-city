@@ -176,7 +176,7 @@ func (ds *DocServer) loadIndex() (*CachedIndex, error) {
 
 // HandleDocList handles GET /docs - list all documents
 func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -243,7 +243,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 
 // HandleDoc handles GET /docs/:slug - render a single document
 func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug string) {
-	if r.Method != http.MethodGet {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -354,7 +354,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 
 // HandleDocJSONLD handles GET /docs/:slug.jsonld - return JSON-LD only
 func (ds *DocServer) HandleDocJSONLD(w http.ResponseWriter, r *http.Request, slug string) {
-	if r.Method != http.MethodGet {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -400,7 +400,7 @@ func (ds *DocServer) HandleDocJSONLD(w http.ResponseWriter, r *http.Request, slu
 
 // HandleIndexJSONLD handles GET /docs/index.jsonld - return collection index
 func (ds *DocServer) HandleIndexJSONLD(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
