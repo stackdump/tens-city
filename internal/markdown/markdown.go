@@ -113,12 +113,13 @@ func sanitizeHTML(html string) string {
 	
 	// Allow Mermaid diagram elements
 	p.AllowAttrs("class").Matching(regexp.MustCompile(`^mermaid$`)).OnElements("pre")
+	
+	// Allow script tags from trusted CDNs for Mermaid
 	p.AllowElements("script")
-	p.AllowAttrs("type").Matching(regexp.MustCompile(`^(application/javascript|text/javascript)$`)).OnElements("script")
-	p.AllowAttrs("src").OnElements("script")
+	p.AllowAttrs("src").Matching(regexp.MustCompile(`^https://cdn\.jsdelivr\.net/npm/mermaid/`)).OnElements("script")
 	
 	// Allow SVG elements for PlantUML diagrams
-	p.AllowElements("svg", "g", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text", "tspan", "defs", "use", "clipPath", "mask")
+	p.AllowElements("svg", "g", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text", "tspan", "defs", "use", "clipPath", "mask", "title", "desc")
 	p.AllowAttrs("xmlns", "xmlns:xlink", "version", "viewBox", "width", "height", "preserveAspectRatio").OnElements("svg")
 	p.AllowAttrs("d", "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "opacity", "transform", "x", "y", "x1", "y1", "x2", "y2", "cx", "cy", "r", "rx", "ry", "points", "class", "id", "style", "font-family", "font-size", "text-anchor", "dominant-baseline").Globally()
 	
