@@ -296,6 +296,15 @@ class TensCity extends HTMLElement {
         this._appContainer.appendChild(errorContainer);
     }
 
+    _shouldShowEditor() {
+        // Check if user is viewing specific content that should open the editor
+        const urlParams = new URLSearchParams(window.location.search);
+        const cidParam = urlParams.get('cid');
+        const dataParam = urlParams.get('data');
+        
+        return !!(cidParam || dataParam || this._pendingPermalinkData);
+    }
+
     _showLogin() {
         this._appShown = false; // Reset app shown flag when showing login
         // Don't show full login screen - just show app with login button in header
@@ -306,12 +315,7 @@ class TensCity extends HTMLElement {
         this._createHeaderWithLogin();
         this._createToolbar();
         this._createEditor().then(() => {
-            // Check if there's a CID or permalink data to load
-            const urlParams = new URLSearchParams(window.location.search);
-            const cidParam = urlParams.get('cid');
-            const dataParam = urlParams.get('data');
-            
-            if (cidParam || dataParam || this._pendingPermalinkData) {
+            if (this._shouldShowEditor()) {
                 // User is viewing specific content, show editor with that content
                 this._editorVisible = true;
                 this._loadInitialData();
@@ -368,12 +372,7 @@ class TensCity extends HTMLElement {
         this._createToolbar();
         await this._createEditor();
         
-        // Check if there's a CID or permalink data to load
-        const urlParams = new URLSearchParams(window.location.search);
-        const cidParam = urlParams.get('cid');
-        const dataParam = urlParams.get('data');
-        
-        if (cidParam || dataParam || this._pendingPermalinkData) {
+        if (this._shouldShowEditor()) {
             // User is viewing specific content, show editor with that content
             this._editorVisible = true;
             await this._loadInitialData();
@@ -1924,18 +1923,32 @@ class TensCity extends HTMLElement {
                     const latestItem = items[0];
                     const post = latestItem.item || latestItem;
                     
-                    // Extract slug from URL
-                    let slug = post.url || post['@id'];
-                    if (slug && slug.includes('/posts/')) {
-                        slug = slug.split('/posts/').pop().split(/[?#]/)[0];
+                    // Extract slug from URL using proper URL parsing
+                    let slug = null;
+                    const urlString = post.url || post['@id'];
+                    if (urlString) {
+                        try {
+                            // Handle both absolute and relative URLs
+                            const url = urlString.startsWith('http') ? new URL(urlString) : new URL(urlString, window.location.origin);
+                            const pathParts = url.pathname.split('/posts/');
+                            if (pathParts.length > 1) {
+                                slug = pathParts[pathParts.length - 1].replace(/\/$/, ''); // Remove trailing slash
+                            }
+                        } catch (err) {
+                            console.error('Failed to parse post URL:', err);
+                        }
                         
-                        // Fetch the full post content
-                        const postResponse = await fetch(`/posts/${slug}`);
-                        if (postResponse.ok) {
-                            const html = await postResponse.text();
-                            this._renderLatestPost(html, slug, post);
+                        if (slug) {
+                            // Fetch the full post content
+                            const postResponse = await fetch(`/posts/${slug}`);
+                            if (postResponse.ok) {
+                                const html = await postResponse.text();
+                                this._renderLatestPost(html, slug, post);
+                            } else {
+                                this._latestPostContainer.innerHTML = '<p style="color: #d73a49; text-align: center; padding: 40px;">Failed to load post content</p>';
+                            }
                         } else {
-                            this._latestPostContainer.innerHTML = '<p style="color: #d73a49; text-align: center; padding: 40px;">Failed to load post content</p>';
+                            this._latestPostContainer.innerHTML = '<p style="color: #999; text-align: center; padding: 40px;">No posts available</p>';
                         }
                     } else {
                         this._latestPostContainer.innerHTML = '<p style="color: #999; text-align: center; padding: 40px;">No posts available</p>';
@@ -1967,10 +1980,23 @@ class TensCity extends HTMLElement {
         // Parse the HTML content to extract the actual article
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlContent, 'text/html');
-        const articleContent = doc.querySelector('article') || doc.body;
+        const articleContent = doc.querySelector('article');
         
-        // Copy the content
-        article.innerHTML = articleContent.innerHTML;
+        // Clone the article content safely instead of using innerHTML
+        if (articleContent) {
+            // Clone all child nodes from the source article
+            Array.from(articleContent.childNodes).forEach(node => {
+                article.appendChild(node.cloneNode(true));
+            });
+        } else {
+            // Fallback: if no article tag found, use body content
+            const bodyContent = doc.body;
+            if (bodyContent) {
+                Array.from(bodyContent.childNodes).forEach(node => {
+                    article.appendChild(node.cloneNode(true));
+                });
+            }
+        }
 
         this._latestPostContainer.appendChild(article);
 
