@@ -427,9 +427,9 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
             }
         })();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js" crossorigin="anonymous"></script>
     <script>mermaid.initialize({startOnLoad: true});</script>
-    <script src="https://cdn.jsdelivr.net/npm/plantuml-encoder@1.4.0/dist/plantuml-encoder.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/plantuml-encoder@1.4.0/dist/plantuml-encoder.min.js" integrity="sha384-F/VYkZMVrmPd0865MwHNY3TWxBZKfvXvPszcTi5WvJPPHu8NQg4qZSvUmFLJJF+0" crossorigin="anonymous"></script>
     <script>
         // Render PlantUML diagrams using PlantUML web service
         document.addEventListener('DOMContentLoaded', function() {
