@@ -1996,8 +1996,14 @@ class TensCity extends HTMLElement {
             this._showEditorContainer();
         }).catch(err => {
             console.error('Failed to recreate editor:', err);
-            // Editor failed to load, but at least show a message in the container
+            
+            // Remove any existing error messages first
+            const existingErrors = this._appContainer.querySelectorAll('.tc-editor-error');
+            existingErrors.forEach(el => el.remove());
+            
+            // Editor failed to load, show error message
             const errorDiv = document.createElement('div');
+            errorDiv.className = 'tc-editor-error';
             errorDiv.textContent = 'Failed to load editor. Please refresh the page.';
             errorDiv.style.padding = '24px';
             errorDiv.style.color = '#d73a49';
@@ -2480,7 +2486,7 @@ class TensCity extends HTMLElement {
                         this._showEditorContainer();
                         
                         // Populate frontmatter from JSON-LD
-                        this._populateMarkdownFromJSONLD(data);
+                        this._populateMarkdownFromJSONLD(data, cidParam);
                         
                         await this._updateDeleteButtonVisibility(data);
                         console.log('Successfully loaded markdown document from CID');
@@ -2576,7 +2582,7 @@ class TensCity extends HTMLElement {
         return false;
     }
 
-    _populateMarkdownFromJSONLD(data) {
+    _populateMarkdownFromJSONLD(data, cidParam) {
         // Populate markdown editor frontmatter from JSON-LD data
         if (!this._frontmatterForm) return;
         
@@ -2590,10 +2596,20 @@ class TensCity extends HTMLElement {
         
         // Extract slug from URL if present
         let slug = '';
-        if (data.url) {
-            const urlParts = data.url.split('/posts/');
-            if (urlParts.length > 1) {
-                slug = urlParts[1].split(/[?#]/)[0];
+        if (data.url && typeof data.url === 'string') {
+            try {
+                // Try to parse as URL to validate format
+                const urlObj = new URL(data.url, window.location.origin);
+                const pathParts = urlObj.pathname.split('/posts/');
+                if (pathParts.length > 1 && pathParts[1]) {
+                    slug = pathParts[1].split(/[?#]/)[0];
+                }
+            } catch (e) {
+                // If URL parsing fails, fall back to simple string split
+                const urlParts = data.url.split('/posts/');
+                if (urlParts.length > 1 && urlParts[1]) {
+                    slug = urlParts[1].split(/[?#]/)[0];
+                }
             }
         }
         
@@ -2633,9 +2649,7 @@ class TensCity extends HTMLElement {
             this._updateMarkdownPreview();
         }
         
-        // Store the CID for future reference
-        const urlParams = new URLSearchParams(window.location.search);
-        const cidParam = urlParams.get('cid');
+        // Store the CID for future reference (passed as parameter to avoid duplicate parsing)
         if (cidParam) {
             this._lastSavedCid = cidParam;
         }
