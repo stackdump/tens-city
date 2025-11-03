@@ -435,8 +435,17 @@ Bob --> Alice: Authentication Response
 		t.Errorf("Expected title 'PlantUML Test', got '%s'", doc.Frontmatter.Title)
 	}
 
-	// Check that HTML contains SVG or PlantUML-related content
-	if !strings.Contains(doc.HTML, "svg") && !strings.Contains(doc.HTML, "plantuml") {
-		t.Error("Expected HTML to contain PlantUML diagram content")
+	// Check that HTML contains PlantUML wrapper for client-side rendering
+	if !strings.Contains(doc.HTML, `class="plantuml"`) {
+		t.Error("Expected HTML to contain PlantUML wrapper with class='plantuml'")
+	}
+
+	// Check that the PlantUML code is included
+	if !strings.Contains(doc.HTML, "@startuml") {
+		t.Error("Expected HTML to contain PlantUML code")
+	}
+
+	if !strings.Contains(doc.HTML, "Alice") && !strings.Contains(doc.HTML, "Bob") {
+		t.Error("Expected HTML to contain PlantUML diagram content (Alice/Bob)")
 	}
 }
