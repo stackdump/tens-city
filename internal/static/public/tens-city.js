@@ -47,8 +47,6 @@ class TensCity extends HTMLElement {
         this._docTags = [];
         this._lastSavedCid = null; // Store CID from last save for permalink in markdown mode
         this._lastSavedSlug = null; // Store slug from last save for permalink in markdown mode
-        this._editorVisible = false; // Track whether editor is visible or latest post is shown
-        this._latestPostContainer = null; // Container for displaying the latest post
     }
 
     connectedCallback() {
@@ -317,11 +315,9 @@ class TensCity extends HTMLElement {
         this._createEditor().then(() => {
             if (this._shouldShowEditor()) {
                 // User is viewing specific content, show editor with that content
-                this._editorVisible = true;
                 this._loadInitialData();
             } else {
-                // No specific content to view, show latest post by default
-                this._editorVisible = false;
+                // No specific content to view, redirect to latest post
                 this._showLatestPostView();
             }
         });
@@ -374,11 +370,9 @@ class TensCity extends HTMLElement {
         
         if (this._shouldShowEditor()) {
             // User is viewing specific content, show editor with that content
-            this._editorVisible = true;
             await this._loadInitialData();
         } else {
-            // No specific content to view, show latest post by default
-            this._editorVisible = false;
+            // No specific content to view, redirect to latest post
             await this._showLatestPostView();
         }
     }
@@ -595,12 +589,6 @@ class TensCity extends HTMLElement {
             await this._createJSONLDEditor();
         } else {
             await this._createMarkdownEditor();
-        }
-        
-        // Hide editor if we're showing latest post view
-        const editorContainer = this._appContainer.querySelector('.tc-editor-container');
-        if (editorContainer && !this._editorVisible) {
-            editorContainer.style.display = 'none';
         }
         
         // Update permalink after creating editor
@@ -1885,222 +1873,52 @@ class TensCity extends HTMLElement {
         }
     }
 
-    _showMessage(container, message, color = '#586069') {
-        // Safely display a message in a container
-        // Clear container safely
-        while (container.firstChild) {
-            container.removeChild(container.firstChild);
-        }
-        const p = document.createElement('p');
-        p.textContent = message;
-        this._applyStyles(p, {
-            color: color,
-            textAlign: 'center',
-            padding: '40px'
-        });
-        container.appendChild(p);
-    }
-
     async _showLatestPostView() {
-        // Show the latest post in the main view instead of the editor
-        // Hide editor if it exists
-        const editorContainer = this._appContainer.querySelector('.tc-editor-container');
-        if (editorContainer) {
-            editorContainer.style.display = 'none';
-        }
-
-        // Create or show latest post container
-        if (!this._latestPostContainer) {
-            this._latestPostContainer = document.createElement('div');
-            this._latestPostContainer.className = 'tc-latest-post-container';
-            this._applyStyles(this._latestPostContainer, {
-                flex: '1',
-                display: 'flex',
-                flexDirection: 'column',
-                padding: '24px',
-                overflow: 'auto',
-                background: '#fff'
-            });
-            this._appContainer.appendChild(this._latestPostContainer);
-        } else {
-            this._latestPostContainer.style.display = 'flex';
-        }
-
-        // Load and display the latest post
-        this._showMessage(this._latestPostContainer, 'Loading latest post...');
-
+        // Redirect to the latest post instead of showing it inline
         try {
             const response = await fetch('/posts/index.jsonld');
-            if (response.ok) {
-                const index = await response.json();
-                const items = index.itemListElement || [];
+            if (!response.ok) {
+                // Failed to fetch index - stay on current page
+                return;
+            }
+            
+            const index = await response.json();
+            const items = index.itemListElement || [];
+            
+            if (items.length === 0) {
+                // No posts available - stay on current page
+                return;
+            }
+            
+            const latestItem = items[0];
+            const post = latestItem.item || latestItem;
+            const urlString = post.url || post['@id'];
+            
+            if (!urlString) {
+                // No URL found - stay on current page
+                return;
+            }
+            
+            // Extract slug from URL using proper URL parsing
+            try {
+                // Handle both absolute and relative URLs
+                const url = urlString.startsWith('http') ? new URL(urlString) : new URL(urlString, window.location.origin);
+                const pathParts = url.pathname.split('/posts/');
                 
-                if (items.length > 0) {
-                    const latestItem = items[0];
-                    const post = latestItem.item || latestItem;
-                    
-                    // Extract slug from URL using proper URL parsing
-                    let slug = null;
-                    const urlString = post.url || post['@id'];
-                    if (urlString) {
-                        try {
-                            // Handle both absolute and relative URLs
-                            const url = urlString.startsWith('http') ? new URL(urlString) : new URL(urlString, window.location.origin);
-                            const pathParts = url.pathname.split('/posts/');
-                            if (pathParts.length > 1) {
-                                slug = pathParts[pathParts.length - 1].replace(/\/$/, ''); // Remove trailing slash
-                            }
-                        } catch (err) {
-                            console.error('Failed to parse post URL:', err);
-                        }
-                        
-                        if (slug) {
-                            // Fetch the full post content
-                            const postResponse = await fetch(`/posts/${slug}`);
-                            if (postResponse.ok) {
-                                const html = await postResponse.text();
-                                this._renderLatestPost(html, slug, post);
-                            } else {
-                                this._showMessage(this._latestPostContainer, 'Failed to load post content', '#d73a49');
-                            }
-                        } else {
-                            this._showMessage(this._latestPostContainer, 'No posts available', '#999');
-                        }
-                    } else {
-                        this._showMessage(this._latestPostContainer, 'No posts available', '#999');
+                if (pathParts.length > 1) {
+                    const slug = pathParts[pathParts.length - 1].replace(/\/$/, ''); // Remove trailing slash
+                    if (slug) {
+                        // Redirect to the latest post
+                        window.location.href = `/posts/${slug}`;
                     }
-                } else {
-                    this._showMessage(this._latestPostContainer, 'No posts available', '#999');
                 }
-            } else {
-                this._showMessage(this._latestPostContainer, 'No posts available', '#999');
+            } catch (err) {
+                console.error('Failed to parse post URL:', err);
+                // Failed to parse URL - stay on current page
             }
         } catch (err) {
-            console.error('Failed to load latest post:', err);
-            this._showMessage(this._latestPostContainer, 'Failed to load posts', '#d73a49');
-        }
-    }
-
-    _renderLatestPost(htmlContent, slug, metadata) {
-        // Clear container safely
-        while (this._latestPostContainer.firstChild) {
-            this._latestPostContainer.removeChild(this._latestPostContainer.firstChild);
-        }
-
-        // Create article wrapper
-        const article = document.createElement('article');
-        this._applyStyles(article, {
-            maxWidth: '800px',
-            margin: '0 auto',
-            width: '100%'
-        });
-
-        // Parse the HTML content to extract the actual article
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlContent, 'text/html');
-        const articleContent = doc.querySelector('article');
-        
-        // Clone the article content safely instead of using innerHTML
-        if (articleContent) {
-            // Clone all child nodes from the source article
-            Array.from(articleContent.childNodes).forEach(node => {
-                article.appendChild(node.cloneNode(true));
-            });
-        } else {
-            // Fallback: if no article tag found, use body content
-            const bodyContent = doc.body;
-            if (bodyContent) {
-                Array.from(bodyContent.childNodes).forEach(node => {
-                    article.appendChild(node.cloneNode(true));
-                });
-            }
-        }
-
-        this._latestPostContainer.appendChild(article);
-
-        // Create footer with Edit button and CID info
-        const footer = document.createElement('div');
-        this._applyStyles(footer, {
-            maxWidth: '800px',
-            margin: '40px auto 0',
-            padding: '20px 0',
-            borderTop: '1px solid #e1e4e8',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '16px'
-        });
-
-        // CID info (if available from metadata)
-        const cidInfo = document.createElement('div');
-        this._applyStyles(cidInfo, {
-            fontSize: '13px',
-            color: '#586069'
-        });
-        
-        if (metadata.identifier) {
-            const cidLabel = document.createElement('span');
-            cidLabel.textContent = 'CID: ';
-            cidInfo.appendChild(cidLabel);
-            
-            const cidLink = document.createElement('a');
-            cidLink.href = `/o/${metadata.identifier}`;
-            cidLink.textContent = metadata.identifier;
-            cidLink.target = '_blank';
-            this._applyStyles(cidLink, {
-                color: '#0366d6',
-                textDecoration: 'none',
-                fontFamily: 'monospace'
-            });
-            cidLink.addEventListener('mouseenter', () => {
-                cidLink.style.textDecoration = 'underline';
-            });
-            cidLink.addEventListener('mouseleave', () => {
-                cidLink.style.textDecoration = 'none';
-            });
-            cidInfo.appendChild(cidLink);
-        }
-        
-        footer.appendChild(cidInfo);
-
-        // Edit button
-        const editBtn = document.createElement('button');
-        editBtn.textContent = '✏️ Edit';
-        editBtn.title = 'Open editor';
-        this._applyStyles(editBtn, {
-            padding: '8px 16px',
-            fontSize: '14px',
-            fontWeight: '500',
-            background: '#fafbfc',
-            border: '1px solid #e1e4e8',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            transition: 'background 0.2s'
-        });
-        editBtn.addEventListener('mouseenter', () => {
-            editBtn.style.background = '#f3f4f6';
-        });
-        editBtn.addEventListener('mouseleave', () => {
-            editBtn.style.background = '#fafbfc';
-        });
-        editBtn.addEventListener('click', () => this._showEditor());
-        footer.appendChild(editBtn);
-
-        this._latestPostContainer.appendChild(footer);
-    }
-
-    _showEditor() {
-        // Show the editor and hide the latest post view
-        this._editorVisible = true;
-        
-        if (this._latestPostContainer) {
-            this._latestPostContainer.style.display = 'none';
-        }
-
-        const editorContainer = this._appContainer.querySelector('.tc-editor-container');
-        if (editorContainer) {
-            editorContainer.style.display = 'flex';
+            console.error('Failed to load latest post for redirect:', err);
+            // Don't redirect on error - just continue showing the editor
         }
     }
 
