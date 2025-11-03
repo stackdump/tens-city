@@ -626,6 +626,9 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
 
 	// Render HTML page
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	
+	allPostsFeedURL := fmt.Sprintf("%s/posts.rss", ds.baseURL)
+	
 	fmt.Fprintf(w, `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -638,6 +641,7 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
         .intro { color: #666; margin-bottom: 2rem; }
         .feed-list { list-style: none; padding: 0; }
         .feed-item { margin: 1rem 0; padding: 1rem; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9; }
+        .feed-item.featured { background: #e6f3ff; border-color: #0066cc; }
         .feed-item h2 { margin: 0 0 0.5rem 0; font-size: 1.25rem; }
         .feed-item a { color: #0066cc; text-decoration: none; font-family: monospace; }
         .feed-item a:hover { text-decoration: underline; }
@@ -646,14 +650,25 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
         .author-link:hover { text-decoration: underline; }
         .back-link { display: inline-block; margin-bottom: 1rem; color: #0066cc; text-decoration: none; }
         .back-link:hover { text-decoration: underline; }
+        .section-title { color: #333; margin-top: 2rem; margin-bottom: 1rem; font-size: 1.5rem; }
     </style>
 </head>
 <body>
     <a href="/" class="back-link">← Back to Home</a>
     <h1>RSS Feeds</h1>
-    <p class="intro">Subscribe to RSS feeds for individual authors to stay updated with their latest posts.</p>
+    <p class="intro">Subscribe to RSS feeds to stay updated with the latest posts.</p>
     <ul class="feed-list">
-`)
+        <li class="feed-item featured">
+            <h2>All Posts</h2>
+            <a href="%s">%s</a>
+            <div class="feed-meta">
+                Latest blog posts from all authors on Tens City
+            </div>
+        </li>
+    </ul>
+    <h2 class="section-title">Author Feeds</h2>
+    <ul class="feed-list">
+`, allPostsFeedURL, allPostsFeedURL)
 
 	// Sort authors alphabetically by username for consistent ordering
 	var userNames []string
@@ -679,7 +694,7 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(userNames) == 0 {
-		fmt.Fprintf(w, `        <li class="feed-item">No RSS feeds available yet.</li>
+		fmt.Fprintf(w, `        <li class="feed-item">No author feeds available yet.</li>
 `)
 	}
 
