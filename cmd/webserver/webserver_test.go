@@ -342,3 +342,122 @@ This is Bob's post.
 		t.Error("Expected Bob's GitHub link")
 	}
 }
+
+func TestSiteWideRSSFeed(t *testing.T) {
+	tmpDir := t.TempDir()
+	storage := NewFSStorage(tmpDir)
+
+	// Get the embedded public filesystem
+	publicFS, err := static.Public()
+	if err != nil {
+		t.Fatalf("Failed to get public filesystem: %v", err)
+	}
+
+	// Create a temporary content directory with test posts
+	contentDir := t.TempDir()
+
+	// Create posts from different authors
+	testPost1 := `---
+title: Post by Alice
+description: A test blog post by Alice
+datePublished: 2025-11-03T00:00:00Z
+author:
+  name: Alice Smith
+  type: Person
+  url: https://github.com/alicesmith
+tags:
+  - test
+lang: en
+slug: alice-post
+draft: false
+---
+
+# Post by Alice
+
+This is Alice's post.
+`
+	testPost2 := `---
+title: Post by Bob
+description: A test blog post by Bob
+datePublished: 2025-11-02T00:00:00Z
+author:
+  name: Bob Jones
+  type: Person
+  url: https://github.com/bobjones
+tags:
+  - test
+lang: en
+slug: bob-post
+draft: false
+---
+
+# Post by Bob
+
+This is Bob's post.
+`
+
+	if err := os.WriteFile(contentDir+"/alice-post.md", []byte(testPost1), 0644); err != nil {
+		t.Fatalf("Failed to create test post 1: %v", err)
+	}
+	if err := os.WriteFile(contentDir+"/bob-post.md", []byte(testPost2), 0644); err != nil {
+		t.Fatalf("Failed to create test post 2: %v", err)
+	}
+
+	// Create docserver with the test content
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080")
+	server := NewServer(storage, publicFS, docServer)
+
+	// Test serving /posts.rss site-wide feed
+	req := httptest.NewRequest("GET", "/posts.rss", nil)
+	w := httptest.NewRecorder()
+	server.ServeHTTP(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", resp.StatusCode)
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	if !strings.Contains(contentType, "application/rss+xml") {
+		t.Errorf("Expected Content-Type to contain 'application/rss+xml', got %s", contentType)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	bodyStr := string(body)
+
+	// Check RSS feed structure
+	if !strings.Contains(bodyStr, "<rss") {
+		t.Error("Expected <rss> tag in feed")
+	}
+
+	if !strings.Contains(bodyStr, `version="2.0"`) {
+		t.Error("Expected RSS version 2.0")
+	}
+
+	// Check channel metadata
+	if !strings.Contains(bodyStr, "Tens City - All Posts") {
+		t.Error("Expected site-wide feed title")
+	}
+
+	if !strings.Contains(bodyStr, "Latest blog posts from all authors on Tens City") {
+		t.Error("Expected site-wide feed description")
+	}
+
+	// Check that both posts are included
+	if !strings.Contains(bodyStr, "Post by Alice") {
+		t.Error("Expected Alice's post in feed")
+	}
+
+	if !strings.Contains(bodyStr, "Post by Bob") {
+		t.Error("Expected Bob's post in feed")
+	}
+
+	// Check that post URLs are correct
+	if !strings.Contains(bodyStr, "http://localhost:8080/posts/alice-post") {
+		t.Error("Expected Alice's post URL in feed")
+	}
+
+	if !strings.Contains(bodyStr, "http://localhost:8080/posts/bob-post") {
+		t.Error("Expected Bob's post URL in feed")
+	}
+}

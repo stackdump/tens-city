@@ -10,7 +10,7 @@ Tens City is a simple, elegant blog platform built on markdown files and content
 - **Beautiful, responsive design** - Modern card-based layout
 - **Schema.org JSON-LD** - Automatic structured data generation for SEO
 - **Server-side rendering** - Fast HTML generation from markdown
-- **RSS feeds** - Automatic feed generation per author
+- **RSS feeds** - Automatic feed generation per author and site-wide
 - **Static file serving** - Simple, secure blog hosting
 - **No authentication required** - Pure static blog viewer
 
@@ -28,7 +28,8 @@ make build
 # Posts list: http://localhost:8080/posts
 # Specific post: http://localhost:8080/posts/your-slug
 # JSON-LD: http://localhost:8080/posts/your-slug.jsonld
-# RSS feed: http://localhost:8080/u/{author}/posts.rss
+# Site-wide RSS: http://localhost:8080/posts.rss
+# Author RSS: http://localhost:8080/u/{author}/posts.rss
 ```
 
 ## Writing Posts

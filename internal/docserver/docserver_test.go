@@ -522,3 +522,231 @@ func TestExtractAuthorURL(t *testing.T) {
 		})
 	}
 }
+
+func TestHandleSiteRSS_BasicFeed(t *testing.T) {
+	// Create a temporary directory with test content
+	tmpDir := t.TempDir()
+
+	// Create test markdown files from different authors
+	doc1 := `---
+title: Post by Alice
+description: Alice's post
+datePublished: 2025-11-01T10:00:00Z
+author:
+  name: Alice
+  type: Person
+  url: https://github.com/alice
+lang: en
+slug: alice-post
+---
+
+Content of Alice's post.
+`
+
+	doc2 := `---
+title: Post by Bob
+description: Bob's post
+datePublished: 2025-11-02T10:00:00Z
+author:
+  name: Bob
+  type: Person
+  url: https://github.com/bob
+lang: en
+slug: bob-post
+---
+
+Content of Bob's post.
+`
+
+	doc3 := `---
+title: Another Post by Alice
+description: Alice's second post
+datePublished: 2025-11-03T10:00:00Z
+author:
+  name: Alice
+  type: Person
+  url: https://github.com/alice
+lang: en
+slug: alice-second
+---
+
+Content of Alice's second post.
+`
+
+	// Write test files
+	if err := os.WriteFile(filepath.Join(tmpDir, "alice1.md"), []byte(doc1), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "bob1.md"), []byte(doc2), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "alice2.md"), []byte(doc3), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create docserver
+	ds := NewDocServer(tmpDir, "https://tens.city")
+
+	// Create test request
+	req := httptest.NewRequest(http.MethodGet, "/posts.rss", nil)
+	rec := httptest.NewRecorder()
+
+	// Handle request
+	ds.HandleSiteRSS(rec, req)
+
+	// Check response
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", rec.Code)
+	}
+
+	// Check content type
+	contentType := rec.Header().Get("Content-Type")
+	if !strings.Contains(contentType, "application/rss+xml") {
+		t.Errorf("Expected Content-Type to contain 'application/rss+xml', got %q", contentType)
+	}
+
+	// Parse RSS feed
+	var feed rss.RSS
+	if err := xml.Unmarshal(rec.Body.Bytes(), &feed); err != nil {
+		t.Fatalf("Failed to parse RSS feed: %v", err)
+	}
+
+	// Should have all posts from all authors (3 items)
+	if len(feed.Channel.Items) != 3 {
+		t.Errorf("Expected 3 items from all authors, got %d", len(feed.Channel.Items))
+	}
+
+	// Verify sorted by date (newest first)
+	if feed.Channel.Items[0].Title != "Another Post by Alice" {
+		t.Errorf("Expected first item to be 'Another Post by Alice', got %q", feed.Channel.Items[0].Title)
+	}
+
+	if feed.Channel.Items[1].Title != "Post by Bob" {
+		t.Errorf("Expected second item to be 'Post by Bob', got %q", feed.Channel.Items[1].Title)
+	}
+
+	if feed.Channel.Items[2].Title != "Post by Alice" {
+		t.Errorf("Expected third item to be 'Post by Alice', got %q", feed.Channel.Items[2].Title)
+	}
+
+	// Verify channel metadata
+	if feed.Channel.Title != "Tens City - All Posts" {
+		t.Errorf("Expected title 'Tens City - All Posts', got %q", feed.Channel.Title)
+	}
+
+	expectedLink := "https://tens.city/posts"
+	if feed.Channel.Link != expectedLink {
+		t.Errorf("Expected link %q, got %q", expectedLink, feed.Channel.Link)
+	}
+}
+
+func TestHandleSiteRSS_ExcludesDrafts(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	publishedPost := `---
+title: Published Post
+datePublished: 2025-11-01T10:00:00Z
+author:
+  name: Alice
+  url: https://github.com/alice
+lang: en
+slug: published
+draft: false
+---
+Content
+`
+
+	draftPost := `---
+title: Draft Post
+datePublished: 2025-11-02T10:00:00Z
+author:
+  name: Bob
+  url: https://github.com/bob
+lang: en
+slug: draft
+draft: true
+---
+Content
+`
+
+	if err := os.WriteFile(filepath.Join(tmpDir, "published.md"), []byte(publishedPost), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "draft.md"), []byte(draftPost), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	ds := NewDocServer(tmpDir, "https://tens.city")
+
+	req := httptest.NewRequest(http.MethodGet, "/posts.rss", nil)
+	rec := httptest.NewRecorder()
+	ds.HandleSiteRSS(rec, req)
+
+	var feed rss.RSS
+	if err := xml.Unmarshal(rec.Body.Bytes(), &feed); err != nil {
+		t.Fatalf("Failed to parse RSS feed: %v", err)
+	}
+
+	// Should only have the published post
+	if len(feed.Channel.Items) != 1 {
+		t.Errorf("Expected 1 item (draft excluded), got %d", len(feed.Channel.Items))
+	}
+
+	if feed.Channel.Items[0].Title != "Published Post" {
+		t.Errorf("Expected 'Published Post', got %q", feed.Channel.Items[0].Title)
+	}
+}
+
+func TestHandleSiteRSS_EmptyFeed(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	ds := NewDocServer(tmpDir, "https://tens.city")
+
+	// Request site feed with no posts
+	req := httptest.NewRequest(http.MethodGet, "/posts.rss", nil)
+	rec := httptest.NewRecorder()
+	ds.HandleSiteRSS(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200 even for empty feed, got %d", rec.Code)
+	}
+
+	var feed rss.RSS
+	if err := xml.Unmarshal(rec.Body.Bytes(), &feed); err != nil {
+		t.Fatalf("Failed to parse RSS feed: %v", err)
+	}
+
+	// Should have an empty feed
+	if len(feed.Channel.Items) != 0 {
+		t.Errorf("Expected 0 items for site with no posts, got %d", len(feed.Channel.Items))
+	}
+}
+
+func TestHandleSiteRSS_OnlyGetMethod(t *testing.T) {
+	tmpDir := t.TempDir()
+	ds := NewDocServer(tmpDir, "https://tens.city")
+
+	// Test GET is allowed
+	req := httptest.NewRequest(http.MethodGet, "/posts.rss", nil)
+	rec := httptest.NewRecorder()
+	ds.HandleSiteRSS(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected GET to be allowed, got status %d", rec.Code)
+	}
+
+	// Test HEAD is allowed
+	req = httptest.NewRequest(http.MethodHead, "/posts.rss", nil)
+	rec = httptest.NewRecorder()
+	ds.HandleSiteRSS(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected HEAD to be allowed, got status %d", rec.Code)
+	}
+
+	// Test POST is not allowed
+	req = httptest.NewRequest(http.MethodPost, "/posts.rss", nil)
+	rec = httptest.NewRecorder()
+	ds.HandleSiteRSS(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("Expected POST to be disallowed, got status %d", rec.Code)
+	}
+}
