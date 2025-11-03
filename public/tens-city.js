@@ -2571,12 +2571,16 @@ class TensCity extends HTMLElement {
         const context = data['@context'];
         if (!context) return false;
         
-        // Accept schema.org in various forms
-        if (typeof context === 'string' && context.includes('schema.org')) {
-            return true;
+        // Accept schema.org in various forms (with proper URL validation to avoid substring matches)
+        // Valid forms: "https://schema.org", "http://schema.org", "https://schema.org/version/3.7/"
+        if (typeof context === 'string') {
+            // Match schema.org as the domain (not just anywhere in the URL)
+            return /^https?:\/\/schema\.org(\/|$)/.test(context);
         }
-        if (Array.isArray(context) && context.some(c => typeof c === 'string' && c.includes('schema.org'))) {
-            return true;
+        if (Array.isArray(context)) {
+            return context.some(c => 
+                typeof c === 'string' && /^https?:\/\/schema\.org(\/|$)/.test(c)
+            );
         }
         
         return false;
