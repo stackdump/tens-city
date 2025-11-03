@@ -1887,7 +1887,10 @@ class TensCity extends HTMLElement {
 
     _showMessage(container, message, color = '#586069') {
         // Safely display a message in a container
-        container.innerHTML = '';
+        // Clear container safely
+        while (container.firstChild) {
+            container.removeChild(container.firstChild);
+        }
         const p = document.createElement('p');
         p.textContent = message;
         this._applyStyles(p, {
@@ -1979,8 +1982,10 @@ class TensCity extends HTMLElement {
     }
 
     _renderLatestPost(htmlContent, slug, metadata) {
-        // Clear container
-        this._latestPostContainer.innerHTML = '';
+        // Clear container safely
+        while (this._latestPostContainer.firstChild) {
+            this._latestPostContainer.removeChild(this._latestPostContainer.firstChild);
+        }
 
         // Create article wrapper
         const article = document.createElement('article');
