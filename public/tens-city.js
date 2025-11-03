@@ -1885,6 +1885,19 @@ class TensCity extends HTMLElement {
         }
     }
 
+    _showMessage(container, message, color = '#586069') {
+        // Safely display a message in a container
+        container.innerHTML = '';
+        const p = document.createElement('p');
+        p.textContent = message;
+        this._applyStyles(p, {
+            color: color,
+            textAlign: 'center',
+            padding: '40px'
+        });
+        container.appendChild(p);
+    }
+
     async _showLatestPostView() {
         // Show the latest post in the main view instead of the editor
         // Hide editor if it exists
@@ -1911,7 +1924,7 @@ class TensCity extends HTMLElement {
         }
 
         // Load and display the latest post
-        this._latestPostContainer.innerHTML = '<p style="color: #586069; text-align: center; padding: 40px;">Loading latest post...</p>';
+        this._showMessage(this._latestPostContainer, 'Loading latest post...');
 
         try {
             const response = await fetch('/posts/index.jsonld');
@@ -1945,23 +1958,23 @@ class TensCity extends HTMLElement {
                                 const html = await postResponse.text();
                                 this._renderLatestPost(html, slug, post);
                             } else {
-                                this._latestPostContainer.innerHTML = '<p style="color: #d73a49; text-align: center; padding: 40px;">Failed to load post content</p>';
+                                this._showMessage(this._latestPostContainer, 'Failed to load post content', '#d73a49');
                             }
                         } else {
-                            this._latestPostContainer.innerHTML = '<p style="color: #999; text-align: center; padding: 40px;">No posts available</p>';
+                            this._showMessage(this._latestPostContainer, 'No posts available', '#999');
                         }
                     } else {
-                        this._latestPostContainer.innerHTML = '<p style="color: #999; text-align: center; padding: 40px;">No posts available</p>';
+                        this._showMessage(this._latestPostContainer, 'No posts available', '#999');
                     }
                 } else {
-                    this._latestPostContainer.innerHTML = '<p style="color: #999; text-align: center; padding: 40px;">No posts available</p>';
+                    this._showMessage(this._latestPostContainer, 'No posts available', '#999');
                 }
             } else {
-                this._latestPostContainer.innerHTML = '<p style="color: #999; text-align: center; padding: 40px;">No posts available</p>';
+                this._showMessage(this._latestPostContainer, 'No posts available', '#999');
             }
         } catch (err) {
             console.error('Failed to load latest post:', err);
-            this._latestPostContainer.innerHTML = '<p style="color: #d73a49; text-align: center; padding: 40px;">Failed to load posts</p>';
+            this._showMessage(this._latestPostContainer, 'Failed to load posts', '#d73a49');
         }
     }
 
