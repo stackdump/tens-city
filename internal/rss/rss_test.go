@@ -2,6 +2,7 @@ package rss
 
 import (
 	"encoding/xml"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -182,9 +183,9 @@ func TestGenerateUserFeed_LimitsTo20Items(t *testing.T) {
 		date := time.Date(2025, 11, i+1, 10, 0, 0, 0, time.UTC)
 		docs[i] = &markdown.Document{
 			Frontmatter: markdown.Frontmatter{
-				Title:         "Post " + string(rune(i)),
+				Title:         fmt.Sprintf("Post %d", i),
 				DatePublished: date.Format(time.RFC3339),
-				Slug:          "post-" + string(rune(i)),
+				Slug:          fmt.Sprintf("post-%d", i),
 				Draft:         false,
 			},
 		}
