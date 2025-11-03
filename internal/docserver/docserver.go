@@ -406,7 +406,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
         .footer-edit.visible { display: inline; }
         .cid-link { color: #0066cc; text-decoration: none; font-family: monospace; }
         .cid-link:hover { text-decoration: underline; }
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%%; height: 100%%; overflow: auto; background-color: rgba(0,0,0,0.4); }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%%; height: 100%%; background-color: rgba(0,0,0,0.4); }
         .modal-content { background-color: #fefefe; margin: 5%% auto; padding: 2rem; border: 1px solid #888; border-radius: 8px; width: 80%%; max-width: 900px; max-height: 80vh; overflow: auto; }
         .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
         .close:hover, .close:focus { color: #000; }
