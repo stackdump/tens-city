@@ -3,7 +3,8 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1" name="viewport"/>
-    <title>Tens City - Static Blog</title>
+    <title>Tens City - A Minimal Blog Platform</title>
+    <meta name="description" content="Simple, elegant blog platform built on content-addressable storage">
     <style>
         * {
             margin: 0;
@@ -11,125 +12,237 @@
             box-sizing: border-box;
         }
         
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --bg: #ffffff;
+            --bg-alt: #f9fafb;
+            --border: #e5e7eb;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+        
         body {
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-            line-height: 1.6;
-            color: #24292e;
-            background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--text);
+            background: var(--bg-alt);
         }
         
-        header {
-            background: #fff;
-            border-bottom: 1px solid #e1e4e8;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            padding: 1.5rem 2rem;
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+            box-shadow: 0 4px 6px var(--shadow);
         }
         
-        header h1 {
-            font-size: 1.75rem;
-            font-weight: bold;
-            color: #24292e;
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
         }
         
-        header p {
-            color: #586069;
-            margin-top: 0.5rem;
+        .hero .emoji {
+            font-size: 3.5rem;
+            display: block;
+            margin-bottom: 1rem;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            opacity: 0.95;
+            max-width: 600px;
+            margin: 0 auto;
         }
         
         main {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 0 1rem;
+            max-width: 900px;
+            margin: 3rem auto;
+            padding: 0 1.5rem;
         }
         
-        .post-list {
-            background: #fff;
-            border-radius: 6px;
-            border: 1px solid #e1e4e8;
+        .section-header {
+            margin-bottom: 2rem;
+        }
+        
+        .section-header h2 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+        
+        .section-header p {
+            color: var(--text-light);
+            font-size: 1.125rem;
+        }
+        
+        .post-grid {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        }
+        
+        .post-card {
+            background: var(--bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
             overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px var(--shadow);
         }
         
-        .post-item {
+        .post-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px var(--shadow);
+            border-color: var(--primary);
+        }
+        
+        .post-card-content {
             padding: 1.5rem;
-            border-bottom: 1px solid #e1e4e8;
-            transition: background 0.2s;
         }
         
-        .post-item:last-child {
-            border-bottom: none;
+        .post-card h3 {
+            font-size: 1.375rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            line-height: 1.4;
         }
         
-        .post-item:hover {
-            background: #f6f8fa;
-        }
-        
-        .post-item h2 {
-            font-size: 1.25rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .post-item h2 a {
-            color: #0366d6;
+        .post-card h3 a {
+            color: var(--text);
             text-decoration: none;
+            transition: color 0.2s;
         }
         
-        .post-item h2 a:hover {
-            text-decoration: underline;
+        .post-card h3 a:hover {
+            color: var(--primary);
         }
         
-        .post-item .meta {
-            color: #586069;
+        .post-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
             font-size: 0.875rem;
-            margin-bottom: 0.5rem;
+            color: var(--text-light);
         }
         
-        .post-item .description {
-            color: #586069;
-            line-height: 1.5;
+        .post-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .post-description {
+            color: var(--text-light);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        .post-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .tag {
+            background: var(--bg-alt);
+            color: var(--text-light);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .tag:hover {
+            background: var(--primary);
+            color: white;
         }
         
         .loading {
             text-align: center;
-            padding: 2rem;
-            color: #586069;
+            padding: 4rem 2rem;
+            color: var(--text-light);
+            font-size: 1.125rem;
+        }
+        
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
         }
         
         .error {
             text-align: center;
-            padding: 2rem;
-            color: #d73a49;
+            padding: 4rem 2rem;
+            color: #dc2626;
+            font-size: 1.125rem;
         }
         
         footer {
             text-align: center;
-            padding: 2rem;
-            color: #586069;
-            font-size: 0.875rem;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-light);
+            font-size: 0.9375rem;
         }
         
         footer a {
-            color: #0366d6;
+            color: var(--primary);
             text-decoration: none;
+            font-weight: 500;
         }
         
         footer a:hover {
             text-decoration: underline;
         }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .hero p {
+                font-size: 1.125rem;
+            }
+            
+            .post-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
-    <header>
-        <h1>🏕️ Tens City</h1>
-        <p>A static blog hosting system with content-addressable storage</p>
-    </header>
+    <div class="hero">
+        <span class="emoji">🏕️</span>
+        <h1>Tens City</h1>
+        <p>A minimal blog platform built on simplicity and content ownership</p>
+    </div>
     
     <main>
-        <div id="posts" class="loading">Loading posts...</div>
+        <div class="section-header">
+            <h2>Recent Posts</h2>
+            <p>Explore our latest articles and guides</p>
+        </div>
+        
+        <div id="posts" class="loading">Loading posts</div>
     </main>
     
     <footer>
         <p>
-            Powered by <a href="https://github.com/stackdump/tens-city" target="_blank">tens-city</a>
+            Built with <a href="https://github.com/stackdump/tens-city" target="_blank">Tens City</a> • 
+            A simple, elegant blog platform
         </p>
     </footer>
     
@@ -143,6 +256,16 @@
                 return parts[1].split(/[?#]/)[0];
             }
             return null;
+        }
+        
+        // Format date nicely
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
         }
         
         // Load and display blog posts
@@ -163,66 +286,85 @@
                     return;
                 }
                 
-                // Redirect to the latest post immediately
-                const latestItem = items[0];
-                const post = latestItem.item || latestItem;
-                const url = post.url || post['@id'];
-                
-                const slug = extractSlugFromUrl(url);
-                if (slug) {
-                    window.location.href = `/posts/${slug}`;
-                    return;
-                }
-                
-                // Fallback: show list if redirect fails
-                renderPostList(items);
+                renderPostGrid(items);
                 
             } catch (err) {
                 console.error('Failed to load posts:', err);
-                postsEl.innerHTML = '<div class="error">Failed to load posts</div>';
+                postsEl.innerHTML = '<div class="error">Failed to load posts. Please try again later.</div>';
             }
         }
         
-        function renderPostList(items) {
+        function renderPostGrid(items) {
             const postsEl = document.getElementById('posts');
-            postsEl.className = 'post-list';
+            postsEl.className = 'post-grid';
             postsEl.innerHTML = '';
             
             items.forEach(item => {
                 const post = item.item || item;
                 const url = post.url || post['@id'];
-                
-                const postDiv = document.createElement('div');
-                postDiv.className = 'post-item';
-                
-                const title = document.createElement('h2');
-                const link = document.createElement('a');
-                
                 const slug = extractSlugFromUrl(url);
-                if (slug) {
-                    link.href = `/posts/${slug}`;
-                }
                 
+                const card = document.createElement('article');
+                card.className = 'post-card';
+                
+                const content = document.createElement('div');
+                content.className = 'post-card-content';
+                
+                // Title
+                const title = document.createElement('h3');
+                const link = document.createElement('a');
+                link.href = slug ? `/posts/${slug}` : '#';
                 link.textContent = post.headline || post.name || post.title || 'Untitled';
                 title.appendChild(link);
-                postDiv.appendChild(title);
+                content.appendChild(title);
                 
-                if (post.datePublished) {
+                // Meta (date and author)
+                if (post.datePublished || post.author) {
                     const meta = document.createElement('div');
-                    meta.className = 'meta';
-                    const date = new Date(post.datePublished);
-                    meta.textContent = `📅 ${date.toLocaleDateString()}`;
-                    postDiv.appendChild(meta);
+                    meta.className = 'post-meta';
+                    
+                    if (post.datePublished) {
+                        const dateItem = document.createElement('div');
+                        dateItem.className = 'post-meta-item';
+                        dateItem.innerHTML = `📅 ${formatDate(post.datePublished)}`;
+                        meta.appendChild(dateItem);
+                    }
+                    
+                    if (post.author && post.author.name) {
+                        const authorItem = document.createElement('div');
+                        authorItem.className = 'post-meta-item';
+                        authorItem.innerHTML = `✍️ ${post.author.name}`;
+                        meta.appendChild(authorItem);
+                    }
+                    
+                    content.appendChild(meta);
                 }
                 
+                // Description
                 if (post.description) {
-                    const desc = document.createElement('div');
-                    desc.className = 'description';
+                    const desc = document.createElement('p');
+                    desc.className = 'post-description';
                     desc.textContent = post.description;
-                    postDiv.appendChild(desc);
+                    content.appendChild(desc);
                 }
                 
-                postsEl.appendChild(postDiv);
+                // Tags
+                if (post.keywords && post.keywords.length > 0) {
+                    const tagsDiv = document.createElement('div');
+                    tagsDiv.className = 'post-tags';
+                    
+                    post.keywords.slice(0, 4).forEach(tag => {
+                        const tagSpan = document.createElement('span');
+                        tagSpan.className = 'tag';
+                        tagSpan.textContent = tag;
+                        tagsDiv.appendChild(tagSpan);
+                    });
+                    
+                    content.appendChild(tagsDiv);
+                }
+                
+                card.appendChild(content);
+                postsEl.appendChild(card);
             });
         }
         

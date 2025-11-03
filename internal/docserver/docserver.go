@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -13,23 +12,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/stackdump/tens-city/internal/canonical"
 	"github.com/stackdump/tens-city/internal/markdown"
 	"github.com/stackdump/tens-city/internal/rss"
-	"github.com/stackdump/tens-city/internal/seal"
 )
-
-// Storage interface for saving JSON-LD documents
-type Storage interface {
-	SaveObject(cid string, raw []byte, canonical []byte) error
-}
 
 // DocServer handles markdown document requests
 type DocServer struct {
 	contentDir string
 	baseURL    string
 	cache      *DocumentCache
-	storage    Storage
 }
 
 // DocumentCache caches rendered documents
@@ -44,7 +35,6 @@ type CachedDoc struct {
 	Doc      *markdown.Document
 	ETag     string
 	Modified time.Time
-	CID      string // CID of the JSON-LD representation
 }
 
 // CachedIndex represents the cached document index
@@ -56,15 +46,9 @@ type CachedIndex struct {
 
 // NewDocServer creates a new document server
 func NewDocServer(contentDir, baseURL string) *DocServer {
-	return NewDocServerWithStorage(contentDir, baseURL, nil)
-}
-
-// NewDocServerWithStorage creates a new document server with storage
-func NewDocServerWithStorage(contentDir, baseURL string, storage Storage) *DocServer {
 	return &DocServer{
 		contentDir: contentDir,
 		baseURL:    baseURL,
-		storage:    storage,
 		cache: &DocumentCache{
 			docs: make(map[string]*CachedDoc),
 		},
@@ -127,36 +111,10 @@ func (ds *DocServer) loadDocument(slug string) (*CachedDoc, error) {
 	// Generate ETag
 	etag := generateETag(doc.HTML)
 
-	// Convert to JSON-LD and compute CID if storage is available
-	var docCID string
-	if ds.storage != nil {
-		jsonld := doc.ToJSONLD(ds.baseURL)
-
-		// Serialize to JSON using canonical encoding
-		raw, err := canonical.MarshalJSON(jsonld)
-		if err != nil {
-			log.Printf("Warning: failed to marshal JSON-LD for %s: %v", slug, err)
-		} else {
-			// Compute CID
-			cid, canonicalData, err := seal.SealJSONLD(raw)
-			if err != nil {
-				log.Printf("Warning: failed to seal JSON-LD for %s: %v", slug, err)
-			} else {
-				// Save to storage
-				if err := ds.storage.SaveObject(cid, raw, canonicalData); err != nil {
-					log.Printf("Warning: failed to save JSON-LD for %s: %v", slug, err)
-				} else {
-					docCID = cid
-				}
-			}
-		}
-	}
-
 	cached = &CachedDoc{
 		Doc:      doc,
 		ETag:     etag,
 		Modified: fileInfo.ModTime(),
-		CID:      docCID,
 	}
 
 	// Update cache
@@ -356,7 +314,6 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 	jsonldBytes, _ := json.MarshalIndent(jsonld, "    ", "  ")
 
 	// HTML-escape user-provided values
-	escapedSlug := html.EscapeString(slug)
 	escapedTitle := html.EscapeString(doc.Frontmatter.Title)
 	escapedLang := html.EscapeString(doc.Frontmatter.Lang)
 	escapedDatePublished := html.EscapeString(doc.Frontmatter.DatePublished)
@@ -421,20 +378,6 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
             <a href="/posts">← All Posts</a>`,
 		jsonldBytes, doc.HTML)
 
-	// Add CID link if available
-	if cached.CID != "" {
-		cidShort := ""
-		if len(cached.CID) > 8 {
-			cidShort = cached.CID[len(cached.CID)-8:]
-		} else {
-			cidShort = cached.CID
-		}
-		escapedCIDShort := html.EscapeString(cidShort)
-
-		fmt.Fprintf(w, `
-            <a href="#" class="cid-link" onclick="showCIDModal(); return false;">CID: %s</a>`, escapedCIDShort)
-	}
-
 	// Add edit link (will be shown/hidden by JavaScript based on authorship)
 	escapedAuthorURL := html.EscapeString(authorURL)
 	fmt.Fprintf(w, `
@@ -449,46 +392,9 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 
 	fmt.Fprintf(w, `
         </div>
-    </div>`)
+    </div>
 
-	// Add CID modal if available
-	if cached.CID != "" {
-		escapedCID := html.EscapeString(cached.CID)
-		escapedJSONLD := html.EscapeString(string(jsonldBytes))
-		fmt.Fprintf(w, `
-    <div id="cidModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeCIDModal()">&times;</span>
-            <h2>JSON-LD</h2>
-            <p><strong>CID:</strong> <code>%s</code></p>
-            <pre>%s</pre>
-            <div class="modal-actions">
-                <a href="/posts/%s.jsonld" target="_blank">View Full Object</a>
-                <a href="/?cid=%s&slug=%s">Edit Page</a>
-            </div>
-        </div>
-    </div>`, escapedCID, escapedJSONLD, escapedSlug, escapedCID, escapedSlug)
-	}
-
-	fmt.Fprintf(w, `
     <script>
-        function showCIDModal() {
-            document.getElementById('cidModal').style.display = 'block';
-        }
-        function closeCIDModal() {
-            document.getElementById('cidModal').style.display = 'none';
-        }
-        window.onclick = function(event) {
-            var modal = document.getElementById('cidModal');
-            if (event.target == modal) {
-                closeCIDModal();
-            }
-        };
-
-        // Check if user is authenticated and is the author
-        (function() {
-            const editLink = document.getElementById('editLink');
-            if (!editLink) return;
             
             const authorURL = editLink.getAttribute('data-author-url');
             if (!authorURL) return;
