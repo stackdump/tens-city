@@ -134,6 +134,17 @@
     </footer>
     
     <script>
+        // Extract slug from URL
+        function extractSlugFromUrl(url) {
+            if (!url) return null;
+            
+            const parts = url.split('/posts/');
+            if (parts.length > 1) {
+                return parts[1].split(/[?#]/)[0];
+            }
+            return null;
+        }
+        
         // Load and display blog posts
         async function loadPosts() {
             const postsEl = document.getElementById('posts');
@@ -157,16 +168,10 @@
                 const post = latestItem.item || latestItem;
                 const url = post.url || post['@id'];
                 
-                if (url) {
-                    // Extract slug from URL
-                    const parts = url.split('/posts/');
-                    if (parts.length > 1) {
-                        const slug = parts[1].split(/[?#]/)[0];
-                        if (slug) {
-                            window.location.href = `/posts/${slug}`;
-                            return;
-                        }
-                    }
+                const slug = extractSlugFromUrl(url);
+                if (slug) {
+                    window.location.href = `/posts/${slug}`;
+                    return;
                 }
                 
                 // Fallback: show list if redirect fails
@@ -192,13 +197,12 @@
                 
                 const title = document.createElement('h2');
                 const link = document.createElement('a');
-                if (url) {
-                    const parts = url.split('/posts/');
-                    if (parts.length > 1) {
-                        const slug = parts[1].split(/[?#]/)[0];
-                        link.href = `/posts/${slug}`;
-                    }
+                
+                const slug = extractSlugFromUrl(url);
+                if (slug) {
+                    link.href = `/posts/${slug}`;
                 }
+                
                 link.textContent = post.headline || post.name || post.title || 'Untitled';
                 title.appendChild(link);
                 postDiv.appendChild(title);
