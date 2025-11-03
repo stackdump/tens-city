@@ -415,7 +415,7 @@ func TestDeleteObject_RemovesMarkdownContent(t *testing.T) {
 	// Verify files exist
 	objPath := filepath.Join(tmpDir, "o", cid)
 	mdPath := filepath.Join(tmpDir, "o", cid+".md")
-	
+
 	if _, err := os.Stat(objPath); os.IsNotExist(err) {
 		t.Fatal("Object file should exist before deletion")
 	}
@@ -437,4 +437,3 @@ func TestDeleteObject_RemovesMarkdownContent(t *testing.T) {
 		t.Error("Markdown file should be deleted")
 	}
 }
-
