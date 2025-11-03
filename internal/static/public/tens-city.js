@@ -1388,7 +1388,9 @@ class TensCity extends HTMLElement {
             alignItems: 'center',
             gap: '8px',
             textDecoration: 'none',
-            color: 'inherit'
+            color: 'inherit',
+            boxSizing: 'border-box',
+            overflow: 'hidden'
         });
         githubItem.addEventListener('mouseenter', () => {
             githubItem.style.background = '#f6f8fa';
