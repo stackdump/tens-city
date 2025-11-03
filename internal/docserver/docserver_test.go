@@ -1,0 +1,524 @@
+package docserver
+
+import (
+	"encoding/xml"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/stackdump/tens-city/internal/rss"
+)
+
+func TestHandleUserRSS_BasicFeed(t *testing.T) {
+	// Create a temporary directory with test content
+	tmpDir := t.TempDir()
+
+	// Create test markdown files
+	doc1 := `---
+title: First Post by Alice
+description: Alice's first post
+datePublished: 2025-11-01T10:00:00Z
+author:
+  name: Alice
+  type: Person
+  url: https://github.com/alice
+lang: en
+slug: alice-first
+---
+
+Content of Alice's first post.
+`
+
+	doc2 := `---
+title: Second Post by Alice
+description: Alice's second post
+datePublished: 2025-11-02T10:00:00Z
+author:
+  name: Alice
+  type: Person
+  url: https://github.com/alice
+lang: en
+slug: alice-second
+---
+
+Content of Alice's second post.
+`
+
+	doc3 := `---
+title: Post by Bob
+description: Bob's post
+datePublished: 2025-11-01T12:00:00Z
+author:
+  name: Bob
+  type: Person
+  url: https://github.com/bob
+lang: en
+slug: bob-post
+---
+
+Content of Bob's post.
+`
+
+	// Write test files
+	if err := os.WriteFile(filepath.Join(tmpDir, "alice1.md"), []byte(doc1), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "alice2.md"), []byte(doc2), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "bob1.md"), []byte(doc3), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create docserver
+	ds := NewDocServer(tmpDir, "https://tens.city")
+
+	// Create test request
+	req := httptest.NewRequest(http.MethodGet, "/u/alice/posts.rss", nil)
+	rec := httptest.NewRecorder()
+
+	// Handle request
+	ds.HandleUserRSS(rec, req, "alice")
+
+	// Check response
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", rec.Code)
+	}
+
+	// Check content type
+	contentType := rec.Header().Get("Content-Type")
+	if !strings.Contains(contentType, "application/rss+xml") {
+		t.Errorf("Expected Content-Type to contain 'application/rss+xml', got %q", contentType)
+	}
+
+	// Parse RSS feed
+	var feed rss.RSS
+	if err := xml.Unmarshal(rec.Body.Bytes(), &feed); err != nil {
+		t.Fatalf("Failed to parse RSS feed: %v", err)
+	}
+
+	// Should only have Alice's posts (2 items)
+	if len(feed.Channel.Items) != 2 {
+		t.Errorf("Expected 2 items for alice, got %d", len(feed.Channel.Items))
+	}
+
+	// Verify items are Alice's posts
+	for _, item := range feed.Channel.Items {
+		if !strings.Contains(item.Title, "Alice") {
+			t.Errorf("Expected item title to contain 'Alice', got %q", item.Title)
+		}
+	}
+
+	// Verify sorted by date (newest first)
+	if feed.Channel.Items[0].Title != "Second Post by Alice" {
+		t.Errorf("Expected first item to be 'Second Post by Alice', got %q", feed.Channel.Items[0].Title)
+	}
+}
+
+func TestHandleUserRSS_FiltersByGitHubUsername(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create posts by different users
+	alicePost := `---
+title: Alice's Post
+datePublished: 2025-11-01T10:00:00Z
+author:
+  name: Alice
+  url: https://github.com/alice
+lang: en
+slug: alice-post
+---
+Content
+`
+
+	bobPost := `---
+title: Bob's Post
+datePublished: 2025-11-01T10:00:00Z
+author:
+  name: Bob
+  url: https://github.com/bob
+lang: en
+slug: bob-post
+---
+Content
+`
+
+	if err := os.WriteFile(filepath.Join(tmpDir, "alice.md"), []byte(alicePost), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "bob.md"), []byte(bobPost), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	ds := NewDocServer(tmpDir, "https://tens.city")
+
+	// Request Bob's feed
+	req := httptest.NewRequest(http.MethodGet, "/u/bob/posts.rss", nil)
+	rec := httptest.NewRecorder()
+	ds.HandleUserRSS(rec, req, "bob")
+
+	var feed rss.RSS
+	if err := xml.Unmarshal(rec.Body.Bytes(), &feed); err != nil {
+		t.Fatalf("Failed to parse RSS feed: %v", err)
+	}
+
+	// Should only have Bob's post
+	if len(feed.Channel.Items) != 1 {
+		t.Errorf("Expected 1 item for bob, got %d", len(feed.Channel.Items))
+	}
+
+	// Note: XML marshaling may escape apostrophes as &#39;
+	expectedTitle := "Bob's Post"
+	actualTitle := feed.Channel.Items[0].Title
+	if actualTitle != expectedTitle && actualTitle != "Bob&#39;s Post" {
+		t.Errorf("Expected 'Bob's Post' or 'Bob&#39;s Post', got %q", actualTitle)
+	}
+}
+
+func TestHandleUserRSS_ExcludesDrafts(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	publishedPost := `---
+title: Published Post
+datePublished: 2025-11-01T10:00:00Z
+author:
+  name: Alice
+  url: https://github.com/alice
+lang: en
+slug: published
+draft: false
+---
+Content
+`
+
+	draftPost := `---
+title: Draft Post
+datePublished: 2025-11-02T10:00:00Z
+author:
+  name: Alice
+  url: https://github.com/alice
+lang: en
+slug: draft
+draft: true
+---
+Content
+`
+
+	if err := os.WriteFile(filepath.Join(tmpDir, "published.md"), []byte(publishedPost), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "draft.md"), []byte(draftPost), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	ds := NewDocServer(tmpDir, "https://tens.city")
+
+	req := httptest.NewRequest(http.MethodGet, "/u/alice/posts.rss", nil)
+	rec := httptest.NewRecorder()
+	ds.HandleUserRSS(rec, req, "alice")
+
+	var feed rss.RSS
+	if err := xml.Unmarshal(rec.Body.Bytes(), &feed); err != nil {
+		t.Fatalf("Failed to parse RSS feed: %v", err)
+	}
+
+	// Should only have the published post
+	if len(feed.Channel.Items) != 1 {
+		t.Errorf("Expected 1 item (draft excluded), got %d", len(feed.Channel.Items))
+	}
+
+	if feed.Channel.Items[0].Title != "Published Post" {
+		t.Errorf("Expected 'Published Post', got %q", feed.Channel.Items[0].Title)
+	}
+}
+
+func TestHandleUserRSS_EmptyFeed(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create a post by a different user
+	alicePost := `---
+title: Alice's Post
+datePublished: 2025-11-01T10:00:00Z
+author:
+  name: Alice
+  url: https://github.com/alice
+lang: en
+slug: alice-post
+---
+Content
+`
+
+	if err := os.WriteFile(filepath.Join(tmpDir, "alice.md"), []byte(alicePost), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	ds := NewDocServer(tmpDir, "https://tens.city")
+
+	// Request feed for a user with no posts
+	req := httptest.NewRequest(http.MethodGet, "/u/bob/posts.rss", nil)
+	rec := httptest.NewRecorder()
+	ds.HandleUserRSS(rec, req, "bob")
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200 even for empty feed, got %d", rec.Code)
+	}
+
+	var feed rss.RSS
+	if err := xml.Unmarshal(rec.Body.Bytes(), &feed); err != nil {
+		t.Fatalf("Failed to parse RSS feed: %v", err)
+	}
+
+	// Should have an empty feed
+	if len(feed.Channel.Items) != 0 {
+		t.Errorf("Expected 0 items for user with no posts, got %d", len(feed.Channel.Items))
+	}
+}
+
+func TestHandleUserRSS_OnlyGetMethod(t *testing.T) {
+	tmpDir := t.TempDir()
+	ds := NewDocServer(tmpDir, "https://tens.city")
+
+	// Test GET is allowed
+	req := httptest.NewRequest(http.MethodGet, "/u/alice/posts.rss", nil)
+	rec := httptest.NewRecorder()
+	ds.HandleUserRSS(rec, req, "alice")
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected GET to be allowed, got status %d", rec.Code)
+	}
+
+	// Test HEAD is allowed
+	req = httptest.NewRequest(http.MethodHead, "/u/alice/posts.rss", nil)
+	rec = httptest.NewRecorder()
+	ds.HandleUserRSS(rec, req, "alice")
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected HEAD to be allowed, got status %d", rec.Code)
+	}
+
+	// Test POST is not allowed
+	req = httptest.NewRequest(http.MethodPost, "/u/alice/posts.rss", nil)
+	rec = httptest.NewRecorder()
+	ds.HandleUserRSS(rec, req, "alice")
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("Expected POST to be disallowed, got status %d", rec.Code)
+	}
+}
+
+func TestHandleUserRSS_MultipleAuthors(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create a post with multiple authors
+	multiAuthorPost := `---
+title: Multi-Author Post
+datePublished: 2025-11-01T10:00:00Z
+author:
+  - name: Alice
+    url: https://github.com/alice
+  - name: Bob
+    url: https://github.com/bob
+lang: en
+slug: multi-author
+---
+Content
+`
+
+	aliceOnlyPost := `---
+title: Alice Only Post
+datePublished: 2025-11-02T10:00:00Z
+author:
+  name: Alice
+  url: https://github.com/alice
+lang: en
+slug: alice-only
+---
+Content
+`
+
+	if err := os.WriteFile(filepath.Join(tmpDir, "multi.md"), []byte(multiAuthorPost), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "alice.md"), []byte(aliceOnlyPost), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	ds := NewDocServer(tmpDir, "https://tens.city")
+
+	// Request Alice's feed
+	req := httptest.NewRequest(http.MethodGet, "/u/alice/posts.rss", nil)
+	rec := httptest.NewRecorder()
+	ds.HandleUserRSS(rec, req, "alice")
+
+	var feed rss.RSS
+	if err := xml.Unmarshal(rec.Body.Bytes(), &feed); err != nil {
+		t.Fatalf("Failed to parse RSS feed: %v", err)
+	}
+
+	// Should include both posts (multi-author is matched by first author)
+	if len(feed.Channel.Items) != 2 {
+		t.Errorf("Expected 2 items (including multi-author post), got %d", len(feed.Channel.Items))
+	}
+}
+
+func TestHandleUserRSS_FeedMetadata(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	alicePost := `---
+title: Alice's Post
+description: A great post
+datePublished: 2025-11-01T10:00:00Z
+author:
+  name: Alice
+  url: https://github.com/alice
+lang: en
+slug: alice-post
+---
+Content
+`
+
+	if err := os.WriteFile(filepath.Join(tmpDir, "alice.md"), []byte(alicePost), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	ds := NewDocServer(tmpDir, "https://tens.city")
+
+	req := httptest.NewRequest(http.MethodGet, "/u/alice/posts.rss", nil)
+	rec := httptest.NewRecorder()
+	ds.HandleUserRSS(rec, req, "alice")
+
+	var feed rss.RSS
+	if err := xml.Unmarshal(rec.Body.Bytes(), &feed); err != nil {
+		t.Fatalf("Failed to parse RSS feed: %v", err)
+	}
+
+	// Verify channel metadata
+	if !strings.Contains(feed.Channel.Title, "alice") {
+		t.Errorf("Expected channel title to contain 'alice', got %q", feed.Channel.Title)
+	}
+
+	expectedLink := "https://tens.city/u/alice"
+	if feed.Channel.Link != expectedLink {
+		t.Errorf("Expected channel link %q, got %q", expectedLink, feed.Channel.Link)
+	}
+
+	if !strings.Contains(feed.Channel.Description, "alice") {
+		t.Errorf("Expected channel description to contain 'alice', got %q", feed.Channel.Description)
+	}
+
+	// Verify item fields
+	item := feed.Channel.Items[0]
+	expectedItemLink := "https://tens.city/posts/alice-post"
+	if item.Link != expectedItemLink {
+		t.Errorf("Expected item link %q, got %q", expectedItemLink, item.Link)
+	}
+
+	if item.Description != "A great post" {
+		t.Errorf("Expected description 'A great post', got %q", item.Description)
+	}
+}
+
+func TestExtractGitHubUsername(t *testing.T) {
+	tests := []struct {
+		name     string
+		url      string
+		expected string
+	}{
+		{
+			name:     "standard github url",
+			url:      "https://github.com/alice",
+			expected: "alice",
+		},
+		{
+			name:     "github url with trailing slash",
+			url:      "https://github.com/alice/",
+			expected: "alice",
+		},
+		{
+			name:     "github url with repository",
+			url:      "https://github.com/alice/repo",
+			expected: "alice",
+		},
+		{
+			name:     "empty url",
+			url:      "",
+			expected: "",
+		},
+		{
+			name:     "non-github url",
+			url:      "https://example.com/alice",
+			expected: "",
+		},
+		{
+			name:     "github.com without username",
+			url:      "https://github.com/",
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractGitHubUsername(tt.url)
+			if result != tt.expected {
+				t.Errorf("extractGitHubUsername(%q) = %q, want %q", tt.url, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestExtractAuthorURL(t *testing.T) {
+	tests := []struct {
+		name     string
+		author   interface{}
+		expected string
+	}{
+		{
+			name: "single author with url",
+			author: map[string]interface{}{
+				"name": "Alice",
+				"url":  "https://github.com/alice",
+			},
+			expected: "https://github.com/alice",
+		},
+		{
+			name: "multiple authors",
+			author: []interface{}{
+				map[string]interface{}{
+					"name": "Alice",
+					"url":  "https://github.com/alice",
+				},
+				map[string]interface{}{
+					"name": "Bob",
+					"url":  "https://github.com/bob",
+				},
+			},
+			expected: "https://github.com/alice", // Returns first author's URL
+		},
+		{
+			name:     "nil author",
+			author:   nil,
+			expected: "",
+		},
+		{
+			name: "author without url",
+			author: map[string]interface{}{
+				"name": "Alice",
+			},
+			expected: "",
+		},
+		{
+			name:     "empty array",
+			author:   []interface{}{},
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractAuthorURL(tt.author)
+			if result != tt.expected {
+				t.Errorf("extractAuthorURL() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
