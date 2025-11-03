@@ -47,6 +47,8 @@ class TensCity extends HTMLElement {
         this._docTags = [];
         this._lastSavedCid = null; // Store CID from last save for permalink in markdown mode
         this._lastSavedSlug = null; // Store slug from last save for permalink in markdown mode
+        this._editorVisible = false; // Track whether editor is visible or latest post is shown
+        this._latestPostContainer = null; // Container for displaying the latest post
     }
 
     connectedCallback() {
@@ -304,7 +306,20 @@ class TensCity extends HTMLElement {
         this._createHeaderWithLogin();
         this._createToolbar();
         this._createEditor().then(() => {
-            this._loadInitialData();
+            // Check if there's a CID or permalink data to load
+            const urlParams = new URLSearchParams(window.location.search);
+            const cidParam = urlParams.get('cid');
+            const dataParam = urlParams.get('data');
+            
+            if (cidParam || dataParam || this._pendingPermalinkData) {
+                // User is viewing specific content, show editor with that content
+                this._editorVisible = true;
+                this._loadInitialData();
+            } else {
+                // No specific content to view, show latest post by default
+                this._editorVisible = false;
+                this._showLatestPostView();
+            }
         });
     }
 
@@ -352,7 +367,21 @@ class TensCity extends HTMLElement {
         this._createHeader();
         this._createToolbar();
         await this._createEditor();
-        await this._loadInitialData();
+        
+        // Check if there's a CID or permalink data to load
+        const urlParams = new URLSearchParams(window.location.search);
+        const cidParam = urlParams.get('cid');
+        const dataParam = urlParams.get('data');
+        
+        if (cidParam || dataParam || this._pendingPermalinkData) {
+            // User is viewing specific content, show editor with that content
+            this._editorVisible = true;
+            await this._loadInitialData();
+        } else {
+            // No specific content to view, show latest post by default
+            this._editorVisible = false;
+            await this._showLatestPostView();
+        }
     }
 
     _createHeader() {
@@ -408,69 +437,7 @@ class TensCity extends HTMLElement {
 
         header.appendChild(leftSection);
 
-        // Right section: user info and logout
-        const userInfo = document.createElement('div');
-        this._applyStyles(userInfo, {
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px'
-        });
-
-        // GitHub user info with icon
-        const githubUserContainer = document.createElement('div');
-        this._applyStyles(githubUserContainer, {
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '4px 12px',
-            background: '#f6f8fa',
-            borderRadius: '6px',
-            border: '1px solid #e1e4e8'
-        });
-
-        // GitHub icon (SVG)
-        const githubIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        githubIcon.setAttribute('height', '16');
-        githubIcon.setAttribute('width', '16');
-        githubIcon.setAttribute('viewBox', '0 0 16 16');
-        githubIcon.setAttribute('fill', 'currentColor');
-        const githubPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        githubPath.setAttribute('d', 'M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z');
-        githubIcon.appendChild(githubPath);
-        githubUserContainer.appendChild(githubIcon);
-
-        const userEmail = document.createElement('span');
-        userEmail.textContent = this._user?.user_metadata?.user_name || this._user?.email || 'User';
-        this._applyStyles(userEmail, {
-            fontSize: '14px',
-            color: '#24292e',
-            fontWeight: '500'
-        });
-        githubUserContainer.appendChild(userEmail);
-        
-        userInfo.appendChild(githubUserContainer);
-
-        const logoutBtn = document.createElement('button');
-        logoutBtn.textContent = 'Logout';
-        this._applyStyles(logoutBtn, {
-            padding: '6px 12px',
-            fontSize: '14px',
-            background: '#fafbfc',
-            border: '1px solid #e1e4e8',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            transition: 'background 0.2s'
-        });
-        logoutBtn.addEventListener('mouseenter', () => {
-            logoutBtn.style.background = '#f3f4f6';
-        });
-        logoutBtn.addEventListener('mouseleave', () => {
-            logoutBtn.style.background = '#fafbfc';
-        });
-        logoutBtn.addEventListener('click', () => this._logout());
-        userInfo.appendChild(logoutBtn);
-
-        header.appendChild(userInfo);
+        // Right section: empty (user info moved to menu)
         this._appContainer.appendChild(header);
     }
 
@@ -527,30 +494,7 @@ class TensCity extends HTMLElement {
 
         header.appendChild(leftSection);
 
-        // Right section: login button
-        const loginBtn = document.createElement('button');
-        loginBtn.textContent = 'Login with GitHub';
-        loginBtn.className = 'tc-login-btn';
-        this._applyStyles(loginBtn, {
-            padding: '8px 16px',
-            fontSize: '14px',
-            fontWeight: '500',
-            background: '#24292e',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            transition: 'background 0.2s'
-        });
-        loginBtn.addEventListener('mouseenter', () => {
-            loginBtn.style.background = '#444d56';
-        });
-        loginBtn.addEventListener('mouseleave', () => {
-            loginBtn.style.background = '#24292e';
-        });
-        loginBtn.addEventListener('click', () => this._loginWithGitHub());
-
-        header.appendChild(loginBtn);
+        // Right section: empty (login button moved to menu)
         this._appContainer.appendChild(header);
     }
 
@@ -653,6 +597,13 @@ class TensCity extends HTMLElement {
         } else {
             await this._createMarkdownEditor();
         }
+        
+        // Hide editor if we're showing latest post view
+        const editorContainer = this._appContainer.querySelector('.tc-editor-container');
+        if (editorContainer && !this._editorVisible) {
+            editorContainer.style.display = 'none';
+        }
+        
         // Update permalink after creating editor
         this._updatePermalinkAnchor();
     }
@@ -1315,6 +1266,118 @@ class TensCity extends HTMLElement {
 
         menu.appendChild(menuHeader);
 
+        // User status section (at top of menu items)
+        const userSection = document.createElement('div');
+        this._applyStyles(userSection, {
+            padding: '16px 24px',
+            borderBottom: '1px solid #e1e4e8',
+            background: '#f6f8fa'
+        });
+
+        if (this._user) {
+            // Show user info for logged-in users
+            const userLabel = document.createElement('div');
+            userLabel.textContent = 'Logged in as:';
+            this._applyStyles(userLabel, {
+                fontSize: '12px',
+                color: '#586069',
+                marginBottom: '8px'
+            });
+            userSection.appendChild(userLabel);
+
+            const userInfo = document.createElement('div');
+            this._applyStyles(userInfo, {
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '12px'
+            });
+
+            // GitHub icon
+            const githubIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            githubIcon.setAttribute('height', '16');
+            githubIcon.setAttribute('width', '16');
+            githubIcon.setAttribute('viewBox', '0 0 16 16');
+            githubIcon.setAttribute('fill', 'currentColor');
+            const githubPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            githubPath.setAttribute('d', 'M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z');
+            githubIcon.appendChild(githubPath);
+            userInfo.appendChild(githubIcon);
+
+            const userName = document.createElement('span');
+            userName.textContent = this._user.user_metadata?.user_name || this._user.email || 'User';
+            this._applyStyles(userName, {
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#24292e'
+            });
+            userInfo.appendChild(userName);
+            userSection.appendChild(userInfo);
+
+            // Logout button
+            const logoutBtn = document.createElement('button');
+            logoutBtn.textContent = 'Logout';
+            this._applyStyles(logoutBtn, {
+                width: '100%',
+                padding: '8px 12px',
+                fontSize: '14px',
+                background: '#fafbfc',
+                border: '1px solid #e1e4e8',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                transition: 'background 0.2s'
+            });
+            logoutBtn.addEventListener('mouseenter', () => {
+                logoutBtn.style.background = '#f3f4f6';
+            });
+            logoutBtn.addEventListener('mouseleave', () => {
+                logoutBtn.style.background = '#fafbfc';
+            });
+            logoutBtn.addEventListener('click', () => {
+                this._toggleMenu();
+                this._logout();
+            });
+            userSection.appendChild(logoutBtn);
+        } else {
+            // Show login button for non-logged-in users
+            const loginLabel = document.createElement('div');
+            loginLabel.textContent = 'Not logged in';
+            this._applyStyles(loginLabel, {
+                fontSize: '12px',
+                color: '#586069',
+                marginBottom: '8px'
+            });
+            userSection.appendChild(loginLabel);
+
+            const loginBtn = document.createElement('button');
+            loginBtn.textContent = 'Login with GitHub';
+            this._applyStyles(loginBtn, {
+                width: '100%',
+                padding: '8px 12px',
+                fontSize: '14px',
+                fontWeight: '500',
+                background: '#24292e',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                transition: 'background 0.2s'
+            });
+            loginBtn.addEventListener('mouseenter', () => {
+                loginBtn.style.background = '#444d56';
+            });
+            loginBtn.addEventListener('mouseleave', () => {
+                loginBtn.style.background = '#24292e';
+            });
+            loginBtn.addEventListener('click', () => {
+                this._toggleMenu();
+                this._loginWithGitHub();
+            });
+            userSection.appendChild(loginBtn);
+        }
+
+        menu.appendChild(userSection);
+
         // Menu items
         const menuItems = document.createElement('div');
         this._applyStyles(menuItems, {
@@ -1820,6 +1883,180 @@ class TensCity extends HTMLElement {
         const overlay = this._root.querySelector('.tc-posts-overlay');
         if (overlay) {
             overlay.remove();
+        }
+    }
+
+    async _showLatestPostView() {
+        // Show the latest post in the main view instead of the editor
+        // Hide editor if it exists
+        const editorContainer = this._appContainer.querySelector('.tc-editor-container');
+        if (editorContainer) {
+            editorContainer.style.display = 'none';
+        }
+
+        // Create or show latest post container
+        if (!this._latestPostContainer) {
+            this._latestPostContainer = document.createElement('div');
+            this._latestPostContainer.className = 'tc-latest-post-container';
+            this._applyStyles(this._latestPostContainer, {
+                flex: '1',
+                display: 'flex',
+                flexDirection: 'column',
+                padding: '24px',
+                overflow: 'auto',
+                background: '#fff'
+            });
+            this._appContainer.appendChild(this._latestPostContainer);
+        } else {
+            this._latestPostContainer.style.display = 'flex';
+        }
+
+        // Load and display the latest post
+        this._latestPostContainer.innerHTML = '<p style="color: #586069; text-align: center; padding: 40px;">Loading latest post...</p>';
+
+        try {
+            const response = await fetch('/posts/index.jsonld');
+            if (response.ok) {
+                const index = await response.json();
+                const items = index.itemListElement || [];
+                
+                if (items.length > 0) {
+                    const latestItem = items[0];
+                    const post = latestItem.item || latestItem;
+                    
+                    // Extract slug from URL
+                    let slug = post.url || post['@id'];
+                    if (slug && slug.includes('/posts/')) {
+                        slug = slug.split('/posts/').pop().split(/[?#]/)[0];
+                        
+                        // Fetch the full post content
+                        const postResponse = await fetch(`/posts/${slug}`);
+                        if (postResponse.ok) {
+                            const html = await postResponse.text();
+                            this._renderLatestPost(html, slug, post);
+                        } else {
+                            this._latestPostContainer.innerHTML = '<p style="color: #d73a49; text-align: center; padding: 40px;">Failed to load post content</p>';
+                        }
+                    } else {
+                        this._latestPostContainer.innerHTML = '<p style="color: #999; text-align: center; padding: 40px;">No posts available</p>';
+                    }
+                } else {
+                    this._latestPostContainer.innerHTML = '<p style="color: #999; text-align: center; padding: 40px;">No posts available</p>';
+                }
+            } else {
+                this._latestPostContainer.innerHTML = '<p style="color: #999; text-align: center; padding: 40px;">No posts available</p>';
+            }
+        } catch (err) {
+            console.error('Failed to load latest post:', err);
+            this._latestPostContainer.innerHTML = '<p style="color: #d73a49; text-align: center; padding: 40px;">Failed to load posts</p>';
+        }
+    }
+
+    _renderLatestPost(htmlContent, slug, metadata) {
+        // Clear container
+        this._latestPostContainer.innerHTML = '';
+
+        // Create article wrapper
+        const article = document.createElement('article');
+        this._applyStyles(article, {
+            maxWidth: '800px',
+            margin: '0 auto',
+            width: '100%'
+        });
+
+        // Parse the HTML content to extract the actual article
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlContent, 'text/html');
+        const articleContent = doc.querySelector('article') || doc.body;
+        
+        // Copy the content
+        article.innerHTML = articleContent.innerHTML;
+
+        this._latestPostContainer.appendChild(article);
+
+        // Create footer with Edit button and CID info
+        const footer = document.createElement('div');
+        this._applyStyles(footer, {
+            maxWidth: '800px',
+            margin: '40px auto 0',
+            padding: '20px 0',
+            borderTop: '1px solid #e1e4e8',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '16px'
+        });
+
+        // CID info (if available from metadata)
+        const cidInfo = document.createElement('div');
+        this._applyStyles(cidInfo, {
+            fontSize: '13px',
+            color: '#586069'
+        });
+        
+        if (metadata.identifier) {
+            const cidLabel = document.createElement('span');
+            cidLabel.textContent = 'CID: ';
+            cidInfo.appendChild(cidLabel);
+            
+            const cidLink = document.createElement('a');
+            cidLink.href = `/o/${metadata.identifier}`;
+            cidLink.textContent = metadata.identifier;
+            cidLink.target = '_blank';
+            this._applyStyles(cidLink, {
+                color: '#0366d6',
+                textDecoration: 'none',
+                fontFamily: 'monospace'
+            });
+            cidLink.addEventListener('mouseenter', () => {
+                cidLink.style.textDecoration = 'underline';
+            });
+            cidLink.addEventListener('mouseleave', () => {
+                cidLink.style.textDecoration = 'none';
+            });
+            cidInfo.appendChild(cidLink);
+        }
+        
+        footer.appendChild(cidInfo);
+
+        // Edit button
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '✏️ Edit';
+        editBtn.title = 'Open editor';
+        this._applyStyles(editBtn, {
+            padding: '8px 16px',
+            fontSize: '14px',
+            fontWeight: '500',
+            background: '#fafbfc',
+            border: '1px solid #e1e4e8',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            transition: 'background 0.2s'
+        });
+        editBtn.addEventListener('mouseenter', () => {
+            editBtn.style.background = '#f3f4f6';
+        });
+        editBtn.addEventListener('mouseleave', () => {
+            editBtn.style.background = '#fafbfc';
+        });
+        editBtn.addEventListener('click', () => this._showEditor());
+        footer.appendChild(editBtn);
+
+        this._latestPostContainer.appendChild(footer);
+    }
+
+    _showEditor() {
+        // Show the editor and hide the latest post view
+        this._editorVisible = true;
+        
+        if (this._latestPostContainer) {
+            this._latestPostContainer.style.display = 'none';
+        }
+
+        const editorContainer = this._appContainer.querySelector('.tc-editor-container');
+        if (editorContainer) {
+            editorContainer.style.display = 'flex';
         }
     }
 
