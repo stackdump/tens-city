@@ -624,6 +624,9 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
 
 	// Render HTML page
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	
+	allPostsFeedURL := fmt.Sprintf("%s/posts.rss", ds.baseURL)
+	
 	fmt.Fprintf(w, `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -655,7 +658,7 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
     <ul class="feed-list">
         <li class="feed-item featured">
             <h2>All Posts</h2>
-            <a href="%s/posts.rss">%s/posts.rss</a>
+            <a href="%s">%s</a>
             <div class="feed-meta">
                 Latest blog posts from all authors on Tens City
             </div>
@@ -663,7 +666,7 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
     </ul>
     <h2 class="section-title">Author Feeds</h2>
     <ul class="feed-list">
-`, ds.baseURL, ds.baseURL)
+`, allPostsFeedURL, allPostsFeedURL)
 
 	// Sort authors alphabetically by username for consistent ordering
 	var userNames []string
