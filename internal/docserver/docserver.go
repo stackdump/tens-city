@@ -213,6 +213,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Blog Posts - Tens City</title>
+    <link rel="alternate" type="application/rss+xml" title="All Posts - Tens City" href="%s/posts.rss">
     <script type="application/ld+json">
 %s
     </script>
@@ -231,7 +232,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 <body>
     <h1>Blog Posts</h1>
     <ul class="doc-list">
-`, string(cached.Data))
+`, ds.baseURL, string(cached.Data))
 
 	for _, doc := range publicDocs {
 		escapedSlug := html.EscapeString(doc.Frontmatter.Slug)
@@ -544,6 +545,31 @@ func (ds *DocServer) HandleUserRSS(w http.ResponseWriter, r *http.Request, userN
 
 	// Generate RSS feed
 	feedData, err := rss.GenerateUserFeed(userDocs, userName, ds.baseURL)
+	if err != nil {
+		http.Error(w, "Failed to generate RSS feed", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/rss+xml; charset=utf-8")
+	w.Write(feedData)
+}
+
+// HandleSiteRSS handles GET /posts.rss - return RSS feed for all blog posts
+func (ds *DocServer) HandleSiteRSS(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Load all posts
+	docs, err := markdown.ListDocuments(ds.contentDir)
+	if err != nil {
+		http.Error(w, "Failed to load posts", http.StatusInternalServerError)
+		return
+	}
+
+	// Generate site-wide RSS feed
+	feedData, err := rss.GenerateSiteFeed(docs, ds.baseURL)
 	if err != nil {
 		http.Error(w, "Failed to generate RSS feed", http.StatusInternalServerError)
 		return

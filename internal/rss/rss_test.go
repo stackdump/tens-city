@@ -473,3 +473,181 @@ func TestGenerateUserFeed_XMLFormat(t *testing.T) {
 		t.Error("Expected indented XML output")
 	}
 }
+
+func TestGenerateSiteFeed_BasicFeed(t *testing.T) {
+	docs := []*markdown.Document{
+		{
+			Frontmatter: markdown.Frontmatter{
+				Title:         "First Post",
+				Description:   "This is the first post",
+				DatePublished: "2025-11-01T10:00:00Z",
+				Slug:          "first-post",
+				Draft:         false,
+			},
+		},
+		{
+			Frontmatter: markdown.Frontmatter{
+				Title:         "Second Post",
+				Description:   "This is the second post",
+				DatePublished: "2025-11-02T10:00:00Z",
+				Slug:          "second-post",
+				Draft:         false,
+			},
+		},
+	}
+
+	feedData, err := GenerateSiteFeed(docs, "https://tens.city")
+	if err != nil {
+		t.Fatalf("GenerateSiteFeed failed: %v", err)
+	}
+
+	// Parse the XML to verify structure
+	var feed RSS
+	if err := xml.Unmarshal(feedData, &feed); err != nil {
+		t.Fatalf("Failed to parse generated RSS: %v", err)
+	}
+
+	// Verify basic structure
+	if feed.Version != "2.0" {
+		t.Errorf("Expected RSS version 2.0, got %s", feed.Version)
+	}
+
+	if feed.Channel == nil {
+		t.Fatal("Expected channel to be non-nil")
+	}
+
+	// Verify channel metadata
+	expectedTitle := "Tens City - All Posts"
+	if feed.Channel.Title != expectedTitle {
+		t.Errorf("Expected title %q, got %q", expectedTitle, feed.Channel.Title)
+	}
+
+	expectedLink := "https://tens.city/posts"
+	if feed.Channel.Link != expectedLink {
+		t.Errorf("Expected link %q, got %q", expectedLink, feed.Channel.Link)
+	}
+
+	expectedDesc := "Latest blog posts from all authors on Tens City"
+	if feed.Channel.Description != expectedDesc {
+		t.Errorf("Expected description %q, got %q", expectedDesc, feed.Channel.Description)
+	}
+
+	if feed.Channel.Language != "en" {
+		t.Errorf("Expected language en, got %s", feed.Channel.Language)
+	}
+
+	// Verify items count
+	if len(feed.Channel.Items) != 2 {
+		t.Fatalf("Expected 2 items, got %d", len(feed.Channel.Items))
+	}
+
+	// Verify items are sorted by date (newest first)
+	if feed.Channel.Items[0].Title != "Second Post" {
+		t.Errorf("Expected first item to be 'Second Post', got %s", feed.Channel.Items[0].Title)
+	}
+
+	if feed.Channel.Items[1].Title != "First Post" {
+		t.Errorf("Expected second item to be 'First Post', got %s", feed.Channel.Items[1].Title)
+	}
+}
+
+func TestGenerateSiteFeed_FiltersDrafts(t *testing.T) {
+	docs := []*markdown.Document{
+		{
+			Frontmatter: markdown.Frontmatter{
+				Title:         "Published Post",
+				Description:   "This is published",
+				DatePublished: "2025-11-01T10:00:00Z",
+				Slug:          "published-post",
+				Draft:         false,
+			},
+		},
+		{
+			Frontmatter: markdown.Frontmatter{
+				Title:         "Draft Post",
+				Description:   "This is a draft",
+				DatePublished: "2025-11-02T10:00:00Z",
+				Slug:          "draft-post",
+				Draft:         true, // This should be filtered out
+			},
+		},
+	}
+
+	feedData, err := GenerateSiteFeed(docs, "https://tens.city")
+	if err != nil {
+		t.Fatalf("GenerateSiteFeed failed: %v", err)
+	}
+
+	var feed RSS
+	if err := xml.Unmarshal(feedData, &feed); err != nil {
+		t.Fatalf("Failed to parse generated RSS: %v", err)
+	}
+
+	// Should only have the published post
+	if len(feed.Channel.Items) != 1 {
+		t.Errorf("Expected 1 item (draft filtered), got %d", len(feed.Channel.Items))
+	}
+
+	if feed.Channel.Items[0].Title != "Published Post" {
+		t.Errorf("Expected 'Published Post', got %s", feed.Channel.Items[0].Title)
+	}
+}
+
+func TestGenerateSiteFeed_LimitsTo20Items(t *testing.T) {
+	// Create 25 documents
+	docs := make([]*markdown.Document, 25)
+	for i := 0; i < 25; i++ {
+		date := time.Date(2025, 11, i+1, 10, 0, 0, 0, time.UTC)
+		docs[i] = &markdown.Document{
+			Frontmatter: markdown.Frontmatter{
+				Title:         fmt.Sprintf("Post %d", i),
+				DatePublished: date.Format(time.RFC3339),
+				Slug:          fmt.Sprintf("post-%d", i),
+				Draft:         false,
+			},
+		}
+	}
+
+	feedData, err := GenerateSiteFeed(docs, "https://tens.city")
+	if err != nil {
+		t.Fatalf("GenerateSiteFeed failed: %v", err)
+	}
+
+	var feed RSS
+	if err := xml.Unmarshal(feedData, &feed); err != nil {
+		t.Fatalf("Failed to parse generated RSS: %v", err)
+	}
+
+	// Should be limited to 20 items
+	if len(feed.Channel.Items) != 20 {
+		t.Errorf("Expected 20 items (max limit), got %d", len(feed.Channel.Items))
+	}
+}
+
+func TestGenerateSiteFeed_EmptyDocuments(t *testing.T) {
+	docs := []*markdown.Document{}
+
+	feedData, err := GenerateSiteFeed(docs, "https://tens.city")
+	if err != nil {
+		t.Fatalf("GenerateSiteFeed failed: %v", err)
+	}
+
+	var feed RSS
+	if err := xml.Unmarshal(feedData, &feed); err != nil {
+		t.Fatalf("Failed to parse generated RSS: %v", err)
+	}
+
+	// Should have a valid feed structure even with no items
+	if feed.Channel == nil {
+		t.Fatal("Expected channel to be non-nil")
+	}
+
+	if len(feed.Channel.Items) != 0 {
+		t.Errorf("Expected 0 items, got %d", len(feed.Channel.Items))
+	}
+
+	// LastBuildDate should be empty
+	if feed.Channel.LastBuildDate != "" {
+		t.Errorf("Expected empty LastBuildDate, got %s", feed.Channel.LastBuildDate)
+	}
+}

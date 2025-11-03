@@ -172,8 +172,13 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 	htmlContent := string(data)
 
-	// If docServer is available, inject JSON-LD script tag
+	// If docServer is available, inject JSON-LD script tag and RSS link
 	if s.docServer != nil {
+		// Add RSS autodiscovery link
+		rssLink := fmt.Sprintf(`    <link rel="alternate" type="application/rss+xml" title="All Posts - Tens City" href="%s/posts.rss">
+`, s.baseURL)
+		htmlContent = strings.Replace(htmlContent, "</head>", rssLink+"</head>", 1)
+
 		// Get the collection index JSON-LD
 		indexData, err := s.docServer.GetIndexJSONLD()
 		if err == nil && len(indexData) > 0 {
@@ -199,6 +204,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if s.docServer != nil {
 		if r.URL.Path == "/posts" {
 			s.docServer.HandleDocList(w, r)
+			return
+		}
+		if r.URL.Path == "/posts.rss" {
+			s.docServer.HandleSiteRSS(w, r)
 			return
 		}
 		if r.URL.Path == "/posts/index.jsonld" {
