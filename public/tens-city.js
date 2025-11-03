@@ -1981,8 +1981,10 @@ class TensCity extends HTMLElement {
             editorContainer.remove();
         }
 
-        // Recreate appropriate editor
-        this._createEditor();
+        // Recreate appropriate editor and show it (user is already using the app)
+        this._createEditor().then(() => {
+            this._showEditorContainer();
+        });
     }
 
     _loadFromScriptTag() {
