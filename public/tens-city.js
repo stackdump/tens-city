@@ -315,6 +315,7 @@ class TensCity extends HTMLElement {
         this._createEditor().then(() => {
             if (this._shouldShowEditor()) {
                 // User is viewing specific content, show editor with that content
+                this._showEditorContainer();
                 this._loadInitialData();
             } else {
                 // No specific content to view, redirect to latest post
@@ -370,6 +371,7 @@ class TensCity extends HTMLElement {
         
         if (this._shouldShowEditor()) {
             // User is viewing specific content, show editor with that content
+            this._showEditorContainer();
             await this._loadInitialData();
         } else {
             // No specific content to view, redirect to latest post
@@ -593,6 +595,20 @@ class TensCity extends HTMLElement {
         
         // Update permalink after creating editor
         this._updatePermalinkAnchor();
+        
+        // Initially hide editor - it will be shown after redirect determination
+        const editorContainer = this._appContainer.querySelector('.tc-editor-container');
+        if (editorContainer) {
+            editorContainer.style.display = 'none';
+        }
+    }
+
+    _showEditorContainer() {
+        // Show the editor container
+        const editorContainer = this._appContainer.querySelector('.tc-editor-container');
+        if (editorContainer) {
+            editorContainer.style.display = 'flex';
+        }
     }
 
     async _createJSONLDEditor() {
