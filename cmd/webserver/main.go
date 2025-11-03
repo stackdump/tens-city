@@ -259,8 +259,8 @@ func main() {
 		log.Fatalf("Failed to access embedded public files: %v", err)
 	}
 
-	// Create document server without write access to storage (read-only mode)
-	docServer := docserver.NewDocServerWithStorage(*contentDir, *baseURL, nil)
+	// Create document server
+	docServer := docserver.NewDocServer(*contentDir, *baseURL)
 
 	server := NewServer(storage, publicSubFS, docServer)
 	server.baseURL = *baseURL // Set the base URL from command line flag
