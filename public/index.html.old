@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
+    <title>Tens City</title>
+    <script src="tens-city.js" type="module"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+<tens-city
+supabase-url="https://gquccmagslcoytktmcfa.supabase.co"
+supabase-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxdWNjbWFnc2xjb3l0a3RtY2ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3NjY5MTUsImV4cCI6MjA3NzM0MjkxNX0.vmQRR7kNnGfkmkNUcs9aoZMMPrjeMqPWA5X7VQiqkiQ"
+>
+    <script type="application/ld+json">
+        {
+            "@context": "https://pflow.xyz/schema",
+            "@type": "PetriNet",
+            "@version": "1.1",
+            "arcs": [],
+            "places": {},
+            "token": [
+                "https://pflow.xyz/tokens/black"
+            ],
+            "transitions": {}
+        }
+    </script>
+</tens-city>
+</body>
+</html>

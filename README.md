@@ -1,18 +1,19 @@
-# tens.city 
+# tens.city
 
-## Web Application
+## Static Blog Hosting
 
-The web application is a single-page app for managing JSON-LD objects with GitHub authentication.
+Tens City is a static blog hosting system that serves markdown blog posts with content-addressable storage. Content is managed through markdown files with YAML frontmatter, providing a simple file-based workflow.
 
 ### Features
-- Post new JSON-LD objects with ownership tracking
-- ACE editor for JSON editing with syntax highlighting
-- Load data from embedded `<script type="application/ld+json">` tags
-- Auto-update script tags when editor content changes
-- Dynamic permalink anchor that updates with editor content
-- Share and load JSON-LD via URL parameters
+- **Markdown with frontmatter** - Write posts as `.md` files with YAML metadata
+- **Content-addressable storage** - Immutable JSON-LD objects identified by CID
+- **Schema.org JSON-LD** - Automatic structured data generation
+- **Server-side rendering** - HTML generation from markdown
+- **RSS feeds** - Automatic feed generation per author
+- **Static file serving** - Simple, fast blog hosting
+- **No authentication required** - Pure static blog viewer
 
-For details on the JSON-LD script tag and permalink features, see [docs/jsonld-script-tag.md](docs/jsonld-script-tag.md).
+For details on the markdown documentation system, see [docs/markdown-docs.md](docs/markdown-docs.md).
 
 ## Documentation System
 
@@ -24,21 +25,23 @@ Tens City includes a comprehensive markdown documentation system with YAML front
 - **Server-side rendering** - HTML generation with sanitization
 - **Caching** - ETag and Last-Modified support for performance
 - **Content negotiation** - Serve HTML or JSON-LD based on Accept header
-- **Collection index** - `/docs/index.jsonld` with all published documents
+- **Collection index** - `/posts/index.jsonld` with all published documents
 - **Draft support** - Hide work-in-progress documents
+- **RSS feeds** - Automatic feed generation per author
 
 See [docs/markdown-docs.md](docs/markdown-docs.md) for complete documentation.
 
 ### Quick Start
 ```bash
-# Start server with documentation enabled
-./webserver -addr :8080 -store data -content content/docs -base-url http://localhost:8080
+# Start server
+./webserver -addr :8080 -store data -content content/posts -base-url http://localhost:8080
 
-# Access documentation
-# List: http://localhost:8080/docs
-# Index: http://localhost:8080/docs/index.jsonld
-# Document: http://localhost:8080/docs/getting-started
-# JSON-LD: http://localhost:8080/docs/getting-started.jsonld
+# Access blog
+# Home: http://localhost:8080 (redirects to latest post)
+# Posts list: http://localhost:8080/posts
+# Index: http://localhost:8080/posts/index.jsonld
+# Specific post: http://localhost:8080/posts/your-slug
+# JSON-LD: http://localhost:8080/posts/your-slug.jsonld
 ```
 
 ## 1. Ethos: tent city
@@ -68,43 +71,35 @@ Maps to:
 
 ## 4. CLI Tools
 
-### webserver - HTTP server for JSON-LD objects
-Runs a web server that provides API access to JSON-LD objects and serves the web application using filesystem storage.
+### webserver - HTTP server for static blog hosting
+Runs a web server that serves markdown blog posts as HTML and JSON-LD using filesystem storage.
 
 ```bash
-# Set the Supabase JWT secret for authentication
-export SUPABASE_JWT_SECRET="your-supabase-jwt-secret"
-
 # Start with filesystem storage
-./webserver -addr :8080 -store data -public public
+./webserver -addr :8080 -store data -content content/posts -base-url http://localhost:8080
 ```
 
 **Features:**
-- **Storage backend**: Filesystem-based storage
-- **API routes**:
+- **Blog hosting**: Serves markdown posts from the content directory
+- **Read-only routes**:
+  - `GET /` - Blog home page (redirects to latest post)
+  - `GET /posts` - List all posts
+  - `GET /posts/index.jsonld` - JSON-LD index of all posts
+  - `GET /posts/{slug}` - Individual post as HTML
+  - `GET /posts/{slug}.jsonld` - Individual post as JSON-LD
   - `GET /o/{cid}` - Retrieve object by CID
-  - `POST /api/save` - Save JSON-LD and get CID (requires authentication)
-  - `DELETE /o/{cid}` - Delete object by CID (author only, requires authentication)
+  - `GET /o/{cid}/markdown` - Get markdown source by CID
   - `GET /u/{user}/g/{slug}/latest` - Get latest CID for user's gist
   - `GET /u/{user}/g/{slug}/_history` - Get history for user's gist
-- **Autosave**: When a logged-in user visits `?data=<json>`, valid JSON-LD is automatically saved and redirected to `?cid=<CID>`
-- **Static file serving**: Serves the web application from the public directory
-- **CORS support**: Enable with `-cors` flag for cross-origin requests
-- **Security**: 
-  - Cryptographic JWT verification using Supabase JWT secret
-  - Server-side validation of JSON-LD structure
-  - Content size limits
-  - Author verification for deletions
+  - `GET /u/{user}/posts.rss` - RSS feed for user's posts
+- **Static file serving**: Serves the blog viewer from the public directory
+- **Content-addressable storage**: All posts stored as immutable CID-addressed objects
 
 **Options:**
 - `-addr` - Server address (default: `:8080`)
 - `-store` - Filesystem store directory (default: `data`)
-- `-public` - Public directory for static files (default: `public`)
-- `-cors` - Enable CORS headers (default: `true`)
-- `-max-content-mb` - Maximum content size in megabytes (default: `1`)
-
-**Environment Variables:**
-- `SUPABASE_JWT_SECRET` - Required. JWT secret from Supabase project settings for verifying authentication tokens
+- `-content` - Content directory for markdown posts (default: `content/posts`)
+- `-base-url` - Base URL for the server (default: `http://localhost:8080`)
 
 ### seal - Create sealed JSON-LD objects
 Seals JSON-LD documents using URDNA2015 canonicalization and computes CIDv1 identifiers.
@@ -165,16 +160,20 @@ make help
    go build -o webserver ./cmd/webserver
    ```
 
-2. Create and seal a JSON-LD document:
+2. Create markdown blog posts in `content/posts/`:
    ```bash
-   ./seal -in examples/petrinet.jsonld -store data
+   mkdir -p content/posts
+   # Create your first post as a .md file with YAML frontmatter
+   # See docs/markdown-docs.md for frontmatter format
    ```
 
 3. Start the web server:
    ```bash
-   ./webserver -addr :8080 -store data -public public
+   ./webserver -addr :8080 -store data -content content/posts -base-url http://localhost:8080
    ```
 
 4. Open your browser to `http://localhost:8080`
 
-See [examples/workflow.sh](examples/workflow.sh) for a complete workflow example.
+The home page will automatically redirect to your latest blog post.
+
+See [docs/markdown-docs.md](docs/markdown-docs.md) for details on writing blog posts with markdown and frontmatter.
