@@ -395,8 +395,6 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
         pre { background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; }
         pre code { background: none; padding: 0; }
         a { color: #0066cc; }
-        .nav { margin-bottom: 2rem; }
-        .nav a { margin-right: 1rem; }
         .footer { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e0e0e0; color: #666; font-size: 0.85rem; }
         .footer-menu { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 1rem; }
         .footer-menu a { color: #0066cc; text-decoration: none; }
@@ -417,14 +415,11 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
     </style>
 </head>
 <body>
-    <div class="nav">
-        <a href="/posts">← Back to Posts</a>
-    </div>
     %s
     <div class="footer">
         <div class="footer-menu">
             <a href="/posts">← All Posts</a>`,
-		escapedSlug, doc.HTML)
+		jsonldBytes, doc.HTML)
 
 	// Add CID link if available
 	if cached.CID != "" {
