@@ -239,11 +239,10 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Build JSON-LD index
-	index := markdown.BuildCollectionIndex(publicDocs, ds.baseURL)
-	indexJSON, err := json.MarshalIndent(index, "    ", "  ")
+	// Load cached JSON-LD index
+	cached, err := ds.loadIndex()
 	if err != nil {
-		http.Error(w, "Failed to generate JSON-LD", http.StatusInternalServerError)
+		http.Error(w, "Failed to load index", http.StatusInternalServerError)
 		return
 	}
 
@@ -256,7 +255,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Blog Posts - Tens City</title>
     <script type="application/ld+json">
-    %s
+%s
     </script>
     <style>
         body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; }
@@ -273,7 +272,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 <body>
     <h1>Blog Posts</h1>
     <ul class="doc-list">
-`, string(indexJSON))
+`, string(cached.Data))
 
 	for _, doc := range publicDocs {
 		escapedSlug := html.EscapeString(doc.Frontmatter.Slug)
