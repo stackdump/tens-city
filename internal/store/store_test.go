@@ -319,3 +319,122 @@ func TestPathSanitization(t *testing.T) {
 		t.Errorf("Reading valid user/slug should work: %v", err)
 	}
 }
+
+func TestSaveObjectWithMarkdownContent(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "store-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	store := NewFSStore(tmpDir)
+
+	cid := "z4EBG9jTestCID123"
+	raw := []byte(`{"@context": "https://schema.org", "@type": "Article", "headline": "Test"}`)
+	canonical := []byte("_:c14n0 <http://schema.org/headline> \"Test\" .\n")
+	markdownContent := "# Test Document\n\nThis is a test markdown document."
+
+	// Save with markdown content
+	err = store.SaveObjectWithAuthor(cid, raw, canonical, "testuser", "12345", markdownContent)
+	if err != nil {
+		t.Fatalf("SaveObjectWithAuthor failed: %v", err)
+	}
+
+	// Verify markdown file was created
+	mdPath := filepath.Join(tmpDir, "o", cid+".md")
+	savedMarkdown, err := os.ReadFile(mdPath)
+	if err != nil {
+		t.Fatalf("Failed to read markdown file: %v", err)
+	}
+
+	if string(savedMarkdown) != markdownContent {
+		t.Errorf("Markdown content mismatch.\nExpected: %s\nGot: %s", markdownContent, savedMarkdown)
+	}
+
+	// Test ReadMarkdownContent
+	readMarkdown, err := store.ReadMarkdownContent(cid)
+	if err != nil {
+		t.Fatalf("ReadMarkdownContent failed: %v", err)
+	}
+
+	if string(readMarkdown) != markdownContent {
+		t.Errorf("Read markdown content mismatch.\nExpected: %s\nGot: %s", markdownContent, readMarkdown)
+	}
+}
+
+func TestReadMarkdownContent_NonExistent(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "store-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	store := NewFSStore(tmpDir)
+
+	// Save object without markdown content
+	cid := "z4EBG9jTestCID123"
+	raw := []byte(`{"@context": "https://schema.org", "@type": "Article", "headline": "Test"}`)
+	canonical := []byte("_:c14n0 <http://schema.org/headline> \"Test\" .\n")
+
+	err = store.SaveObject(cid, raw, canonical)
+	if err != nil {
+		t.Fatalf("SaveObject failed: %v", err)
+	}
+
+	// ReadMarkdownContent should return empty content, not error
+	content, err := store.ReadMarkdownContent(cid)
+	if err != nil {
+		t.Fatalf("ReadMarkdownContent should not error for non-existent markdown: %v", err)
+	}
+
+	if len(content) != 0 {
+		t.Errorf("Expected empty content for non-existent markdown, got: %s", content)
+	}
+}
+
+func TestDeleteObject_RemovesMarkdownContent(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "store-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	store := NewFSStore(tmpDir)
+
+	cid := "z4EBG9jTestCID123"
+	raw := []byte(`{"@context": "https://schema.org", "@type": "Article", "headline": "Test"}`)
+	canonical := []byte("_:c14n0 <http://schema.org/headline> \"Test\" .\n")
+	markdownContent := "# Test Document\n\nThis is a test."
+
+	// Save with markdown content
+	err = store.SaveObjectWithAuthor(cid, raw, canonical, "testuser", "12345", markdownContent)
+	if err != nil {
+		t.Fatalf("SaveObjectWithAuthor failed: %v", err)
+	}
+
+	// Verify files exist
+	objPath := filepath.Join(tmpDir, "o", cid)
+	mdPath := filepath.Join(tmpDir, "o", cid+".md")
+	
+	if _, err := os.Stat(objPath); os.IsNotExist(err) {
+		t.Fatal("Object file should exist before deletion")
+	}
+	if _, err := os.Stat(mdPath); os.IsNotExist(err) {
+		t.Fatal("Markdown file should exist before deletion")
+	}
+
+	// Delete the object
+	err = store.DeleteObject(cid)
+	if err != nil {
+		t.Fatalf("DeleteObject failed: %v", err)
+	}
+
+	// Verify both files are deleted
+	if _, err := os.Stat(objPath); !os.IsNotExist(err) {
+		t.Error("Object file should be deleted")
+	}
+	if _, err := os.Stat(mdPath); !os.IsNotExist(err) {
+		t.Error("Markdown file should be deleted")
+	}
+}
+
