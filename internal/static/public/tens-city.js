@@ -605,6 +605,20 @@ class TensCity extends HTMLElement {
         
         // Update permalink after creating editor
         this._updatePermalinkAnchor();
+        
+        // Initially hide editor - it will be shown after redirect determination
+        const editorContainer = this._appContainer.querySelector('.tc-editor-container');
+        if (editorContainer) {
+            editorContainer.style.display = 'none';
+        }
+    }
+
+    _showEditorContainer() {
+        // Show the editor container
+        const editorContainer = this._appContainer.querySelector('.tc-editor-container');
+        if (editorContainer) {
+            editorContainer.style.display = 'flex';
+        }
     }
 
     async _createJSONLDEditor() {
@@ -1977,8 +1991,18 @@ class TensCity extends HTMLElement {
             editorContainer.remove();
         }
 
-        // Recreate appropriate editor
-        this._createEditor();
+        // Recreate appropriate editor and show it (user is already using the app)
+        this._createEditor().then(() => {
+            this._showEditorContainer();
+        }).catch(err => {
+            console.error('Failed to recreate editor:', err);
+            // Editor failed to load, but at least show a message in the container
+            const errorDiv = document.createElement('div');
+            errorDiv.textContent = 'Failed to load editor. Please refresh the page.';
+            errorDiv.style.padding = '24px';
+            errorDiv.style.color = '#d73a49';
+            this._appContainer.appendChild(errorDiv);
+        });
     }
 
     _loadFromScriptTag() {
@@ -2423,19 +2447,52 @@ class TensCity extends HTMLElement {
         const urlParams = new URLSearchParams(window.location.search);
         const cidParam = urlParams.get('cid');
         
-        if (cidParam && this._aceEditor) {
+        if (cidParam) {
             console.log('Loading data from CID:', cidParam);
             // Load object by CID from API
             try {
                 const response = await fetch(`/o/${cidParam}`);
                 if (response.ok) {
                     const data = await response.json();
-                    this._aceEditor.session.setValue(JSON.stringify(data, null, 2));
-                    this._updatePermalinkAnchor();
-                    // Pass the loaded data to ownership check to avoid API call
-                    await this._updateDeleteButtonVisibility(data);
-                    console.log('Successfully loaded data from CID');
-                    return;
+                    
+                    // Check if this is a markdown document (Article type with schema.org context)
+                    const isMarkdownDoc = this._isMarkdownDocument(data);
+                    
+                    if (isMarkdownDoc && this._editorMode !== 'markdown') {
+                        // Switch to markdown mode
+                        console.log('Detected markdown document, switching to markdown mode');
+                        this._editorMode = 'markdown';
+                        
+                        // Update toggle button
+                        const toggleBtn = this._root.querySelector('#tc-mode-toggle');
+                        if (toggleBtn) {
+                            toggleBtn.textContent = '📋 Switch to JSON-LD';
+                        }
+                        
+                        // Remove existing editor container
+                        const editorContainer = this._appContainer.querySelector('.tc-editor-container');
+                        if (editorContainer) {
+                            editorContainer.remove();
+                        }
+                        
+                        // Create markdown editor
+                        await this._createEditor();
+                        this._showEditorContainer();
+                        
+                        // Populate frontmatter from JSON-LD
+                        this._populateMarkdownFromJSONLD(data);
+                        
+                        await this._updateDeleteButtonVisibility(data);
+                        console.log('Successfully loaded markdown document from CID');
+                        return;
+                    } else if (this._aceEditor) {
+                        // Load as JSON-LD
+                        this._aceEditor.session.setValue(JSON.stringify(data, null, 2));
+                        this._updatePermalinkAnchor();
+                        await this._updateDeleteButtonVisibility(data);
+                        console.log('Successfully loaded data from CID');
+                        return;
+                    }
                 } else {
                     console.error('Failed to load CID:', response.status, response.statusText);
                 }
@@ -2494,6 +2551,96 @@ class TensCity extends HTMLElement {
         if (this._aceEditor) {
             this._updatePermalinkAnchor();
         }
+    }
+
+    _isMarkdownDocument(data) {
+        // Check if the data represents a markdown document (Article type with schema.org context)
+        if (!data || typeof data !== 'object') return false;
+        
+        // Check for @type: "Article"
+        const type = data['@type'];
+        if (type !== 'Article') return false;
+        
+        // Check for schema.org context
+        const context = data['@context'];
+        if (!context) return false;
+        
+        // Accept schema.org in various forms
+        if (typeof context === 'string' && context.includes('schema.org')) {
+            return true;
+        }
+        if (Array.isArray(context) && context.some(c => typeof c === 'string' && c.includes('schema.org'))) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    _populateMarkdownFromJSONLD(data) {
+        // Populate markdown editor frontmatter from JSON-LD data
+        if (!this._frontmatterForm) return;
+        
+        const form = this._frontmatterForm;
+        
+        // Extract fields from JSON-LD
+        const title = data.headline || data.title || data.name || '';
+        const description = data.description || '';
+        const datePublished = data.datePublished || '';
+        const dateModified = data.dateModified || '';
+        
+        // Extract slug from URL if present
+        let slug = '';
+        if (data.url) {
+            const urlParts = data.url.split('/posts/');
+            if (urlParts.length > 1) {
+                slug = urlParts[1].split(/[?#]/)[0];
+            }
+        }
+        
+        // Populate form fields
+        const titleField = form.querySelector('#fm-title');
+        const descField = form.querySelector('#fm-description');
+        const slugField = form.querySelector('#fm-slug');
+        const datePublishedField = form.querySelector('#fm-datePublished');
+        const dateModifiedField = form.querySelector('#fm-dateModified');
+        
+        if (titleField) titleField.value = title;
+        if (descField) descField.value = description;
+        if (slugField) slugField.value = slug;
+        
+        // Convert ISO dates to datetime-local format
+        if (datePublishedField && datePublished) {
+            try {
+                const date = new Date(datePublished);
+                datePublishedField.value = date.toISOString().slice(0, 16);
+            } catch (e) {
+                console.error('Failed to parse datePublished:', e);
+            }
+        }
+        
+        if (dateModifiedField && dateModified) {
+            try {
+                const date = new Date(dateModified);
+                dateModifiedField.value = date.toISOString().slice(0, 16);
+            } catch (e) {
+                console.error('Failed to parse dateModified:', e);
+            }
+        }
+        
+        // Clear markdown content since we don't have the original
+        if (this._markdownEditor) {
+            this._markdownEditor.value = '';
+            this._updateMarkdownPreview();
+        }
+        
+        // Store the CID for future reference
+        const urlParams = new URLSearchParams(window.location.search);
+        const cidParam = urlParams.get('cid');
+        if (cidParam) {
+            this._lastSavedCid = cidParam;
+        }
+        
+        this._updatePermalinkAnchor();
     }
 
     _applyStyles(el, styles = {}) {
