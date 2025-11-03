@@ -315,6 +315,7 @@ class TensCity extends HTMLElement {
         this._createEditor().then(() => {
             if (this._shouldShowEditor()) {
                 // User is viewing specific content, show editor with that content
+                this._showEditorContainer();
                 this._loadInitialData();
             } else {
                 // No specific content to view, redirect to latest post
@@ -370,6 +371,7 @@ class TensCity extends HTMLElement {
         
         if (this._shouldShowEditor()) {
             // User is viewing specific content, show editor with that content
+            this._showEditorContainer();
             await this._loadInitialData();
         } else {
             // No specific content to view, redirect to latest post
@@ -593,6 +595,20 @@ class TensCity extends HTMLElement {
         
         // Update permalink after creating editor
         this._updatePermalinkAnchor();
+        
+        // Initially hide editor - it will be shown after redirect determination
+        const editorContainer = this._appContainer.querySelector('.tc-editor-container');
+        if (editorContainer) {
+            editorContainer.style.display = 'none';
+        }
+    }
+
+    _showEditorContainer() {
+        // Show the editor container
+        const editorContainer = this._appContainer.querySelector('.tc-editor-container');
+        if (editorContainer) {
+            editorContainer.style.display = 'flex';
+        }
     }
 
     async _createJSONLDEditor() {
@@ -1965,8 +1981,18 @@ class TensCity extends HTMLElement {
             editorContainer.remove();
         }
 
-        // Recreate appropriate editor
-        this._createEditor();
+        // Recreate appropriate editor and show it (user is already using the app)
+        this._createEditor().then(() => {
+            this._showEditorContainer();
+        }).catch(err => {
+            console.error('Failed to recreate editor:', err);
+            // Editor failed to load, but at least show a message in the container
+            const errorDiv = document.createElement('div');
+            errorDiv.textContent = 'Failed to load editor. Please refresh the page.';
+            errorDiv.style.padding = '24px';
+            errorDiv.style.color = '#d73a49';
+            this._appContainer.appendChild(errorDiv);
+        });
     }
 
     _loadFromScriptTag() {
