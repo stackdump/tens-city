@@ -81,8 +81,7 @@ func ParseDocumentFromBytes(content []byte, filePath string) (*Document, error) 
 			extension.GFM,
 			extension.Table,
 			extension.Strikethrough,
-			&mermaid.Extender{NoScript: true}, // Client-side rendering, script added in docserver
-			NewPlantUMLExtender(),             // Client-side rendering for PlantUML
+			&mermaid.Extender{},
 		),
 		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
 		goldmark.WithRendererOptions(html.WithUnsafe()), // We'll sanitize after
@@ -112,10 +111,7 @@ func sanitizeHTML(html string) string {
 	// Allow Mermaid diagram elements - diagrams wrapped in <pre class="mermaid"> for client-side rendering
 	p.AllowAttrs("class").Matching(regexp.MustCompile(`^mermaid$`)).OnElements("pre")
 	
-	// Allow PlantUML diagram elements - diagrams wrapped in <pre class="plantuml"> for client-side rendering
-	p.AllowAttrs("class").Matching(regexp.MustCompile(`^plantuml$`)).OnElements("pre")
-	
-	// Allow SVG elements for diagrams (may be used by client-side rendering libraries)
+	// Allow SVG elements for diagrams
 	p.AllowElements("svg", "g", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text", "tspan", "defs", "use", "clipPath", "mask", "title", "desc")
 	
 	// Allow SVG-specific attributes only on SVG elements (not globally for security)

@@ -427,24 +427,8 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
             }
         })();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({startOnLoad: true});</script>
-    <script src="https://cdn.jsdelivr.net/npm/plantuml-encoder@1.4.0/dist/plantuml-encoder.min.js" integrity="sha384-F/VYkZMVrmPd0865MwHNY3TWxBZKfvXvPszcTi5WvJPPHu8NQg4qZSvUmFLJJF+0" crossorigin="anonymous"></script>
-    <script>
-        // Render PlantUML diagrams using PlantUML web service
-        document.addEventListener('DOMContentLoaded', function() {
-            const plantumlBlocks = document.querySelectorAll('pre.plantuml');
-            plantumlBlocks.forEach(function(block) {
-                const code = block.textContent;
-                const encoded = plantumlEncoder.encode(code);
-                const img = document.createElement('img');
-                img.src = 'https://www.plantuml.com/plantuml/svg/' + encoded;
-                img.alt = 'PlantUML Diagram';
-                img.style.maxWidth = '100%%';
-                block.parentNode.replaceChild(img, block);
-            });
-        });
-    </script>
 </body>
 </html>`)
 }
