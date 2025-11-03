@@ -230,3 +230,115 @@ This is a test post.
 		t.Error("Expected test post slug in JSON-LD")
 	}
 }
+
+func TestRSSListPage(t *testing.T) {
+	tmpDir := t.TempDir()
+	storage := NewFSStorage(tmpDir)
+
+	// Get the embedded public filesystem
+	publicFS, err := static.Public()
+	if err != nil {
+		t.Fatalf("Failed to get public filesystem: %v", err)
+	}
+
+	// Create a temporary content directory with test posts
+	contentDir := t.TempDir()
+
+	// Create posts from different authors
+	testPost1 := `---
+title: Post by Alice
+description: A test blog post by Alice
+datePublished: 2025-11-03T00:00:00Z
+author:
+  name: Alice Smith
+  type: Person
+  url: https://github.com/alicesmith
+tags:
+  - test
+lang: en
+slug: alice-post
+draft: false
+---
+
+# Post by Alice
+
+This is Alice's post.
+`
+	testPost2 := `---
+title: Post by Bob
+description: A test blog post by Bob
+datePublished: 2025-11-02T00:00:00Z
+author:
+  name: Bob Jones
+  type: Person
+  url: https://github.com/bobjones
+tags:
+  - test
+lang: en
+slug: bob-post
+draft: false
+---
+
+# Post by Bob
+
+This is Bob's post.
+`
+
+	if err := os.WriteFile(contentDir+"/alice-post.md", []byte(testPost1), 0644); err != nil {
+		t.Fatalf("Failed to create test post 1: %v", err)
+	}
+	if err := os.WriteFile(contentDir+"/bob-post.md", []byte(testPost2), 0644); err != nil {
+		t.Fatalf("Failed to create test post 2: %v", err)
+	}
+
+	// Create docserver with the test content
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080")
+	server := NewServer(storage, publicFS, docServer)
+
+	// Test serving /rss page
+	req := httptest.NewRequest("GET", "/rss", nil)
+	w := httptest.NewRecorder()
+	server.ServeHTTP(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", resp.StatusCode)
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	if contentType != "text/html; charset=utf-8" {
+		t.Errorf("Expected Content-Type text/html; charset=utf-8, got %s", contentType)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	bodyStr := string(body)
+
+	// Check that the page title is correct
+	if !strings.Contains(bodyStr, "<title>RSS Feeds - Tens City</title>") {
+		t.Error("Expected RSS Feeds page title")
+	}
+
+	// Check that both authors are listed
+	if !strings.Contains(bodyStr, "Alice Smith") {
+		t.Error("Expected Alice Smith in RSS feeds list")
+	}
+	if !strings.Contains(bodyStr, "Bob Jones") {
+		t.Error("Expected Bob Jones in RSS feeds list")
+	}
+
+	// Check that RSS feed URLs are present
+	if !strings.Contains(bodyStr, "/u/alicesmith/posts.rss") {
+		t.Error("Expected Alice's RSS feed URL")
+	}
+	if !strings.Contains(bodyStr, "/u/bobjones/posts.rss") {
+		t.Error("Expected Bob's RSS feed URL")
+	}
+
+	// Check that author GitHub links are present
+	if !strings.Contains(bodyStr, "https://github.com/alicesmith") {
+		t.Error("Expected Alice's GitHub link")
+	}
+	if !strings.Contains(bodyStr, "https://github.com/bobjones") {
+		t.Error("Expected Bob's GitHub link")
+	}
+}

@@ -205,6 +205,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			s.docServer.HandleIndexJSONLD(w, r)
 			return
 		}
+		if r.URL.Path == "/rss" {
+			s.docServer.HandleRSSList(w, r)
+			return
+		}
 		if strings.HasPrefix(r.URL.Path, "/posts/") {
 			slug := strings.TrimPrefix(r.URL.Path, "/posts/")
 			// Check for .jsonld extension

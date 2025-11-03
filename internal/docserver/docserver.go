@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -552,6 +553,113 @@ func (ds *DocServer) HandleUserRSS(w http.ResponseWriter, r *http.Request, userN
 	w.Write(feedData)
 }
 
+// HandleRSSList handles GET /rss - return HTML page listing all available RSS feeds
+func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Load all posts
+	docs, err := markdown.ListDocuments(ds.contentDir)
+	if err != nil {
+		http.Error(w, "Failed to load posts", http.StatusInternalServerError)
+		return
+	}
+
+	// Collect unique authors
+	authorMap := make(map[string]struct {
+		name string
+		url  string
+	})
+
+	for _, doc := range docs {
+		// Skip drafts
+		if doc.Frontmatter.Draft {
+			continue
+		}
+
+		authorURL := extractAuthorURL(doc.Frontmatter.Author)
+		userName := extractGitHubUsername(authorURL)
+		if userName != "" {
+			// Extract author name
+			authorName := extractAuthorName(doc.Frontmatter.Author)
+			if authorName != "" {
+				authorMap[userName] = struct {
+					name string
+					url  string
+				}{
+					name: authorName,
+					url:  authorURL,
+				}
+			}
+		}
+	}
+
+	// Render HTML page
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(w, `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RSS Feeds - Tens City</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+        h1 { color: #333; margin-bottom: 1rem; }
+        .intro { color: #666; margin-bottom: 2rem; }
+        .feed-list { list-style: none; padding: 0; }
+        .feed-item { margin: 1rem 0; padding: 1rem; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9; }
+        .feed-item h2 { margin: 0 0 0.5rem 0; font-size: 1.25rem; }
+        .feed-item a { color: #0066cc; text-decoration: none; font-family: monospace; }
+        .feed-item a:hover { text-decoration: underline; }
+        .feed-meta { color: #666; font-size: 0.9rem; margin-top: 0.5rem; }
+        .author-link { color: #0066cc; text-decoration: none; }
+        .author-link:hover { text-decoration: underline; }
+        .back-link { display: inline-block; margin-bottom: 1rem; color: #0066cc; text-decoration: none; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-link">← Back to Home</a>
+    <h1>RSS Feeds</h1>
+    <p class="intro">Subscribe to RSS feeds for individual authors to stay updated with their latest posts.</p>
+    <ul class="feed-list">
+`)
+
+	// Sort authors alphabetically by username for consistent ordering
+	var userNames []string
+	for userName := range authorMap {
+		userNames = append(userNames, userName)
+	}
+	sort.Strings(userNames)
+
+	for _, userName := range userNames {
+		author := authorMap[userName]
+		escapedUserName := html.EscapeString(userName)
+		escapedAuthorName := html.EscapeString(author.name)
+		escapedAuthorURL := html.EscapeString(author.url)
+
+		fmt.Fprintf(w, `        <li class="feed-item">
+            <h2>%s</h2>
+            <a href="%s/u/%s/posts.rss">%s/u/%s/posts.rss</a>
+            <div class="feed-meta">
+                Author: <a href="%s" class="author-link" target="_blank">%s</a>
+            </div>
+        </li>
+`, escapedAuthorName, ds.baseURL, escapedUserName, ds.baseURL, escapedUserName, escapedAuthorURL, escapedAuthorName)
+	}
+
+	if len(userNames) == 0 {
+		fmt.Fprintf(w, `        <li class="feed-item">No RSS feeds available yet.</li>
+`)
+	}
+
+	fmt.Fprintf(w, `    </ul>
+</body>
+</html>`)
+}
+
 // generateETag generates an ETag from content
 func generateETag(content string) string {
 	hash := md5.Sum([]byte(content))
@@ -601,5 +709,25 @@ func extractGitHubUsername(githubURL string) string {
 		return pathParts[0]
 	}
 
+	return ""
+}
+
+// extractAuthorName extracts the author's name from frontmatter
+func extractAuthorName(author interface{}) string {
+	switch a := author.(type) {
+	case map[string]interface{}:
+		if name, ok := a["name"].(string); ok {
+			return name
+		}
+	case []interface{}:
+		// For multiple authors, return the first author's name
+		if len(a) > 0 {
+			if m, ok := a[0].(map[string]interface{}); ok {
+				if name, ok := m["name"].(string); ok {
+					return name
+				}
+			}
+		}
+	}
 	return ""
 }
