@@ -365,3 +365,78 @@ func TestBuildCollectionIndex(t *testing.T) {
 		t.Errorf("Expected numberOfItems to be 2, got %v", index["numberOfItems"])
 	}
 }
+
+func TestParseDocument_Mermaid(t *testing.T) {
+	content := []byte(`---
+title: Mermaid Test
+description: Testing Mermaid diagrams
+datePublished: 2025-11-03T00:00:00Z
+author:
+  name: Test Author
+  type: Person
+lang: en
+slug: mermaid-test
+---
+
+# Mermaid Diagram Test
+
+` + "```mermaid" + `
+graph TD;
+    A-->B;
+    A-->C;
+    B-->D;
+    C-->D;
+` + "```" + `
+`)
+
+	doc, err := ParseDocumentFromBytes(content, "mermaid-test.md")
+	if err != nil {
+		t.Fatalf("ParseDocumentFromBytes failed: %v", err)
+	}
+
+	if doc.Frontmatter.Title != "Mermaid Test" {
+		t.Errorf("Expected title 'Mermaid Test', got '%s'", doc.Frontmatter.Title)
+	}
+
+	// Check that HTML contains mermaid-related content
+	if !strings.Contains(doc.HTML, "mermaid") && !strings.Contains(doc.HTML, "graph") {
+		t.Error("Expected HTML to contain mermaid diagram content")
+	}
+}
+
+func TestParseDocument_PlantUML(t *testing.T) {
+	content := []byte(`---
+title: PlantUML Test
+description: Testing PlantUML diagrams
+datePublished: 2025-11-03T00:00:00Z
+author:
+  name: Test Author
+  type: Person
+lang: en
+slug: plantuml-test
+---
+
+# PlantUML Diagram Test
+
+` + "```plantuml" + `
+@startuml
+Alice -> Bob: Authentication Request
+Bob --> Alice: Authentication Response
+@enduml
+` + "```" + `
+`)
+
+	doc, err := ParseDocumentFromBytes(content, "plantuml-test.md")
+	if err != nil {
+		t.Fatalf("ParseDocumentFromBytes failed: %v", err)
+	}
+
+	if doc.Frontmatter.Title != "PlantUML Test" {
+		t.Errorf("Expected title 'PlantUML Test', got '%s'", doc.Frontmatter.Title)
+	}
+
+	// Check that HTML contains SVG or PlantUML-related content
+	if !strings.Contains(doc.HTML, "svg") && !strings.Contains(doc.HTML, "plantuml") {
+		t.Error("Expected HTML to contain PlantUML diagram content")
+	}
+}
