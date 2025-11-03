@@ -2452,6 +2452,7 @@ class TensCity extends HTMLElement {
         // Check for CID parameter first
         const urlParams = new URLSearchParams(window.location.search);
         const cidParam = urlParams.get('cid');
+        const slugParam = urlParams.get('slug');
         
         if (cidParam) {
             console.log('Loading data from CID:', cidParam);
@@ -2485,8 +2486,9 @@ class TensCity extends HTMLElement {
                         await this._createEditor();
                         this._showEditorContainer();
                         
-                        // Populate frontmatter from JSON-LD (now async to fetch markdown content)
-                        await this._populateMarkdownFromJSONLD(data, cidParam);
+                        // Populate frontmatter from JSON-LD and load markdown content
+                        // Pass slugParam if available, otherwise it will be extracted from data.url
+                        await this._populateMarkdownFromJSONLD(data, cidParam, slugParam);
                         
                         await this._updateDeleteButtonVisibility(data);
                         console.log('Successfully loaded markdown document from CID');
@@ -2586,7 +2588,7 @@ class TensCity extends HTMLElement {
         return false;
     }
 
-    async _populateMarkdownFromJSONLD(data, cidParam) {
+    async _populateMarkdownFromJSONLD(data, cidParam, slugParam = null) {
         // Populate markdown editor frontmatter from JSON-LD data
         if (!this._frontmatterForm) return;
         
@@ -2598,9 +2600,9 @@ class TensCity extends HTMLElement {
         const datePublished = data.datePublished || '';
         const dateModified = data.dateModified || '';
         
-        // Extract slug from URL if present
-        let slug = '';
-        if (data.url && typeof data.url === 'string') {
+        // Use slugParam if provided, otherwise extract from data.url
+        let slug = slugParam || '';
+        if (!slug && data.url && typeof data.url === 'string') {
             try {
                 // Try to parse as URL to validate format
                 const urlObj = new URL(data.url, window.location.origin);
