@@ -15,7 +15,10 @@ import (
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer/html"
+	"go.abhg.dev/goldmark/mermaid"
 	"gopkg.in/yaml.v3"
+
+	uml "github.com/OhYee/goldmark-plantuml"
 )
 
 // Frontmatter represents the YAML frontmatter of a document
@@ -76,7 +79,13 @@ func ParseDocumentFromBytes(content []byte, filePath string) (*Document, error) 
 	// Render markdown to HTML
 	var buf bytes.Buffer
 	md := goldmark.New(
-		goldmark.WithExtensions(extension.GFM, extension.Table, extension.Strikethrough),
+		goldmark.WithExtensions(
+			extension.GFM,
+			extension.Table,
+			extension.Strikethrough,
+			&mermaid.Extender{},
+			uml.Default,
+		),
 		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
 		goldmark.WithRendererOptions(html.WithUnsafe()), // We'll sanitize after
 	)
@@ -101,6 +110,18 @@ func sanitizeHTML(html string) string {
 	// Allow additional safe elements for documentation
 	p.AllowAttrs("id").Matching(regexp.MustCompile(`^[a-zA-Z0-9\-_]+$`)).OnElements("h1", "h2", "h3", "h4", "h5", "h6")
 	p.AllowAttrs("class").Matching(regexp.MustCompile(`^[a-zA-Z0-9\s\-_]+$`)).OnElements("code", "pre")
+	
+	// Allow Mermaid diagram elements
+	p.AllowAttrs("class").Matching(regexp.MustCompile(`^mermaid$`)).OnElements("pre")
+	p.AllowElements("script")
+	p.AllowAttrs("type").Matching(regexp.MustCompile(`^(application/javascript|text/javascript)$`)).OnElements("script")
+	p.AllowAttrs("src").OnElements("script")
+	
+	// Allow SVG elements for PlantUML diagrams
+	p.AllowElements("svg", "g", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text", "tspan", "defs", "use", "clipPath", "mask")
+	p.AllowAttrs("xmlns", "xmlns:xlink", "version", "viewBox", "width", "height", "preserveAspectRatio").OnElements("svg")
+	p.AllowAttrs("d", "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "opacity", "transform", "x", "y", "x1", "y1", "x2", "y2", "cx", "cy", "r", "rx", "ry", "points", "class", "id", "style", "font-family", "font-size", "text-anchor", "dominant-baseline").Globally()
+	
 	return p.Sanitize(html)
 }
 
