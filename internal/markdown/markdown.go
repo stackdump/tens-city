@@ -111,17 +111,24 @@ func sanitizeHTML(html string) string {
 	p.AllowAttrs("id").Matching(regexp.MustCompile(`^[a-zA-Z0-9\-_]+$`)).OnElements("h1", "h2", "h3", "h4", "h5", "h6")
 	p.AllowAttrs("class").Matching(regexp.MustCompile(`^[a-zA-Z0-9\s\-_]+$`)).OnElements("code", "pre")
 	
-	// Allow Mermaid diagram elements
+	// Allow Mermaid diagram elements - diagrams wrapped in <pre class="mermaid"> for client-side rendering
 	p.AllowAttrs("class").Matching(regexp.MustCompile(`^mermaid$`)).OnElements("pre")
 	
-	// Allow script tags from trusted CDNs for Mermaid
-	p.AllowElements("script")
-	p.AllowAttrs("src").Matching(regexp.MustCompile(`^https://cdn\.jsdelivr\.net/npm/mermaid/`)).OnElements("script")
-	
-	// Allow SVG elements for PlantUML diagrams
+	// Allow SVG elements for PlantUML diagrams (server-side rendered)
 	p.AllowElements("svg", "g", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text", "tspan", "defs", "use", "clipPath", "mask", "title", "desc")
+	
+	// Allow SVG-specific attributes only on SVG elements (not globally for security)
 	p.AllowAttrs("xmlns", "xmlns:xlink", "version", "viewBox", "width", "height", "preserveAspectRatio").OnElements("svg")
-	p.AllowAttrs("d", "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "opacity", "transform", "x", "y", "x1", "y1", "x2", "y2", "cx", "cy", "r", "rx", "ry", "points", "class", "id", "style", "font-family", "font-size", "text-anchor", "dominant-baseline").Globally()
+	p.AllowAttrs("d").OnElements("path")
+	p.AllowAttrs("fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "opacity").OnElements("path", "rect", "circle", "ellipse", "line", "polyline", "polygon")
+	p.AllowAttrs("transform").OnElements("g", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text")
+	p.AllowAttrs("x", "y", "width", "height").OnElements("rect", "text")
+	p.AllowAttrs("x1", "y1", "x2", "y2").OnElements("line")
+	p.AllowAttrs("cx", "cy", "r").OnElements("circle")
+	p.AllowAttrs("cx", "cy", "rx", "ry").OnElements("ellipse")
+	p.AllowAttrs("points").OnElements("polyline", "polygon")
+	p.AllowAttrs("x", "y", "font-family", "font-size", "text-anchor", "dominant-baseline").OnElements("text", "tspan")
+	p.AllowAttrs("class", "id").OnElements("svg", "g", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text")
 	
 	return p.Sanitize(html)
 }
