@@ -2485,8 +2485,8 @@ class TensCity extends HTMLElement {
                         await this._createEditor();
                         this._showEditorContainer();
                         
-                        // Populate frontmatter from JSON-LD
-                        this._populateMarkdownFromJSONLD(data, cidParam);
+                        // Populate frontmatter from JSON-LD and load markdown content
+                        await this._populateMarkdownFromJSONLD(data, cidParam);
                         
                         await this._updateDeleteButtonVisibility(data);
                         console.log('Successfully loaded markdown document from CID');
@@ -2586,7 +2586,7 @@ class TensCity extends HTMLElement {
         return false;
     }
 
-    _populateMarkdownFromJSONLD(data, cidParam) {
+    async _populateMarkdownFromJSONLD(data, cidParam) {
         // Populate markdown editor frontmatter from JSON-LD data
         if (!this._frontmatterForm) return;
         
@@ -2647,15 +2647,37 @@ class TensCity extends HTMLElement {
             }
         }
         
-        // Clear markdown content since we don't have the original
-        if (this._markdownEditor) {
+        // Load markdown content from the CID if available
+        if (cidParam && this._markdownEditor) {
+            try {
+                const response = await fetch(`/o/${cidParam}/markdown`);
+                if (response.ok) {
+                    const markdownContent = await response.text();
+                    this._markdownEditor.value = markdownContent;
+                    this._updateMarkdownPreview();
+                    console.log('Successfully loaded markdown content from CID');
+                } else {
+                    console.log('No markdown content available for CID (this is normal for older documents)');
+                    this._markdownEditor.value = '';
+                    this._updateMarkdownPreview();
+                }
+            } catch (err) {
+                console.error('Failed to load markdown content:', err);
+                this._markdownEditor.value = '';
+                this._updateMarkdownPreview();
+            }
+        } else if (this._markdownEditor) {
+            // Clear markdown content if no CID
             this._markdownEditor.value = '';
             this._updateMarkdownPreview();
         }
         
-        // Store the CID for future reference (passed as parameter to avoid duplicate parsing)
+        // Store the CID and slug for future reference
         if (cidParam) {
             this._lastSavedCid = cidParam;
+        }
+        if (slug) {
+            this._lastSavedSlug = slug;
         }
         
         this._updatePermalinkAnchor();

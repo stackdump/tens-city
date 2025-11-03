@@ -2669,9 +2669,12 @@ class TensCity extends HTMLElement {
             }
         }
         
-        // Store the CID for future reference (passed as parameter to avoid duplicate parsing)
+        // Store the CID and slug for future reference
         if (cidParam) {
             this._lastSavedCid = cidParam;
+        }
+        if (slug) {
+            this._lastSavedSlug = slug;
         }
         
         this._updatePermalinkAnchor();
