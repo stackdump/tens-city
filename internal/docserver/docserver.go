@@ -388,11 +388,11 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
         a { color: #0066cc; }
         .nav { margin-bottom: 2rem; }
         .nav a { margin-right: 1rem; }
-        .meta { color: #666; font-size: 0.9rem; margin-bottom: 2rem; }
         .footer { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e0e0e0; color: #666; font-size: 0.85rem; }
         .footer-menu { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 1rem; }
         .footer-menu a { color: #0066cc; text-decoration: none; }
         .footer-menu a:hover { text-decoration: underline; }
+        .footer-dates { margin-top: 0.5rem; }
         .footer-edit { display: none; }
         .footer-edit.visible { display: inline; }
         .cid-link { color: #0066cc; text-decoration: none; font-family: monospace; }
@@ -412,20 +412,11 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
         <a href="/posts">← Back to Posts</a>
         <a href="/posts/%s.jsonld">JSON-LD</a>
     </div>
-    <div class="meta">
-        Published: %s`, string(jsonldBytes),
-		escapedSlug, escapedDatePublished)
-
-	if doc.Frontmatter.DateModified != "" {
-		fmt.Fprintf(w, ` | Modified: %s`, escapedDateModified)
-	}
-
-	fmt.Fprintf(w, `
-    </div>
     %s
     <div class="footer">
         <div class="footer-menu">
-            <a href="/posts">← All Posts</a>`, doc.HTML)
+            <a href="/posts">← All Posts</a>`, string(jsonldBytes),
+		escapedSlug, doc.HTML)
 
 	// Add CID link if available
 	if cached.CID != "" {
@@ -446,7 +437,16 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 	fmt.Fprintf(w, `
             <a href="#" class="footer-edit" id="editLink" data-author-url="%s">✏️ Edit</a>
         </div>
-    </div>`, escapedAuthorURL)
+        <div class="footer-dates">
+            Published: %s`, escapedAuthorURL, escapedDatePublished)
+
+	if doc.Frontmatter.DateModified != "" {
+		fmt.Fprintf(w, ` | Modified: %s`, escapedDateModified)
+	}
+
+	fmt.Fprintf(w, `
+        </div>
+    </div>`)
 
 	// Add CID modal if available
 	if cached.CID != "" {
