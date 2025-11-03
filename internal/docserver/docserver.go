@@ -502,6 +502,16 @@ func (ds *DocServer) HandleIndexJSONLD(w http.ResponseWriter, r *http.Request) {
 	w.Write(cached.Data)
 }
 
+// GetIndexJSONLD returns the JSON-LD index data without setting HTTP headers
+// This is used for embedding JSON-LD in HTML pages
+func (ds *DocServer) GetIndexJSONLD() ([]byte, error) {
+	cached, err := ds.loadIndex()
+	if err != nil {
+		return nil, err
+	}
+	return cached.Data, nil
+}
+
 // HandleUserRSS handles GET /u/{user}/posts.rss - return RSS feed for user's blog posts
 func (ds *DocServer) HandleUserRSS(w http.ResponseWriter, r *http.Request, userName string) {
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
@@ -160,6 +161,37 @@ func (s *Server) handleGetHistory(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(history)
 }
 
+// handleIndex serves the index page with embedded JSON-LD
+func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
+	// Read the index.html template
+	data, err := fs.ReadFile(s.publicFS, "index.html")
+	if err != nil {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
+	
+	htmlContent := string(data)
+	
+	// If docServer is available, inject JSON-LD script tag
+	if s.docServer != nil {
+		// Get the collection index JSON-LD
+		indexData, err := s.docServer.GetIndexJSONLD()
+		if err == nil && len(indexData) > 0 {
+			// Create the script tag with proper indentation
+			jsonldScript := fmt.Sprintf(`    <script type="application/ld+json">
+%s
+    </script>
+`, string(indexData))
+			
+			// Insert the script tag in the <head> section, before </head>
+			htmlContent = strings.Replace(htmlContent, "</head>", jsonldScript+"</head>", 1)
+		}
+	}
+	
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write([]byte(htmlContent))
+}
+
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s", r.Method, r.URL.Path)
 
@@ -221,15 +253,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Serve static files from embedded filesystem
 	if s.publicFS != nil {
-		// For root path, serve index.html
+		// For root path, serve index.html with embedded JSON-LD
 		if r.URL.Path == "/" {
-			data, err := fs.ReadFile(s.publicFS, "index.html")
-			if err != nil {
-				http.Error(w, "Not found", http.StatusNotFound)
-				return
-			}
-			w.Header().Set("Content-Type", "text/html")
-			w.Write(data)
+			s.handleIndex(w, r)
 			return
 		}
 
