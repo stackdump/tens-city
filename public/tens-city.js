@@ -1877,41 +1877,45 @@ class TensCity extends HTMLElement {
         // Redirect to the latest post instead of showing it inline
         try {
             const response = await fetch('/posts/index.jsonld');
-            if (response.ok) {
-                const index = await response.json();
-                const items = index.itemListElement || [];
-                
-                if (items.length > 0) {
-                    const latestItem = items[0];
-                    const post = latestItem.item || latestItem;
-                    
-                    // Extract slug from URL using proper URL parsing
-                    let slug = null;
-                    const urlString = post.url || post['@id'];
-                    if (urlString) {
-                        try {
-                            // Handle both absolute and relative URLs
-                            const url = urlString.startsWith('http') ? new URL(urlString) : new URL(urlString, window.location.origin);
-                            const pathParts = url.pathname.split('/posts/');
-                            if (pathParts.length > 1) {
-                                slug = pathParts[pathParts.length - 1].replace(/\/$/, ''); // Remove trailing slash
-                            }
-                        } catch (err) {
-                            console.error('Failed to parse post URL:', err);
-                        }
-                        
-                        if (slug) {
-                            // Redirect to the latest post
-                            window.location.href = `/posts/${slug}`;
-                            return;
-                        }
-                    }
-                }
+            if (!response.ok) {
+                // Failed to fetch index - stay on current page
+                return;
             }
             
-            // If we get here, there are no posts or an error occurred
-            // Show a message in the editor instead of redirecting
-            console.log('No posts available for redirect');
+            const index = await response.json();
+            const items = index.itemListElement || [];
+            
+            if (items.length === 0) {
+                // No posts available - stay on current page
+                return;
+            }
+            
+            const latestItem = items[0];
+            const post = latestItem.item || latestItem;
+            const urlString = post.url || post['@id'];
+            
+            if (!urlString) {
+                // No URL found - stay on current page
+                return;
+            }
+            
+            // Extract slug from URL using proper URL parsing
+            try {
+                // Handle both absolute and relative URLs
+                const url = urlString.startsWith('http') ? new URL(urlString) : new URL(urlString, window.location.origin);
+                const pathParts = url.pathname.split('/posts/');
+                
+                if (pathParts.length > 1) {
+                    const slug = pathParts[pathParts.length - 1].replace(/\/$/, ''); // Remove trailing slash
+                    if (slug) {
+                        // Redirect to the latest post
+                        window.location.href = `/posts/${slug}`;
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to parse post URL:', err);
+                // Failed to parse URL - stay on current page
+            }
         } catch (err) {
             console.error('Failed to load latest post for redirect:', err);
             // Don't redirect on error - just continue showing the editor
