@@ -1984,6 +1984,14 @@ class TensCity extends HTMLElement {
         // Recreate appropriate editor and show it (user is already using the app)
         this._createEditor().then(() => {
             this._showEditorContainer();
+        }).catch(err => {
+            console.error('Failed to recreate editor:', err);
+            // Editor failed to load, but at least show a message in the container
+            const errorDiv = document.createElement('div');
+            errorDiv.textContent = 'Failed to load editor. Please refresh the page.';
+            errorDiv.style.padding = '24px';
+            errorDiv.style.color = '#d73a49';
+            this._appContainer.appendChild(errorDiv);
         });
     }
 
