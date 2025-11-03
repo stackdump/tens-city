@@ -305,7 +305,17 @@ class TensCity extends HTMLElement {
 
     _showLogin() {
         this._appShown = false; // Reset app shown flag when showing login
-        // Don't show full login screen - just show app with login button in header
+        
+        if (!this._shouldShowEditor()) {
+            // No specific content to view, redirect to latest post immediately
+            // Keep page empty during redirect - don't create UI
+            this._loginContainer.style.display = 'none';
+            this._appContainer.style.display = 'none';
+            this._showLatestPostView();
+            return;
+        }
+        
+        // User is viewing specific content, show app with login button in header
         this._loginContainer.style.display = 'none';
         this._appContainer.style.display = 'flex';
         this._appContainer.innerHTML = '';
@@ -313,13 +323,9 @@ class TensCity extends HTMLElement {
         this._createHeaderWithLogin();
         this._createToolbar();
         this._createEditor().then(() => {
-            if (this._shouldShowEditor()) {
-                // User is viewing specific content, show editor with that content
-                this._loadInitialData();
-            } else {
-                // No specific content to view, redirect to latest post
-                this._showLatestPostView();
-            }
+            // User is viewing specific content, show editor with that content
+            this._showEditorContainer();
+            this._loadInitialData();
         });
     }
 
@@ -359,6 +365,16 @@ class TensCity extends HTMLElement {
             return;
         }
         
+        if (!this._shouldShowEditor()) {
+            // No specific content to view, redirect to latest post immediately
+            // Keep page empty during redirect - don't create UI
+            this._appShown = true;
+            this._loginContainer.style.display = 'none';
+            this._appContainer.style.display = 'none';
+            await this._showLatestPostView();
+            return;
+        }
+        
         this._appShown = true;
         this._loginContainer.style.display = 'none';
         this._appContainer.style.display = 'flex';
@@ -368,13 +384,9 @@ class TensCity extends HTMLElement {
         this._createToolbar();
         await this._createEditor();
         
-        if (this._shouldShowEditor()) {
-            // User is viewing specific content, show editor with that content
-            await this._loadInitialData();
-        } else {
-            // No specific content to view, redirect to latest post
-            await this._showLatestPostView();
-        }
+        // User is viewing specific content, show editor with that content
+        this._showEditorContainer();
+        await this._loadInitialData();
     }
 
     _createHeader() {
