@@ -1,6 +1,6 @@
 ---
-title: Test Model
-description: Default Petri\-net model used by tests — a small cyclic net for firing and reachability checks
+title: 'Petri-net: Inhibitor and Weighted Arcs Example'
+description: Petri-net with a single capacitated place, weighted arcs and inhibitor flags — used for tests and examples
 datePublished: 2025-11-02T00:00:00Z
 author:
   name: Tens City Team
@@ -12,55 +12,82 @@ tags:
   - test
 collection: guides
 lang: en
-slug: petri-net-default
+slug: petri-net-inhibitor-weighted
 ---
+
+
+# Petri\-net: Inhibitor and Weighted Arcs Example
 
 [![pflow](https://pflow.xyz/img/z4EBG9jE7roa3Th3FeUgXNfMYurHVW5G7YYqUkUJU6NrKcWrMAu.svg)](https://pflow.xyz/?cid=z4EBG9jE7roa3Th3FeUgXNfMYurHVW5G7YYqUkUJU6NrKcWrMAu.svg)
 
-# Default Petri\-net test model
+This document describes a compact Petri\-net encoded as JSON\-LD. It demonstrates a single place with capacity, weighted arcs, and arcs marked with the \`inhibitTransition\` flag. The object identifier is \`@id: z2xFpT8KDD7FU8tiWSMcB8n6dxJriy2PtZJrcyCwHkn9fmug732\` and version \`1.1\`.
 
-This document describes the default, minimal Petri\-net used in tests. It is intentionally small and deterministic so unit tests can verify canonicalization, serialization, firing and simple reachability.
+## Raw structure summary
 
-## Structure
+- Places: \`place0\`
+- Transitions: \`txn0\`, \`txn1\`, \`txn2\`, \`txn3\`
+- Token palette: \`https://pflow.xyz/tokens/black\`
 
-- Places: P0, P1, P2  
-- Transitions: T0, T1  
-- Arcs:
-  - P0 → T0
-  - T0 → P1
-  - P1 → T1
-  - T1 → P2
-  - P2 → T0  (creates a simple cycle)
+## Place details
+
+- \`place0\`:
+  - Type: Place
+  - Capacity: 3
+  - Initial marking: 1 token
+  - Coordinates: (x: 130, y: 207)
+  - Offset: 0
+
+## Transitions (positions)
+
+- \`txn0\` — (x: 46, y: 116)
+- \`txn1\` — (x: 227, y: 112)
+- \`txn2\` — (x: 43, y: 307)
+- \`txn3\` — (x: 235, y: 306)
+
+## Arcs
+
+List includes direction, weight and whether the arc is marked as inhibiting the target transition \`inhibitTransition\`.
+
+1. \`txn0\` → \`place0\`
+   - Weight: 1
+   - \`inhibitTransition\`: false
+   - (output arc from \`txn0\` that deposits 1 token to \`place0\`)
+
+2. \`place0\` → \`txn1\`
+   - Weight: 3
+   - \`inhibitTransition\`: false
+   - (input arc: \`txn1\` requires 3 tokens from \`place0\` to fire)
+
+3. \`txn2\` → \`place0\`
+   - Weight: 3
+   - \`inhibitTransition\`: true
+   - (arc from \`txn2\` to \`place0\` with the inhibitor flag set; interpretation depends on runtime semantics — recorded here as an arc with \`inhibitTransition=true\`)
+
+4. \`place0\` → \`txn3\`
+   - Weight: 1
+   - \`inhibitTransition\`: true
+   - (inhibitor arc: presence of tokens in \`place0\` may prevent \`txn3\` from firing)
 
 ## Initial marking
 
-- M0: P0 = 1, P1 = 0, P2 = 0
+- M0: \`place0\` = 1
 
-## Firing rules (standard Petri\-net semantics)
+## Semantics notes
 
-- A transition is enabled when all its input places contain at least the required number of tokens (here all weights are 1).
-- When a transition fires, it consumes tokens from its input places and produces tokens to its output places.
-- With M0, T0 is enabled. Firing T0 yields marking M1: P0 = 0, P1 = 1, P2 = 0. Then T1 is enabled, firing T1 yields M2: P0 = 0, P1 = 0, P2 = 1. Firing T1 followed by T0 returns the token to P1 and P2 in sequence, maintaining a single-token cycle.
-
-## Incidence matrix (token change per transition)
-
-Rows = places [P0, P1, P2], columns = transitions [T0, T1]
-
-- C = [
-  [-1,  0],  # P0
-  [ 1, -1],  # P1
-  [ 0,  1],  # P2
-]
+- Weighted arcs: some arcs carry weights greater than 1 (notably the arc \`place0\` → \`txn1\` with weight 3), so transitions requiring those inputs need the indicated number of tokens.
+- Inhibitor arcs: arcs with \`inhibitTransition: true\` are recorded; typical semantics treat a place\->transition inhibitor as preventing the transition when the place has tokens. The file also contains an arc from transition\->place with \`inhibitTransition: true\` — this flag is preserved verbatim and should be interpreted by the execution semantics implemented by tests/tools.
+- Capacity: \`place0\` has capacity 3, so the place is bounded by 3 tokens.
 
 ## Properties
 
-- Bounded: Yes (max tokens = 1).
-- Safe: Yes (no place can hold more than 1 token in this model).
-- Liveness: The cycle allows repeated firings; depending on initial marking, the reachable set is cyclic and deterministic.
-- Purpose: Simple deterministic net used as the default test model for serialization, canonicalization, signature, and storage tests.
+- Bounded: Yes (max tokens limited by capacity = 3).
+- Safe: No (capacity > 1, so multiple tokens are allowed).
+- Determinism / liveness: Not fully determined here; behavior depends on transition enabling rules, weighted inputs, and the interpretation of inhibitor flags.
 
-## Usage in tests
+## Purpose and usage in tests
 
-- Verify canonical serialization of the net structure and initial marking.
-- Verify firing semantics produce expected reachable markings.
-- Verify storage and CID generation remain stable for this canonical example.
+- Example for handling:
+  - Weighted input/output arcs.
+  - Inhibitor arc metadata.
+  - Places with finite capacity and non\-safe markings.
+- Tests should verify canonical serialization, correct interpretation of weights and inhibitor flags, and storage\/CID stability for this canonical example.

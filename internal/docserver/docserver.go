@@ -410,12 +410,11 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 <body>
     <div class="nav">
         <a href="/posts">← Back to Posts</a>
-        <a href="/posts/%s.jsonld">JSON-LD</a>
     </div>
     %s
     <div class="footer">
         <div class="footer-menu">
-            <a href="/posts">← All Posts</a>`, string(jsonldBytes),
+            <a href="/posts">← All Posts</a>`,
 		escapedSlug, doc.HTML)
 
 	// Add CID link if available
