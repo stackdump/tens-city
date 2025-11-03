@@ -469,9 +469,10 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
             <pre>%s</pre>
             <div class="modal-actions">
                 <a href="/posts/%s.jsonld" target="_blank">View Full Object</a>
+                <a href="/?cid=%s">Edit Page</a>
             </div>
         </div>
-    </div>`, escapedCID, escapedJSONLD, escapedSlug)
+    </div>`, escapedCID, escapedJSONLD, escapedSlug, escapedCID)
 	}
 
 	fmt.Fprintf(w, `
