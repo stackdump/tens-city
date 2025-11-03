@@ -76,7 +76,8 @@ func (s *FSStore) SaveObject(cid string, raw []byte, canonical []byte) error {
 
 // SaveObjectWithAuthor writes the raw JSON-LD and canonical bytes to disk.
 // It injects the computed CID as the @id field and author information into the stored JSON-LD.
-func (s *FSStore) SaveObjectWithAuthor(cid string, raw []byte, canonical []byte, githubUser, githubID string) error {
+// If markdownContent is provided, it is also saved alongside the JSON-LD.
+func (s *FSStore) SaveObjectWithAuthor(cid string, raw []byte, canonical []byte, githubUser, githubID string, markdownContent ...string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -128,6 +129,14 @@ func (s *FSStore) SaveObjectWithAuthor(cid string, raw []byte, canonical []byte,
 	// Save the modified JSON-LD with injected @id
 	if err := os.WriteFile(filepath.Join(objDir, cleanCID), modifiedRaw, 0o644); err != nil {
 		return err
+	}
+
+	// Save markdown content if provided
+	if len(markdownContent) > 0 && markdownContent[0] != "" {
+		mdPath := filepath.Join(objDir, cleanCID+".md")
+		if err := os.WriteFile(mdPath, []byte(markdownContent[0]), 0o644); err != nil {
+			return fmt.Errorf("failed to save markdown content: %w", err)
+		}
 	}
 
 	// canonical
@@ -287,6 +296,25 @@ func (s *FSStore) ReadCanonical(cid string) ([]byte, error) {
 	return os.ReadFile(path)
 }
 
+// ReadMarkdownContent reads the markdown content for a CID if it exists
+func (s *FSStore) ReadMarkdownContent(cid string) ([]byte, error) {
+	cleanCID, err := sanitizePathComponent(cid)
+	if err != nil {
+		return nil, fmt.Errorf("invalid cid: %w", err)
+	}
+
+	path := filepath.Join(s.base, "o", cleanCID+".md")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		// Return empty content if file doesn't exist (backward compatibility)
+		if os.IsNotExist(err) {
+			return []byte(""), nil
+		}
+		return nil, err
+	}
+	return data, nil
+}
+
 // SignatureMetadata holds information about a signature.
 type SignatureMetadata struct {
 	Signature       string `json:"signature"`
@@ -400,6 +428,12 @@ func (s *FSStore) DeleteObject(cid string) error {
 	objPath := filepath.Join(s.base, "o", cleanCID)
 	if err := os.Remove(objPath); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to delete object: %w", err)
+	}
+
+	// Delete the markdown content file if it exists
+	mdPath := filepath.Join(s.base, "o", cleanCID+".md")
+	if err := os.Remove(mdPath); err != nil && !os.IsNotExist(err) {
+		// Non-critical - markdown may not exist for all objects
 	}
 
 	// Delete the canonical file

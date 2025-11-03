@@ -2485,8 +2485,8 @@ class TensCity extends HTMLElement {
                         await this._createEditor();
                         this._showEditorContainer();
                         
-                        // Populate frontmatter from JSON-LD
-                        this._populateMarkdownFromJSONLD(data, cidParam);
+                        // Populate frontmatter from JSON-LD (now async to fetch markdown content)
+                        await this._populateMarkdownFromJSONLD(data, cidParam);
                         
                         await this._updateDeleteButtonVisibility(data);
                         console.log('Successfully loaded markdown document from CID');
@@ -2586,7 +2586,7 @@ class TensCity extends HTMLElement {
         return false;
     }
 
-    _populateMarkdownFromJSONLD(data, cidParam) {
+    async _populateMarkdownFromJSONLD(data, cidParam) {
         // Populate markdown editor frontmatter from JSON-LD data
         if (!this._frontmatterForm) return;
         
@@ -2647,10 +2647,26 @@ class TensCity extends HTMLElement {
             }
         }
         
-        // Clear markdown content since we don't have the original
-        if (this._markdownEditor) {
-            this._markdownEditor.value = '';
-            this._updateMarkdownPreview();
+        // Fetch and populate markdown content if available
+        if (this._markdownEditor && cidParam) {
+            try {
+                console.log('Fetching markdown content for CID:', cidParam);
+                const response = await fetch(`/o/${cidParam}/markdown`);
+                if (response.ok) {
+                    const markdownContent = await response.text();
+                    this._markdownEditor.value = markdownContent;
+                    this._updateMarkdownPreview();
+                    console.log('Successfully loaded markdown content');
+                } else {
+                    console.log('No markdown content available for this CID');
+                    this._markdownEditor.value = '';
+                    this._updateMarkdownPreview();
+                }
+            } catch (err) {
+                console.error('Failed to fetch markdown content:', err);
+                this._markdownEditor.value = '';
+                this._updateMarkdownPreview();
+            }
         }
         
         // Store the CID for future reference (passed as parameter to avoid duplicate parsing)

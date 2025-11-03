@@ -23,13 +23,14 @@ import (
 type Storage interface {
 	GetObject(cid string) ([]byte, error)
 	SaveObject(cid string, raw []byte, canonical []byte) error
-	SaveObjectWithAuthor(cid string, raw []byte, canonical []byte, githubUser, githubID string) error
+	SaveObjectWithAuthor(cid string, raw []byte, canonical []byte, githubUser, githubID string, markdownContent ...string) error
 	GetLatest(user, slug string) (string, error)
 	GetHistory(user, slug string) ([]store.HistoryEntry, error)
 	UpdateLatest(user, slug, cid string) error
 	AppendHistory(user, slug, cid string) error
 	DeleteObject(cid string) error
 	GetObjectAuthor(cid string) (githubUser, githubID string, err error)
+	ReadMarkdownContent(cid string) ([]byte, error)
 }
 
 // FSStorage implements Storage using filesystem
@@ -49,8 +50,8 @@ func (fs *FSStorage) SaveObject(cid string, raw []byte, canonical []byte) error 
 	return fs.store.SaveObject(cid, raw, canonical)
 }
 
-func (fs *FSStorage) SaveObjectWithAuthor(cid string, raw []byte, canonical []byte, githubUser, githubID string) error {
-	return fs.store.SaveObjectWithAuthor(cid, raw, canonical, githubUser, githubID)
+func (fs *FSStorage) SaveObjectWithAuthor(cid string, raw []byte, canonical []byte, githubUser, githubID string, markdownContent ...string) error {
+	return fs.store.SaveObjectWithAuthor(cid, raw, canonical, githubUser, githubID, markdownContent...)
 }
 
 func (fs *FSStorage) GetLatest(user, slug string) (string, error) {
@@ -75,6 +76,10 @@ func (fs *FSStorage) DeleteObject(cid string) error {
 
 func (fs *FSStorage) GetObjectAuthor(cid string) (string, string, error) {
 	return fs.store.GetObjectAuthor(cid)
+}
+
+func (fs *FSStorage) ReadMarkdownContent(cid string) ([]byte, error) {
+	return fs.store.ReadMarkdownContent(cid)
 }
 
 // validateJSONLD validates the structure and content of a JSON-LD document
@@ -221,6 +226,32 @@ func (s *Server) handleGetObject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/ld+json")
+	w.Write(data)
+}
+
+// Handler for /o/{cid}/markdown - get markdown content for CID
+func (s *Server) handleGetMarkdown(w http.ResponseWriter, r *http.Request) {
+	if s.handleCORS(w, r) {
+		return
+	}
+
+	// Extract CID from path
+	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/o/"), "/")
+	if len(parts) < 2 || parts[0] == "" || parts[1] != "markdown" {
+		http.Error(w, "Invalid path", http.StatusBadRequest)
+		return
+	}
+	cid := parts[0]
+
+	data, err := s.storage.ReadMarkdownContent(cid)
+	if err != nil {
+		log.Printf("Error getting markdown content for %s: %v", cid, err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Return empty content if no markdown exists (backward compatibility)
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write(data)
 }
 
@@ -601,11 +632,11 @@ func (s *Server) handleSaveMarkdown(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Save to storage with author information
+	// Save to storage with author information and markdown content
 	githubUser := userInfo.UserName
 	githubID := userInfo.GitHubID
 
-	if err := s.storage.SaveObjectWithAuthor(cid, raw, canonicalData, githubUser, githubID); err != nil {
+	if err := s.storage.SaveObjectWithAuthor(cid, raw, canonicalData, githubUser, githubID, req.Content); err != nil {
 		log.Printf("Error saving object: %v", err)
 		http.Error(w, "Failed to save object", http.StatusInternalServerError)
 		return
@@ -662,6 +693,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Object routes
 	if strings.HasPrefix(r.URL.Path, "/o/") {
+		// Check for markdown content request
+		if strings.HasSuffix(r.URL.Path, "/markdown") {
+			s.handleGetMarkdown(w, r)
+			return
+		}
 		if r.Method == http.MethodDelete {
 			s.handleDeleteObject(w, r)
 		} else {
