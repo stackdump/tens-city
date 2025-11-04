@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -217,6 +218,25 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		if r.URL.Path == "/rss" {
 			s.docServer.HandleRSSList(w, r)
+			return
+		}
+		if r.URL.Path == "/tags" {
+			s.docServer.HandleTagsPage(w, r)
+			return
+		}
+		if strings.HasPrefix(r.URL.Path, "/tags/") {
+			tag := strings.TrimPrefix(r.URL.Path, "/tags/")
+			if tag != "" {
+				// Decode the URL-encoded tag
+				decodedTag, err := url.PathUnescape(tag)
+				if err != nil {
+					// If decoding fails, use the original tag
+					decodedTag = tag
+				}
+				s.docServer.HandleTagPage(w, r, decodedTag)
+			} else {
+				s.docServer.HandleTagsPage(w, r)
+			}
 			return
 		}
 		if strings.HasPrefix(r.URL.Path, "/posts/") {

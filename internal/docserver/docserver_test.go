@@ -750,3 +750,385 @@ func TestHandleSiteRSS_OnlyGetMethod(t *testing.T) {
 		t.Errorf("Expected POST to be disallowed, got status %d", rec.Code)
 	}
 }
+
+func TestCollectTags(t *testing.T) {
+	// Create a temporary directory with test content
+	tmpDir := t.TempDir()
+
+	// Create test markdown files with tags
+	doc1 := `---
+title: Test Post 1
+description: First test post
+datePublished: 2025-11-01T10:00:00Z
+author:
+  name: Test Author
+  type: Person
+  url: https://github.com/test
+lang: en
+slug: test-1
+tags:
+  - golang
+  - tutorial
+---
+
+Content 1.
+`
+
+	doc2 := `---
+title: Test Post 2
+description: Second test post
+datePublished: 2025-11-02T10:00:00Z
+author:
+  name: Test Author
+  type: Person
+  url: https://github.com/test
+lang: en
+slug: test-2
+tags:
+  - golang
+  - web-development
+keywords:
+  - tutorial
+---
+
+Content 2.
+`
+
+	doc3 := `---
+title: Draft Post
+description: A draft post
+datePublished: 2025-11-03T10:00:00Z
+author:
+  name: Test Author
+  type: Person
+  url: https://github.com/test
+lang: en
+slug: draft-post
+draft: true
+tags:
+  - draft-tag
+---
+
+Draft content.
+`
+
+	os.WriteFile(filepath.Join(tmpDir, "post1.md"), []byte(doc1), 0644)
+	os.WriteFile(filepath.Join(tmpDir, "post2.md"), []byte(doc2), 0644)
+	os.WriteFile(filepath.Join(tmpDir, "post3.md"), []byte(doc3), 0644)
+
+	ds := NewDocServer(tmpDir, "http://localhost:8080", 0)
+
+	tags, err := ds.collectTags()
+	if err != nil {
+		t.Fatalf("collectTags failed: %v", err)
+	}
+
+	// Should have 3 unique tags (draft-tag should be excluded)
+	if len(tags) != 3 {
+		t.Errorf("Expected 3 tags, got %d", len(tags))
+	}
+
+	// Check tags are sorted by count descending, then alphabetically
+	expectedOrder := []string{"golang", "tutorial", "web-development"}
+	for i, tag := range tags {
+		if tag.Tag != expectedOrder[i] {
+			t.Errorf("Expected tag %d to be %s, got %s", i, expectedOrder[i], tag.Tag)
+		}
+	}
+
+	// golang and tutorial should have count 2
+	if tags[0].Count != 2 || tags[1].Count != 2 {
+		t.Errorf("Expected golang and tutorial to have count 2, got %d and %d", tags[0].Count, tags[1].Count)
+	}
+
+	// web-development should have count 1
+	if tags[2].Count != 1 {
+		t.Errorf("Expected web-development to have count 1, got %d", tags[2].Count)
+	}
+}
+
+func TestHandleTagsPage(t *testing.T) {
+	// Create a temporary directory with test content
+	tmpDir := t.TempDir()
+
+	// Create test markdown file
+	doc1 := `---
+title: Test Post
+description: A test post
+datePublished: 2025-11-01T10:00:00Z
+author:
+  name: Test Author
+  type: Person
+  url: https://github.com/test
+lang: en
+slug: test-post
+tags:
+  - golang
+  - tutorial
+---
+
+Content.
+`
+
+	os.WriteFile(filepath.Join(tmpDir, "post1.md"), []byte(doc1), 0644)
+
+	ds := NewDocServer(tmpDir, "http://localhost:8080", 0)
+
+	// Test GET request
+	req := httptest.NewRequest(http.MethodGet, "/tags", nil)
+	rec := httptest.NewRecorder()
+
+	ds.HandleTagsPage(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", rec.Code)
+	}
+
+	body := rec.Body.String()
+
+	// Check for expected content
+	if !strings.Contains(body, "Tags") {
+		t.Error("Expected page title 'Tags'")
+	}
+
+	if !strings.Contains(body, "golang") {
+		t.Error("Expected tag 'golang' to be present")
+	}
+
+	if !strings.Contains(body, "tutorial") {
+		t.Error("Expected tag 'tutorial' to be present")
+	}
+
+	if !strings.Contains(body, "/tags/golang") {
+		t.Error("Expected link to /tags/golang")
+	}
+
+	// Test method not allowed
+	req = httptest.NewRequest(http.MethodPost, "/tags", nil)
+	rec = httptest.NewRecorder()
+	ds.HandleTagsPage(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("Expected POST to be disallowed, got status %d", rec.Code)
+	}
+}
+
+func TestHandleTagPage(t *testing.T) {
+	// Create a temporary directory with test content
+	tmpDir := t.TempDir()
+
+	// Create test markdown files
+	doc1 := `---
+title: Golang Post
+description: About Golang
+datePublished: 2025-11-01T10:00:00Z
+author:
+  name: Test Author
+  type: Person
+  url: https://github.com/test
+lang: en
+slug: golang-post
+tags:
+  - golang
+---
+
+Content about Golang.
+`
+
+	doc2 := `---
+title: Tutorial Post
+description: A tutorial
+datePublished: 2025-11-02T10:00:00Z
+author:
+  name: Test Author
+  type: Person
+  url: https://github.com/test
+lang: en
+slug: tutorial-post
+tags:
+  - tutorial
+---
+
+Tutorial content.
+`
+
+	doc3 := `---
+title: Golang Tutorial
+description: Golang tutorial
+datePublished: 2025-11-03T10:00:00Z
+author:
+  name: Test Author
+  type: Person
+  url: https://github.com/test
+lang: en
+slug: golang-tutorial
+tags:
+  - golang
+  - tutorial
+---
+
+Golang tutorial content.
+`
+
+	os.WriteFile(filepath.Join(tmpDir, "post1.md"), []byte(doc1), 0644)
+	os.WriteFile(filepath.Join(tmpDir, "post2.md"), []byte(doc2), 0644)
+	os.WriteFile(filepath.Join(tmpDir, "post3.md"), []byte(doc3), 0644)
+
+	ds := NewDocServer(tmpDir, "http://localhost:8080", 0)
+
+	// Test filtering by "golang" tag
+	req := httptest.NewRequest(http.MethodGet, "/tags/golang", nil)
+	rec := httptest.NewRecorder()
+
+	ds.HandleTagPage(rec, req, "golang")
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", rec.Code)
+	}
+
+	body := rec.Body.String()
+
+	// Check for expected content
+	if !strings.Contains(body, "golang") {
+		t.Error("Expected tag 'golang' in title")
+	}
+
+	if !strings.Contains(body, "2 posts") {
+		t.Error("Expected '2 posts' in description")
+	}
+
+	if !strings.Contains(body, "Golang Post") {
+		t.Error("Expected 'Golang Post' to be listed")
+	}
+
+	if !strings.Contains(body, "Golang Tutorial") {
+		t.Error("Expected 'Golang Tutorial' to be listed")
+	}
+
+	if strings.Contains(body, "Tutorial Post") {
+		t.Error("Did not expect 'Tutorial Post' to be listed (doesn't have golang tag)")
+	}
+
+	// Test method not allowed
+	req = httptest.NewRequest(http.MethodPost, "/tags/golang", nil)
+	rec = httptest.NewRecorder()
+	ds.HandleTagPage(rec, req, "golang")
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("Expected POST to be disallowed, got status %d", rec.Code)
+	}
+}
+
+func TestHandleTagPage_NoMatchingPosts(t *testing.T) {
+	// Create a temporary directory with test content
+	tmpDir := t.TempDir()
+
+	// Create test markdown file without the searched tag
+	doc1 := `---
+title: Test Post
+description: A test post
+datePublished: 2025-11-01T10:00:00Z
+author:
+  name: Test Author
+  type: Person
+  url: https://github.com/test
+lang: en
+slug: test-post
+tags:
+  - golang
+---
+
+Content.
+`
+
+	os.WriteFile(filepath.Join(tmpDir, "post1.md"), []byte(doc1), 0644)
+
+	ds := NewDocServer(tmpDir, "http://localhost:8080", 0)
+
+	// Test filtering by a tag that doesn't exist in any post
+	req := httptest.NewRequest(http.MethodGet, "/tags/nonexistent", nil)
+	rec := httptest.NewRecorder()
+
+	ds.HandleTagPage(rec, req, "nonexistent")
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", rec.Code)
+	}
+
+	body := rec.Body.String()
+
+	// Check for expected content
+	if !strings.Contains(body, "nonexistent") {
+		t.Error("Expected tag 'nonexistent' in title")
+	}
+
+	if !strings.Contains(body, "0 posts") {
+		t.Error("Expected '0 posts' in description")
+	}
+
+	if !strings.Contains(body, "No posts found") {
+		t.Error("Expected 'No posts found' message")
+	}
+}
+
+func TestHandleTagPage_URLEncoding(t *testing.T) {
+	// Create a temporary directory with test content
+	tmpDir := t.TempDir()
+
+	// Create test markdown file with a tag containing special characters
+	doc1 := `---
+title: Test Post
+description: A test post
+datePublished: 2025-11-01T10:00:00Z
+author:
+  name: Test Author
+  type: Person
+  url: https://github.com/test
+lang: en
+slug: test-post
+tags:
+  - schema.org
+  - web development
+---
+
+Content.
+`
+
+	os.WriteFile(filepath.Join(tmpDir, "post1.md"), []byte(doc1), 0644)
+
+	ds := NewDocServer(tmpDir, "http://localhost:8080", 0)
+
+	// Test filtering by a tag with special characters
+	req := httptest.NewRequest(http.MethodGet, "/tags/schema.org", nil)
+	rec := httptest.NewRecorder()
+
+	ds.HandleTagPage(rec, req, "schema.org")
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", rec.Code)
+	}
+
+	body := rec.Body.String()
+
+	if !strings.Contains(body, "schema.org") {
+		t.Error("Expected tag 'schema.org' in content")
+	}
+
+	if !strings.Contains(body, "Test Post") {
+		t.Error("Expected 'Test Post' to be listed")
+	}
+
+	// Test tag with space
+	req = httptest.NewRequest(http.MethodGet, "/tags/web%20development", nil)
+	rec = httptest.NewRecorder()
+
+	ds.HandleTagPage(rec, req, "web development")
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", rec.Code)
+	}
+
+	body = rec.Body.String()
+
+	if !strings.Contains(body, "web development") {
+		t.Error("Expected tag 'web development' in content")
+	}
+}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -783,4 +784,510 @@ func extractAuthorName(author interface{}) string {
 		}
 	}
 	return ""
+}
+
+// TagInfo represents a tag with its frequency
+type TagInfo struct {
+	Tag   string
+	Count int
+}
+
+// collectTags aggregates all tags from documents and returns them with frequencies
+func (ds *DocServer) collectTags() ([]TagInfo, error) {
+	docs, err := markdown.ListDocuments(ds.contentDir)
+	if err != nil {
+		return nil, err
+	}
+
+	tagCounts := make(map[string]int)
+	for _, doc := range docs {
+		// Skip drafts
+		if doc.Frontmatter.Draft {
+			continue
+		}
+
+		// Collect from both tags and keywords
+		allTags := append([]string{}, doc.Frontmatter.Tags...)
+		allTags = append(allTags, doc.Frontmatter.Keywords...)
+
+		for _, tag := range allTags {
+			if tag != "" {
+				tagCounts[tag]++
+			}
+		}
+	}
+
+	// Convert map to slice and sort by count descending, then alphabetically
+	tags := make([]TagInfo, 0, len(tagCounts))
+	for tag, count := range tagCounts {
+		tags = append(tags, TagInfo{Tag: tag, Count: count})
+	}
+
+	sort.Slice(tags, func(i, j int) bool {
+		if tags[i].Count != tags[j].Count {
+			return tags[i].Count > tags[j].Count
+		}
+		return tags[i].Tag < tags[j].Tag
+	})
+
+	return tags, nil
+}
+
+// HandleTagsPage handles GET /tags - display word cloud of all tags
+func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	tags, err := ds.collectTags()
+	if err != nil {
+		http.Error(w, "Failed to load tags", http.StatusInternalServerError)
+		return
+	}
+
+	// Calculate min and max counts for sizing
+	var minCount, maxCount int
+	if len(tags) > 0 {
+		minCount = tags[len(tags)-1].Count
+		maxCount = tags[0].Count
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(w, `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tags - Tens City</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --bg: #ffffff;
+            --bg-alt: #f9fafb;
+            --border: #e5e7eb;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--text);
+            background: var(--bg-alt);
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%%, var(--primary-dark) 100%%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            box-shadow: 0 4px 6px var(--shadow);
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .hero p {
+            font-size: 1.125rem;
+            opacity: 0.95;
+        }
+        
+        main {
+            max-width: 1200px;
+            margin: 3rem auto;
+            padding: 0 1.5rem;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 2rem;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .tag-cloud {
+            background: var(--bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 1px 3px var(--shadow);
+            line-height: 2.5;
+        }
+        
+        .tag-cloud a {
+            display: inline-block;
+            margin: 0.5rem;
+            padding: 0.5rem 1rem;
+            color: var(--primary);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s;
+            background: var(--bg-alt);
+        }
+        
+        .tag-cloud a:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-light);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-light);
+            font-size: 0.9375rem;
+        }
+        
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .tag-cloud {
+                padding: 2rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>🏷️ Tags</h1>
+        <p>Explore posts by topic</p>
+    </div>
+    
+    <main>
+        <a href="/" class="back-link">← Back to Home</a>
+        
+        <div class="tag-cloud">
+`)
+
+	if len(tags) == 0 {
+		fmt.Fprintf(w, `            <div class="empty-state">No tags found</div>
+`)
+	} else {
+		for _, tagInfo := range tags {
+			// Calculate font size based on count (range: 1.0rem to 3.0rem)
+			var fontSize float64
+			if maxCount > minCount {
+				fontSize = 1.0 + (float64(tagInfo.Count-minCount)/float64(maxCount-minCount))*2.0
+			} else {
+				fontSize = 2.0
+			}
+
+			escapedTag := html.EscapeString(tagInfo.Tag)
+			urlEncodedTag := url.PathEscape(tagInfo.Tag)
+			fmt.Fprintf(w, `            <a href="/tags/%s" style="font-size: %.2frem;" title="%s (%d post%s)">%s</a>
+`, urlEncodedTag, fontSize, escapedTag, tagInfo.Count, pluralize(tagInfo.Count), escapedTag)
+		}
+	}
+
+	fmt.Fprintf(w, `        </div>
+    </main>
+    
+    <footer>
+        <p>
+            <a href="/posts">📝 All Posts</a> • 
+            <a href="/rss">📡 RSS Feeds</a> • 
+            Built with <a href="https://github.com/stackdump/tens-city" target="_blank">Tens City</a>
+        </p>
+    </footer>
+</body>
+</html>`)
+}
+
+// HandleTagPage handles GET /tags/{tag} - show posts with a specific tag
+func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag string) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Load all documents
+	docs, err := markdown.ListDocuments(ds.contentDir)
+	if err != nil {
+		http.Error(w, "Failed to load posts", http.StatusInternalServerError)
+		return
+	}
+
+	// Filter documents by tag
+	var filteredDocs []*markdown.Document
+	for _, doc := range docs {
+		// Skip drafts
+		if doc.Frontmatter.Draft {
+			continue
+		}
+
+		// Check if document has the tag
+		hasTag := false
+		for _, t := range doc.Frontmatter.Tags {
+			if t == tag {
+				hasTag = true
+				break
+			}
+		}
+		if !hasTag {
+			for _, k := range doc.Frontmatter.Keywords {
+				if k == tag {
+					hasTag = true
+					break
+				}
+			}
+		}
+
+		if hasTag {
+			filteredDocs = append(filteredDocs, doc)
+		}
+	}
+
+	// Sort by DatePublished descending (newest first), then by Title ascending
+	markdown.SortDocumentsByDate(filteredDocs)
+
+	escapedTag := html.EscapeString(tag)
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(w, `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tag: %s - Tens City</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --bg: #ffffff;
+            --bg-alt: #f9fafb;
+            --border: #e5e7eb;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--text);
+            background: var(--bg-alt);
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%%, var(--primary-dark) 100%%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            box-shadow: 0 4px 6px var(--shadow);
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .hero p {
+            font-size: 1.125rem;
+            opacity: 0.95;
+        }
+        
+        main {
+            max-width: 900px;
+            margin: 3rem auto;
+            padding: 0 1.5rem;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 2rem;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .post-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .post-item {
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px var(--shadow);
+            transition: all 0.3s ease;
+        }
+        
+        .post-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px var(--shadow);
+            border-color: var(--primary);
+        }
+        
+        .post-item h2 {
+            margin: 0 0 0.75rem 0;
+            font-size: 1.5rem;
+        }
+        
+        .post-item a {
+            color: var(--text);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .post-item a:hover {
+            color: var(--primary);
+        }
+        
+        .post-meta {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .post-description {
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-light);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-light);
+            font-size: 0.9375rem;
+        }
+        
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>🏷️ %s</h1>
+        <p>%d post%s tagged with "%s"</p>
+    </div>
+    
+    <main>
+        <a href="/tags" class="back-link">← All Tags</a>
+        
+        <ul class="post-list">
+`, escapedTag, escapedTag, len(filteredDocs), pluralize(len(filteredDocs)), escapedTag)
+
+	if len(filteredDocs) == 0 {
+		fmt.Fprintf(w, `            <div class="empty-state">No posts found with this tag</div>
+`)
+	} else {
+		for _, doc := range filteredDocs {
+			escapedSlug := html.EscapeString(doc.Frontmatter.Slug)
+			escapedTitle := html.EscapeString(doc.Frontmatter.Title)
+			escapedDescription := html.EscapeString(doc.Frontmatter.Description)
+			escapedDate := html.EscapeString(doc.Frontmatter.DatePublished)
+
+			fmt.Fprintf(w, `            <li class="post-item">
+                <h2><a href="/posts/%s">%s</a></h2>
+`, escapedSlug, escapedTitle)
+
+			if doc.Frontmatter.DatePublished != "" {
+				fmt.Fprintf(w, `                <div class="post-meta">Published: %s</div>
+`, escapedDate)
+			}
+
+			if doc.Frontmatter.Description != "" {
+				fmt.Fprintf(w, `                <p class="post-description">%s</p>
+`, escapedDescription)
+			}
+
+			fmt.Fprintf(w, `            </li>
+`)
+		}
+	}
+
+	fmt.Fprintf(w, `        </ul>
+    </main>
+    
+    <footer>
+        <p>
+            <a href="/posts">📝 All Posts</a> • 
+            <a href="/tags">🏷️ All Tags</a> • 
+            <a href="/rss">📡 RSS Feeds</a> • 
+            Built with <a href="https://github.com/stackdump/tens-city" target="_blank">Tens City</a>
+        </p>
+    </footer>
+</body>
+</html>`)
+}
+
+// pluralize returns "s" if count is not 1, otherwise empty string
+func pluralize(count int) string {
+	if count == 1 {
+		return ""
+	}
+	return "s"
 }
