@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"html"
 	"io/fs"
 	"log"
 	"net/http"
@@ -177,7 +178,7 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 	// If docServer is available, inject JSON-LD script tag and RSS link
 	if s.docServer != nil {
-		baseURL := httputil.GetBaseURL(r, s.fallbackURL)
+		baseURL := html.EscapeString(httputil.GetBaseURL(r, s.fallbackURL))
 		
 		// Add RSS autodiscovery link
 		rssLink := fmt.Sprintf(`    <link rel="alternate" type="application/rss+xml" title="All Posts - Tens City" href="%s/posts.rss">
