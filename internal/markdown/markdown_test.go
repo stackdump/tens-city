@@ -489,6 +489,45 @@ func TestBuildCollectionIndex_Limit(t *testing.T) {
 	}
 }
 
+func TestSortDocumentsByDate(t *testing.T) {
+	docs := []*Document{
+		{
+			Frontmatter: Frontmatter{
+				Title:         "Zebra Post",
+				DatePublished: "2025-11-01T00:00:00Z",
+			},
+		},
+		{
+			Frontmatter: Frontmatter{
+				Title:         "Apple Post",
+				DatePublished: "2025-11-03T00:00:00Z",
+			},
+		},
+		{
+			Frontmatter: Frontmatter{
+				Title:         "Banana Post",
+				DatePublished: "2025-11-03T00:00:00Z",
+			},
+		},
+		{
+			Frontmatter: Frontmatter{
+				Title:         "Mango Post",
+				DatePublished: "2025-11-02T00:00:00Z",
+			},
+		},
+	}
+
+	SortDocumentsByDate(docs)
+
+	// Expected order: Apple (11-03), Banana (11-03), Mango (11-02), Zebra (11-01)
+	expected := []string{"Apple Post", "Banana Post", "Mango Post", "Zebra Post"}
+	for i, doc := range docs {
+		if doc.Frontmatter.Title != expected[i] {
+			t.Errorf("Position %d: expected %s, got %s", i, expected[i], doc.Frontmatter.Title)
+		}
+	}
+}
+
 func TestParseDocument_Mermaid(t *testing.T) {
 	content := []byte(`---
 title: Mermaid Test
