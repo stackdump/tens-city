@@ -349,7 +349,7 @@ func TestBuildCollectionIndex(t *testing.T) {
 		},
 	}
 
-	index := BuildCollectionIndex(docs, "https://tens.city")
+	index := BuildCollectionIndex(docs, "https://tens.city", 0)
 
 	if index["@type"] != "CollectionPage" {
 		t.Error("Expected @type to be CollectionPage")
@@ -363,6 +363,129 @@ func TestBuildCollectionIndex(t *testing.T) {
 
 	if index["numberOfItems"] != 2 {
 		t.Errorf("Expected numberOfItems to be 2, got %v", index["numberOfItems"])
+	}
+}
+
+func TestBuildCollectionIndex_Sorting(t *testing.T) {
+	docs := []*Document{
+		{
+			Frontmatter: Frontmatter{
+				Title:         "Zebra Post",
+				DatePublished: "2025-11-01T00:00:00Z",
+				Slug:          "zebra",
+				Draft:         false,
+			},
+		},
+		{
+			Frontmatter: Frontmatter{
+				Title:         "Apple Post",
+				DatePublished: "2025-11-03T00:00:00Z",
+				Slug:          "apple",
+				Draft:         false,
+			},
+		},
+		{
+			Frontmatter: Frontmatter{
+				Title:         "Banana Post",
+				DatePublished: "2025-11-03T00:00:00Z",
+				Slug:          "banana",
+				Draft:         false,
+			},
+		},
+		{
+			Frontmatter: Frontmatter{
+				Title:         "Mango Post",
+				DatePublished: "2025-11-02T00:00:00Z",
+				Slug:          "mango",
+				Draft:         false,
+			},
+		},
+	}
+
+	index := BuildCollectionIndex(docs, "https://tens.city", 0)
+	items := index["itemListElement"].([]interface{})
+
+	// Should be sorted by date descending, then title ascending
+	// Expected order: Apple (11-03), Banana (11-03), Mango (11-02), Zebra (11-01)
+	if len(items) != 4 {
+		t.Fatalf("Expected 4 items, got %d", len(items))
+	}
+
+	titles := []string{}
+	for _, item := range items {
+		itemMap := item.(map[string]interface{})
+		innerItem := itemMap["item"].(map[string]interface{})
+		titles = append(titles, innerItem["headline"].(string))
+	}
+
+	expected := []string{"Apple Post", "Banana Post", "Mango Post", "Zebra Post"}
+	for i, title := range expected {
+		if titles[i] != title {
+			t.Errorf("Position %d: expected %s, got %s", i, title, titles[i])
+		}
+	}
+}
+
+func TestBuildCollectionIndex_Limit(t *testing.T) {
+	docs := []*Document{
+		{
+			Frontmatter: Frontmatter{
+				Title:         "Post 1",
+				DatePublished: "2025-11-05T00:00:00Z",
+				Slug:          "post1",
+				Draft:         false,
+			},
+		},
+		{
+			Frontmatter: Frontmatter{
+				Title:         "Post 2",
+				DatePublished: "2025-11-04T00:00:00Z",
+				Slug:          "post2",
+				Draft:         false,
+			},
+		},
+		{
+			Frontmatter: Frontmatter{
+				Title:         "Post 3",
+				DatePublished: "2025-11-03T00:00:00Z",
+				Slug:          "post3",
+				Draft:         false,
+			},
+		},
+		{
+			Frontmatter: Frontmatter{
+				Title:         "Post 4",
+				DatePublished: "2025-11-02T00:00:00Z",
+				Slug:          "post4",
+				Draft:         false,
+			},
+		},
+	}
+
+	// Test with limit of 2
+	index := BuildCollectionIndex(docs, "https://tens.city", 2)
+	items := index["itemListElement"].([]interface{})
+
+	if len(items) != 2 {
+		t.Errorf("Expected 2 items with limit, got %d", len(items))
+	}
+
+	if index["numberOfItems"] != 2 {
+		t.Errorf("Expected numberOfItems to be 2, got %v", index["numberOfItems"])
+	}
+
+	// Verify we got the newest posts
+	firstItem := items[0].(map[string]interface{})["item"].(map[string]interface{})
+	if firstItem["headline"] != "Post 1" {
+		t.Errorf("Expected first item to be Post 1, got %s", firstItem["headline"])
+	}
+
+	// Test with no limit (0)
+	indexNoLimit := BuildCollectionIndex(docs, "https://tens.city", 0)
+	itemsNoLimit := indexNoLimit["itemListElement"].([]interface{})
+
+	if len(itemsNoLimit) != 4 {
+		t.Errorf("Expected 4 items with no limit, got %d", len(itemsNoLimit))
 	}
 }
 

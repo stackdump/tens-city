@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/stackdump/tens-city/internal/docserver"
@@ -285,11 +286,20 @@ func main() {
 	storeDir := flag.String("store", "data", "Filesystem store directory")
 	contentDir := flag.String("content", "content/posts", "Content directory for markdown blog posts")
 	baseURL := flag.String("base-url", "http://localhost:8080", "Base URL for the server")
+	indexLimit := flag.Int("index-limit", 20, "Maximum number of posts to show in index (0 = no limit)")
 	flag.Parse()
+
+	// Check for INDEX_LIMIT environment variable (overrides flag default)
+	if envLimit := os.Getenv("INDEX_LIMIT"); envLimit != "" {
+		if limit, err := strconv.Atoi(envLimit); err == nil {
+			indexLimit = &limit
+		}
+	}
 
 	log.Printf("Using filesystem storage: %s", *storeDir)
 	log.Printf("Content directory: %s", *contentDir)
 	log.Printf("Base URL: %s", *baseURL)
+	log.Printf("Index limit: %d", *indexLimit)
 	storage := NewFSStorage(*storeDir)
 
 	// Get the embedded public filesystem
@@ -299,7 +309,7 @@ func main() {
 	}
 
 	// Create document server
-	docServer := docserver.NewDocServer(*contentDir, *baseURL)
+	docServer := docserver.NewDocServer(*contentDir, *baseURL, *indexLimit)
 
 	server := NewServer(storage, publicSubFS, docServer)
 	server.baseURL = *baseURL // Set the base URL from command line flag

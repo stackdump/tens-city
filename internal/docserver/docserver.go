@@ -21,6 +21,7 @@ import (
 type DocServer struct {
 	contentDir string
 	baseURL    string
+	indexLimit int // Maximum number of items to show in index (0 = no limit)
 	cache      *DocumentCache
 }
 
@@ -46,10 +47,11 @@ type CachedIndex struct {
 }
 
 // NewDocServer creates a new document server
-func NewDocServer(contentDir, baseURL string) *DocServer {
+func NewDocServer(contentDir, baseURL string, indexLimit int) *DocServer {
 	return &DocServer{
 		contentDir: contentDir,
 		baseURL:    baseURL,
+		indexLimit: indexLimit,
 		cache: &DocumentCache{
 			docs: make(map[string]*CachedDoc),
 		},
@@ -158,7 +160,7 @@ func (ds *DocServer) loadIndex() (*CachedIndex, error) {
 		return nil, err
 	}
 
-	index := markdown.BuildCollectionIndex(docs, ds.baseURL)
+	index := markdown.BuildCollectionIndex(docs, ds.baseURL, ds.indexLimit)
 	data, err := json.MarshalIndent(index, "", "  ")
 	if err != nil {
 		return nil, err
@@ -196,6 +198,39 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 		if !doc.Frontmatter.Draft {
 			publicDocs = append(publicDocs, doc)
 		}
+	}
+
+	// Sort by DatePublished descending (newest first), then by Title ascending
+	sort.Slice(publicDocs, func(i, j int) bool {
+		// Parse dates for comparison
+		dateI, errI := time.Parse(time.RFC3339, publicDocs[i].Frontmatter.DatePublished)
+		dateJ, errJ := time.Parse(time.RFC3339, publicDocs[j].Frontmatter.DatePublished)
+
+		// If both dates are valid, compare them
+		if errI == nil && errJ == nil {
+			if !dateI.Equal(dateJ) {
+				// Descending order (newest first)
+				return dateI.After(dateJ)
+			}
+			// If dates are equal, sort by title ascending
+			return publicDocs[i].Frontmatter.Title < publicDocs[j].Frontmatter.Title
+		}
+
+		// If one date is invalid, put it after valid dates
+		if errI != nil && errJ == nil {
+			return false
+		}
+		if errI == nil && errJ != nil {
+			return true
+		}
+
+		// If both dates are invalid, sort by title
+		return publicDocs[i].Frontmatter.Title < publicDocs[j].Frontmatter.Title
+	})
+
+	// Apply limit if specified
+	if ds.indexLimit > 0 && len(publicDocs) > ds.indexLimit {
+		publicDocs = publicDocs[:ds.indexLimit]
 	}
 
 	// Load cached JSON-LD index

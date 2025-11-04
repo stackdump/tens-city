@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -271,16 +272,54 @@ func ListDocuments(contentDir string) ([]*Document, error) {
 }
 
 // BuildCollectionIndex creates a schema.org CollectionPage index
-func BuildCollectionIndex(docs []*Document, baseURL string) map[string]interface{} {
+// limit controls how many items to include (0 means no limit)
+func BuildCollectionIndex(docs []*Document, baseURL string, limit int) map[string]interface{} {
 	now := time.Now().Format(time.RFC3339)
 
-	items := make([]interface{}, 0)
+	// Filter out drafts and collect non-draft documents
+	var publicDocs []*Document
 	for _, doc := range docs {
-		// Skip drafts in the public index
-		if doc.Frontmatter.Draft {
-			continue
+		if !doc.Frontmatter.Draft {
+			publicDocs = append(publicDocs, doc)
+		}
+	}
+
+	// Sort by DatePublished descending (newest first), then by Title ascending
+	sort.Slice(publicDocs, func(i, j int) bool {
+		// Parse dates for comparison
+		dateI, errI := time.Parse(time.RFC3339, publicDocs[i].Frontmatter.DatePublished)
+		dateJ, errJ := time.Parse(time.RFC3339, publicDocs[j].Frontmatter.DatePublished)
+
+		// If both dates are valid, compare them
+		if errI == nil && errJ == nil {
+			if !dateI.Equal(dateJ) {
+				// Descending order (newest first)
+				return dateI.After(dateJ)
+			}
+			// If dates are equal, sort by title ascending
+			return publicDocs[i].Frontmatter.Title < publicDocs[j].Frontmatter.Title
 		}
 
+		// If one date is invalid, put it after valid dates
+		if errI != nil && errJ == nil {
+			return false
+		}
+		if errI == nil && errJ != nil {
+			return true
+		}
+
+		// If both dates are invalid, sort by title
+		return publicDocs[i].Frontmatter.Title < publicDocs[j].Frontmatter.Title
+	})
+
+	// Apply limit if specified
+	if limit > 0 && len(publicDocs) > limit {
+		publicDocs = publicDocs[:limit]
+	}
+
+	// Build the items list
+	items := make([]interface{}, 0, len(publicDocs))
+	for _, doc := range publicDocs {
 		item := map[string]interface{}{
 			"@type":    "ListItem",
 			"position": len(items) + 1,
@@ -297,6 +336,16 @@ func BuildCollectionIndex(docs []*Document, baseURL string) map[string]interface
 
 		if doc.Frontmatter.DatePublished != "" {
 			item["item"].(map[string]interface{})["datePublished"] = doc.Frontmatter.DatePublished
+		}
+
+		if doc.Frontmatter.Author != nil {
+			item["item"].(map[string]interface{})["author"] = normalizeAuthor(doc.Frontmatter.Author)
+		}
+
+		if len(doc.Frontmatter.Keywords) > 0 {
+			item["item"].(map[string]interface{})["keywords"] = doc.Frontmatter.Keywords
+		} else if len(doc.Frontmatter.Tags) > 0 {
+			item["item"].(map[string]interface{})["keywords"] = doc.Frontmatter.Tags
 		}
 
 		items = append(items, item)
