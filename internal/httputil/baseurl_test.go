@@ -57,7 +57,7 @@ func TestGetBaseURL(t *testing.T) {
 				req.Header.Set("X-Forwarded-Host", "tens.city")
 			},
 			fallbackURL: "http://localhost:8080",
-			want:        "https://tens.city", // Falls back to assuming https
+			want:        "http://tens.city",
 		},
 		{
 			name: "Forwarded header with proto=https",
@@ -201,7 +201,7 @@ func TestGetProxyProtocol(t *testing.T) {
 			setupReq: func(req *http.Request) {
 				req.Header.Set("X-Forwarded-Ssl", "off")
 			},
-			want: "",
+			want: "http",
 		},
 		{
 			name: "Forwarded proto=https",

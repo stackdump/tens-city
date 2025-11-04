@@ -20,8 +20,12 @@ func getProxyProtocol(r *http.Request) string {
 	}
 
 	// Check X-Forwarded-Ssl (on/off indicator)
-	if ssl := r.Header.Get("X-Forwarded-Ssl"); ssl == "on" {
-		return "https"
+	if ssl := r.Header.Get("X-Forwarded-Ssl"); ssl != "" {
+		if ssl == "on" {
+			return "https"
+		}
+		// If X-Forwarded-Ssl is explicitly set to anything other than "on" (e.g., "off"), treat as http
+		return "http"
 	}
 
 	// Check standard Forwarded header (RFC 7239)
