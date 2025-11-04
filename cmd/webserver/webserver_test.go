@@ -27,7 +27,7 @@ func TestHandleGetObject(t *testing.T) {
 	}
 
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, nil, nil)
+	server := NewServer(storage, nil, nil, "http://localhost:8080")
 
 	// Test successful retrieval
 	req := httptest.NewRequest("GET", "/o/"+cid, nil)
@@ -69,7 +69,7 @@ func TestHandleGetLatest(t *testing.T) {
 	}
 
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, nil, nil)
+	server := NewServer(storage, nil, nil, "http://localhost:8080")
 
 	req := httptest.NewRequest("GET", "/u/"+user+"/g/"+slug+"/latest", nil)
 	w := httptest.NewRecorder()
@@ -104,7 +104,7 @@ func TestHandleGetHistory(t *testing.T) {
 	}
 
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, nil, nil)
+	server := NewServer(storage, nil, nil, "http://localhost:8080")
 
 	req := httptest.NewRequest("GET", "/u/"+user+"/g/"+slug+"/_history", nil)
 	w := httptest.NewRecorder()
@@ -135,7 +135,7 @@ func TestStaticFileServing(t *testing.T) {
 		t.Fatalf("Failed to get public filesystem: %v", err)
 	}
 
-	server := NewServer(storage, publicFS, nil)
+	server := NewServer(storage, publicFS, nil, "http://localhost:8080")
 
 	// Test serving index.html at root
 	req := httptest.NewRequest("GET", "/", nil)
@@ -191,7 +191,7 @@ This is a test post.
 
 	// Create docserver with the test content
 	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0)
-	server := NewServer(storage, publicFS, docServer)
+	server := NewServer(storage, publicFS, docServer, "http://localhost:8080")
 
 	// Test serving index.html at root with JSON-LD
 	req := httptest.NewRequest("GET", "/", nil)
@@ -293,7 +293,7 @@ This is Bob's post.
 
 	// Create docserver with the test content
 	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0)
-	server := NewServer(storage, publicFS, docServer)
+	server := NewServer(storage, publicFS, docServer, "http://localhost:8080")
 
 	// Test serving /rss page
 	req := httptest.NewRequest("GET", "/rss", nil)
@@ -405,10 +405,11 @@ This is Bob's post.
 
 	// Create docserver with the test content
 	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0)
-	server := NewServer(storage, publicFS, docServer)
+	server := NewServer(storage, publicFS, docServer, "http://localhost:8080")
 
 	// Test serving /posts.rss site-wide feed
 	req := httptest.NewRequest("GET", "/posts.rss", nil)
+	req.Host = "localhost:8080"
 	w := httptest.NewRecorder()
 	server.ServeHTTP(w, req)
 

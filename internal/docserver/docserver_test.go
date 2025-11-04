@@ -384,6 +384,8 @@ Content
 	ds := NewDocServer(tmpDir, "https://tens.city", 0)
 
 	req := httptest.NewRequest(http.MethodGet, "/u/alice/posts.rss", nil)
+	req.Header.Set("X-Forwarded-Proto", "https")
+	req.Header.Set("X-Forwarded-Host", "tens.city")
 	rec := httptest.NewRecorder()
 	ds.HandleUserRSS(rec, req, "alice")
 
@@ -589,6 +591,8 @@ Content of Alice's second post.
 
 	// Create test request
 	req := httptest.NewRequest(http.MethodGet, "/posts.rss", nil)
+	req.Header.Set("X-Forwarded-Proto", "https")
+	req.Header.Set("X-Forwarded-Host", "tens.city")
 	rec := httptest.NewRecorder()
 
 	// Handle request
@@ -1181,6 +1185,7 @@ More content.
 
 	// Test GET request
 	req := httptest.NewRequest(http.MethodGet, "/tags", nil)
+	req.Host = "localhost:8080"
 	rec := httptest.NewRecorder()
 
 	ds.HandleTagsPage(rec, req)
@@ -1303,6 +1308,7 @@ Python content.
 
 	// Test filtering by golang tag
 	req := httptest.NewRequest(http.MethodGet, "/tags/golang", nil)
+	req.Host = "localhost:8080"
 	rec := httptest.NewRecorder()
 
 	ds.HandleTagPage(rec, req, "golang")

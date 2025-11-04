@@ -20,10 +20,10 @@ import (
 
 // DocServer handles markdown document requests
 type DocServer struct {
-	contentDir string
-	baseURL    string
-	indexLimit int // Maximum number of items to show in index (0 = no limit)
-	cache      *DocumentCache
+	contentDir  string
+	fallbackURL string // Fallback base URL when headers are not available
+	indexLimit  int    // Maximum number of items to show in index (0 = no limit)
+	cache       *DocumentCache
 }
 
 // DocumentCache caches rendered documents
@@ -48,15 +48,44 @@ type CachedIndex struct {
 }
 
 // NewDocServer creates a new document server
-func NewDocServer(contentDir, baseURL string, indexLimit int) *DocServer {
+func NewDocServer(contentDir, fallbackURL string, indexLimit int) *DocServer {
 	return &DocServer{
-		contentDir: contentDir,
-		baseURL:    baseURL,
-		indexLimit: indexLimit,
+		contentDir:  contentDir,
+		fallbackURL: fallbackURL,
+		indexLimit:  indexLimit,
 		cache: &DocumentCache{
 			docs: make(map[string]*CachedDoc),
 		},
 	}
+}
+
+// getBaseURL extracts the base URL from request headers (for nginx proxy) or falls back to configured URL
+func (ds *DocServer) getBaseURL(r *http.Request) string {
+	// Check for X-Forwarded-Proto and X-Forwarded-Host headers from nginx
+	proto := r.Header.Get("X-Forwarded-Proto")
+	host := r.Header.Get("X-Forwarded-Host")
+	
+	// If both headers are present, construct the base URL
+	if proto != "" && host != "" {
+		return fmt.Sprintf("%s://%s", proto, host)
+	}
+	
+	// Check for X-Forwarded-Host alone (assume https if proto not specified)
+	if host != "" {
+		return fmt.Sprintf("https://%s", host)
+	}
+	
+	// Check the Host header as fallback
+	if r.Host != "" {
+		scheme := "http"
+		if r.TLS != nil {
+			scheme = "https"
+		}
+		return fmt.Sprintf("%s://%s", scheme, r.Host)
+	}
+	
+	// Use configured fallback URL
+	return ds.fallbackURL
 }
 
 // loadDocument loads and caches a document
@@ -161,7 +190,8 @@ func (ds *DocServer) loadIndex() (*CachedIndex, error) {
 		return nil, err
 	}
 
-	index := markdown.BuildCollectionIndex(docs, ds.baseURL, ds.indexLimit)
+	// Use fallback URL for the cached index (will be used when serving via GetIndexJSONLD)
+	index := markdown.BuildCollectionIndex(docs, ds.fallbackURL, ds.indexLimit)
 	data, err := json.MarshalIndent(index, "", "  ")
 	if err != nil {
 		return nil, err
@@ -186,6 +216,8 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	baseURL := ds.getBaseURL(r)
 
 	docs, err := markdown.ListDocuments(ds.contentDir)
 	if err != nil {
@@ -243,7 +275,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 <body>
     <h1>Blog Posts</h1>
     <ul class="doc-list">
-`, ds.baseURL, string(cached.Data))
+`, baseURL, string(cached.Data))
 
 	for _, doc := range publicDocs {
 		escapedSlug := html.EscapeString(doc.Frontmatter.Slug)
@@ -276,6 +308,8 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	baseURL := ds.getBaseURL(r)
 
 	// Check Accept header for content negotiation
 	accept := r.Header.Get("Accept")
@@ -311,7 +345,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 
 	if wantsJSON {
 		// Return JSON-LD
-		jsonld := doc.ToJSONLD(ds.baseURL)
+		jsonld := doc.ToJSONLD(baseURL)
 		data, err := json.MarshalIndent(jsonld, "", "  ")
 		if err != nil {
 			http.Error(w, "Failed to serialize JSON-LD", http.StatusInternalServerError)
@@ -323,7 +357,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 	}
 
 	// Render HTML with embedded JSON-LD
-	jsonld := doc.ToJSONLD(ds.baseURL)
+	jsonld := doc.ToJSONLD(baseURL)
 	jsonldBytes, _ := json.MarshalIndent(jsonld, "    ", "  ")
 
 	// HTML-escape user-provided values
@@ -351,7 +385,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 		escapedUserName := html.EscapeString(userName)
 		fmt.Fprintf(w, `
     <link rel="alternate" type="application/rss+xml" title="%s's Posts" href="%s/u/%s/posts.rss">`,
-			escapedUserName, ds.baseURL, escapedUserName)
+			escapedUserName, baseURL, escapedUserName)
 	}
 
 	fmt.Fprintf(w, `
@@ -365,6 +399,10 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
         pre { background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; }
         pre code { background: none; padding: 0; }
         a { color: #0066cc; }
+        .post-header { margin-bottom: 2rem; }
+        .post-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+        .tag { background: #e6f3ff; color: #0066cc; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500; text-decoration: none; display: inline-block; transition: all 0.2s; }
+        .tag:hover { background: #0066cc; color: white; }
         .footer { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e0e0e0; color: #666; font-size: 0.85rem; }
         .footer-menu { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 1rem; }
         .footer-menu a { color: #0066cc; text-decoration: none; }
@@ -385,11 +423,35 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
     </style>
 </head>
 <body>
+    <div class="post-header">`,
+		jsonldBytes)
+
+	// Add tags at the top of the post
+	allTags := append([]string{}, doc.Frontmatter.Tags...)
+	allTags = append(allTags, doc.Frontmatter.Keywords...)
+	
+	if len(allTags) > 0 {
+		fmt.Fprintf(w, `
+        <div class="post-tags">`)
+		for _, tag := range allTags {
+			if tag != "" {
+				escapedTag := html.EscapeString(tag)
+				urlEncodedTag := url.PathEscape(tag)
+				fmt.Fprintf(w, `
+            <a href="/tags/%s" class="tag">%s</a>`, urlEncodedTag, escapedTag)
+			}
+		}
+		fmt.Fprintf(w, `
+        </div>`)
+	}
+
+	fmt.Fprintf(w, `
+    </div>
     %s
     <div class="footer">
         <div class="footer-menu">
             <a href="/posts">← All Posts</a>`,
-		jsonldBytes, doc.HTML)
+		doc.HTML)
 
 	// Add edit link (will be shown/hidden by JavaScript based on authorship)
 	escapedAuthorURL := html.EscapeString(authorURL)
@@ -451,6 +513,8 @@ func (ds *DocServer) HandleDocJSONLD(w http.ResponseWriter, r *http.Request, slu
 		return
 	}
 
+	baseURL := ds.getBaseURL(r)
+
 	cached, err := ds.loadDocument(slug)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
@@ -479,7 +543,7 @@ func (ds *DocServer) HandleDocJSONLD(w http.ResponseWriter, r *http.Request, slu
 		return
 	}
 
-	jsonld := doc.ToJSONLD(ds.baseURL)
+	jsonld := doc.ToJSONLD(baseURL)
 	data, err := json.MarshalIndent(jsonld, "", "  ")
 	if err != nil {
 		http.Error(w, "Failed to serialize JSON-LD", http.StatusInternalServerError)
@@ -534,6 +598,8 @@ func (ds *DocServer) HandleUserRSS(w http.ResponseWriter, r *http.Request, userN
 		return
 	}
 
+	baseURL := ds.getBaseURL(r)
+
 	// Load all posts
 	docs, err := markdown.ListDocuments(ds.contentDir)
 	if err != nil {
@@ -557,7 +623,7 @@ func (ds *DocServer) HandleUserRSS(w http.ResponseWriter, r *http.Request, userN
 	}
 
 	// Generate RSS feed
-	feedData, err := rss.GenerateUserFeed(userDocs, userName, ds.baseURL)
+	feedData, err := rss.GenerateUserFeed(userDocs, userName, baseURL)
 	if err != nil {
 		http.Error(w, "Failed to generate RSS feed", http.StatusInternalServerError)
 		return
@@ -574,6 +640,8 @@ func (ds *DocServer) HandleSiteRSS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	baseURL := ds.getBaseURL(r)
+
 	// Load all posts
 	docs, err := markdown.ListDocuments(ds.contentDir)
 	if err != nil {
@@ -582,7 +650,7 @@ func (ds *DocServer) HandleSiteRSS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate site-wide RSS feed
-	feedData, err := rss.GenerateSiteFeed(docs, ds.baseURL)
+	feedData, err := rss.GenerateSiteFeed(docs, baseURL)
 	if err != nil {
 		http.Error(w, "Failed to generate RSS feed", http.StatusInternalServerError)
 		return
@@ -598,6 +666,8 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	baseURL := ds.getBaseURL(r)
 
 	// Load all posts
 	docs, err := markdown.ListDocuments(ds.contentDir)
@@ -638,7 +708,7 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
 	// Render HTML page
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	allPostsFeedURL := fmt.Sprintf("%s/posts.rss", ds.baseURL)
+	allPostsFeedURL := fmt.Sprintf("%s/posts.rss", baseURL)
 
 	fmt.Fprintf(w, `<!DOCTYPE html>
 <html lang="en">
@@ -701,7 +771,7 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
                 Author: <a href="%s" class="author-link" target="_blank">%s</a>
             </div>
         </li>
-`, escapedAuthorName, ds.baseURL, escapedUserName, ds.baseURL, escapedUserName, escapedAuthorURL, escapedAuthorName)
+`, escapedAuthorName, baseURL, escapedUserName, baseURL, escapedUserName, escapedAuthorURL, escapedAuthorName)
 	}
 
 	if len(userNames) == 0 {
@@ -834,7 +904,7 @@ func (ds *DocServer) collectTags() ([]TagInfo, error) {
 }
 
 // buildTagsCollectionJSONLD creates a JSON-LD CollectionPage for all tags
-func (ds *DocServer) buildTagsCollectionJSONLD(tags []TagInfo) map[string]interface{} {
+func (ds *DocServer) buildTagsCollectionJSONLD(tags []TagInfo, baseURL string) map[string]interface{} {
 	// Build items list for each tag
 	items := make([]interface{}, 0, len(tags))
 	for i, tagInfo := range tags {
@@ -844,7 +914,7 @@ func (ds *DocServer) buildTagsCollectionJSONLD(tags []TagInfo) map[string]interf
 			"item": map[string]interface{}{
 				"@type": "DefinedTerm",
 				"name":  tagInfo.Tag,
-				"url":   fmt.Sprintf("%s/tags/%s", ds.baseURL, url.PathEscape(tagInfo.Tag)),
+				"url":   fmt.Sprintf("%s/tags/%s", baseURL, url.PathEscape(tagInfo.Tag)),
 			},
 		}
 		items = append(items, item)
@@ -855,21 +925,21 @@ func (ds *DocServer) buildTagsCollectionJSONLD(tags []TagInfo) map[string]interf
 		"@type":           "CollectionPage",
 		"name":            "Tags",
 		"description":     "Collection of all tags used in blog posts",
-		"url":             fmt.Sprintf("%s/tags", ds.baseURL),
+		"url":             fmt.Sprintf("%s/tags", baseURL),
 		"numberOfItems":   len(items),
 		"itemListElement": items,
 	}
 }
 
 // buildTagSearchResultsJSONLD creates a JSON-LD CollectionPage for tag search results
-func (ds *DocServer) buildTagSearchResultsJSONLD(tag string, docs []*markdown.Document) map[string]interface{} {
+func (ds *DocServer) buildTagSearchResultsJSONLD(tag string, docs []*markdown.Document, baseURL string) map[string]interface{} {
 	// Build items list for each document
 	items := make([]interface{}, 0, len(docs))
 	for i, doc := range docs {
 		article := map[string]interface{}{
 			"@type":    "Article",
 			"headline": doc.Frontmatter.Title,
-			"url":      fmt.Sprintf("%s/posts/%s", ds.baseURL, doc.Frontmatter.Slug),
+			"url":      fmt.Sprintf("%s/posts/%s", baseURL, doc.Frontmatter.Slug),
 		}
 
 		if doc.Frontmatter.Description != "" {
@@ -894,7 +964,7 @@ func (ds *DocServer) buildTagSearchResultsJSONLD(tag string, docs []*markdown.Do
 		"@type":           "CollectionPage",
 		"name":            fmt.Sprintf("Posts tagged with \"%s\"", tag),
 		"description":     fmt.Sprintf("Blog posts tagged with %s", tag),
-		"url":             fmt.Sprintf("%s/tags/%s", ds.baseURL, url.PathEscape(tag)),
+		"url":             fmt.Sprintf("%s/tags/%s", baseURL, url.PathEscape(tag)),
 		"numberOfItems":   len(items),
 		"itemListElement": items,
 	}
@@ -907,6 +977,8 @@ func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	baseURL := ds.getBaseURL(r)
+
 	tags, err := ds.collectTags()
 	if err != nil {
 		http.Error(w, "Failed to load tags", http.StatusInternalServerError)
@@ -914,7 +986,7 @@ func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build JSON-LD for the tags collection
-	jsonld := ds.buildTagsCollectionJSONLD(tags)
+	jsonld := ds.buildTagsCollectionJSONLD(tags, baseURL)
 	jsonldBytes, err := json.MarshalIndent(jsonld, "    ", "  ")
 	if err != nil {
 		http.Error(w, "Failed to generate JSON-LD", http.StatusInternalServerError)
@@ -1116,6 +1188,8 @@ func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag s
 		return
 	}
 
+	baseURL := ds.getBaseURL(r)
+
 	// Load all documents
 	docs, err := markdown.ListDocuments(ds.contentDir)
 	if err != nil {
@@ -1157,7 +1231,7 @@ func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag s
 	markdown.SortDocumentsByDate(filteredDocs)
 
 	// Build JSON-LD for the tag search results
-	jsonld := ds.buildTagSearchResultsJSONLD(tag, filteredDocs)
+	jsonld := ds.buildTagSearchResultsJSONLD(tag, filteredDocs, baseURL)
 	jsonldBytes, err := json.MarshalIndent(jsonld, "    ", "  ")
 	if err != nil {
 		http.Error(w, "Failed to generate JSON-LD", http.StatusInternalServerError)

@@ -295,22 +295,35 @@ func BuildCollectionIndex(docs []*Document, baseURL string, limit int) map[strin
 	// Build the items list
 	items := make([]interface{}, 0, len(publicDocs))
 	for _, doc := range publicDocs {
-		item := map[string]interface{}{
-			"@type":    "ListItem",
-			"position": len(items) + 1,
-			"item": map[string]interface{}{
-				"@type":    "Article",
-				"headline": doc.Frontmatter.Title,
-				"url":      fmt.Sprintf("%s/posts/%s", baseURL, doc.Frontmatter.Slug),
-			},
+		itemArticle := map[string]interface{}{
+			"@type":    "Article",
+			"headline": doc.Frontmatter.Title,
+			"url":      fmt.Sprintf("%s/posts/%s", baseURL, doc.Frontmatter.Slug),
 		}
 
 		if doc.Frontmatter.Description != "" {
-			item["item"].(map[string]interface{})["description"] = doc.Frontmatter.Description
+			itemArticle["description"] = doc.Frontmatter.Description
 		}
 
 		if doc.Frontmatter.DatePublished != "" {
-			item["item"].(map[string]interface{})["datePublished"] = doc.Frontmatter.DatePublished
+			itemArticle["datePublished"] = doc.Frontmatter.DatePublished
+		}
+
+		if doc.Frontmatter.Author != nil {
+			itemArticle["author"] = normalizeAuthor(doc.Frontmatter.Author)
+		}
+
+		// Include keywords (combination of tags and keywords)
+		allKeywords := append([]string{}, doc.Frontmatter.Tags...)
+		allKeywords = append(allKeywords, doc.Frontmatter.Keywords...)
+		if len(allKeywords) > 0 {
+			itemArticle["keywords"] = allKeywords
+		}
+
+		item := map[string]interface{}{
+			"@type":    "ListItem",
+			"position": len(items) + 1,
+			"item":     itemArticle,
 		}
 
 		items = append(items, item)
