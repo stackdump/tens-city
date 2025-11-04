@@ -401,7 +401,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 	// Add tags at the top of the post
 	allTags := append([]string{}, doc.Frontmatter.Tags...)
 	allTags = append(allTags, doc.Frontmatter.Keywords...)
-	
+
 	if len(allTags) > 0 {
 		fmt.Fprintf(w, `
         <div class="post-tags">`)

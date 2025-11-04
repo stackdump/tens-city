@@ -53,10 +53,10 @@ func (fs *FSStorage) ReadMarkdownContent(cid string) ([]byte, error) {
 }
 
 type Server struct {
-	storage        Storage
-	publicFS       fs.FS
-	docServer      *docserver.DocServer
-	fallbackURL    string // Fallback Base URL when headers are not available
+	storage     Storage
+	publicFS    fs.FS
+	docServer   *docserver.DocServer
+	fallbackURL string // Fallback Base URL when headers are not available
 }
 
 func NewServer(storage Storage, publicFS fs.FS, docServer *docserver.DocServer, fallbackURL string) *Server {
@@ -179,7 +179,7 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	// If docServer is available, inject JSON-LD script tag and RSS link
 	if s.docServer != nil {
 		baseURL := html.EscapeString(httputil.GetBaseURL(r, s.fallbackURL))
-		
+
 		// Add RSS autodiscovery link
 		rssLink := fmt.Sprintf(`    <link rel="alternate" type="application/rss+xml" title="All Posts - Tens City" href="%s/posts.rss">
 `, baseURL)
