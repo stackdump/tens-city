@@ -313,16 +313,6 @@ func BuildCollectionIndex(docs []*Document, baseURL string, limit int) map[strin
 			item["item"].(map[string]interface{})["datePublished"] = doc.Frontmatter.DatePublished
 		}
 
-		if doc.Frontmatter.Author != nil {
-			item["item"].(map[string]interface{})["author"] = normalizeAuthor(doc.Frontmatter.Author)
-		}
-
-		if len(doc.Frontmatter.Keywords) > 0 {
-			item["item"].(map[string]interface{})["keywords"] = doc.Frontmatter.Keywords
-		} else if len(doc.Frontmatter.Tags) > 0 {
-			item["item"].(map[string]interface{})["keywords"] = doc.Frontmatter.Tags
-		}
-
 		items = append(items, item)
 	}
 

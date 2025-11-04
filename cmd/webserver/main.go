@@ -293,6 +293,8 @@ func main() {
 	if envLimit := os.Getenv("INDEX_LIMIT"); envLimit != "" {
 		if limit, err := strconv.Atoi(envLimit); err == nil {
 			indexLimit = &limit
+		} else {
+			log.Printf("Warning: Invalid INDEX_LIMIT environment variable '%s': %v. Using default or flag value.", envLimit, err)
 		}
 	}
 
