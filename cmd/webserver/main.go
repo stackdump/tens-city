@@ -341,7 +341,7 @@ func main() {
 
 	log.Printf("Starting server on %s", *addr)
 	log.Println("Using embedded public files")
-	log.Println("Server will use X-Forwarded-Proto and X-Forwarded-Host headers when available")
+	log.Println("Server will detect protocol from proxy headers (X-Forwarded-Proto, X-Forwarded-Scheme, X-Forwarded-Ssl, Forwarded)")
 	if err := http.ListenAndServe(*addr, server); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
