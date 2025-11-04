@@ -148,6 +148,28 @@ func TestGetBaseURL(t *testing.T) {
 			fallbackURL: "http://localhost:8080",
 			want:        "https://tens.city",
 		},
+		{
+			name: "X-Forwarded-Proto with Host header (nginx proxy scenario)",
+			setupReq: func(req *http.Request) {
+				// Simulate typical nginx configuration:
+				// proxy_set_header Host $host;
+				// proxy_set_header X-Forwarded-Proto $scheme;
+				// Note: X-Forwarded-Host is NOT set in this config
+				req.Host = "tens.city"
+				req.Header.Set("X-Forwarded-Proto", "https")
+			},
+			fallbackURL: "http://localhost:8080",
+			want:        "https://tens.city",
+		},
+		{
+			name: "X-Forwarded-Proto http with Host header",
+			setupReq: func(req *http.Request) {
+				req.Host = "example.com"
+				req.Header.Set("X-Forwarded-Proto", "http")
+			},
+			fallbackURL: "http://localhost:8080",
+			want:        "http://example.com",
+		},
 	}
 
 	for _, tt := range tests {

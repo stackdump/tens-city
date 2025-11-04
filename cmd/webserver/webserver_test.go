@@ -343,6 +343,214 @@ This is Bob's post.
 	}
 }
 
+func TestRSSListPageWithProxyHeaders(t *testing.T) {
+	tmpDir := t.TempDir()
+	storage := NewFSStorage(tmpDir)
+
+	// Get the embedded public filesystem
+	publicFS, err := static.Public()
+	if err != nil {
+		t.Fatalf("Failed to get public filesystem: %v", err)
+	}
+
+	// Create a temporary content directory with test posts
+	contentDir := t.TempDir()
+
+	// Create posts from different authors
+	testPost := `---
+title: Test Post
+description: A test blog post
+datePublished: 2025-11-03T00:00:00Z
+author:
+  name: Alice Smith
+  type: Person
+  url: https://github.com/alicesmith
+tags:
+  - test
+lang: en
+slug: test-post
+draft: false
+---
+
+# Test Post
+
+This is a test post.
+`
+
+	if err := os.WriteFile(contentDir+"/test-post.md", []byte(testPost), 0644); err != nil {
+		t.Fatalf("Failed to create test post: %v", err)
+	}
+
+	// Create docserver with the test content
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0)
+	server := NewServer(storage, publicFS, docServer, "http://localhost:8080")
+
+	// Test with HTTPS proxy headers
+	t.Run("With X-Forwarded-Proto HTTPS", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/rss", nil)
+		req.Header.Set("X-Forwarded-Proto", "https")
+		req.Header.Set("X-Forwarded-Host", "tens.city")
+		w := httptest.NewRecorder()
+		server.ServeHTTP(w, req)
+
+		resp := w.Result()
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", resp.StatusCode)
+		}
+
+		body, _ := io.ReadAll(resp.Body)
+		bodyStr := string(body)
+
+		// Check that RSS feed URLs use HTTPS protocol
+		if !strings.Contains(bodyStr, `href="https://tens.city/posts.rss"`) {
+			t.Error("Expected site-wide RSS feed URL to use https://tens.city")
+		}
+		if !strings.Contains(bodyStr, `href="https://tens.city/u/alicesmith/posts.rss"`) {
+			t.Error("Expected user RSS feed URL to use https://tens.city")
+		}
+
+		// Verify URLs are displayed in link text as well
+		if !strings.Contains(bodyStr, `>https://tens.city/posts.rss<`) {
+			t.Error("Expected displayed URL to show https://tens.city/posts.rss")
+		}
+		if !strings.Contains(bodyStr, `>https://tens.city/u/alicesmith/posts.rss<`) {
+			t.Error("Expected displayed URL to show https://tens.city/u/alicesmith/posts.rss")
+		}
+	})
+
+	// Test with X-Forwarded-Scheme HTTPS (alternative header)
+	t.Run("With X-Forwarded-Scheme HTTPS", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/rss", nil)
+		req.Header.Set("X-Forwarded-Scheme", "https")
+		req.Header.Set("X-Forwarded-Host", "example.com")
+		w := httptest.NewRecorder()
+		server.ServeHTTP(w, req)
+
+		resp := w.Result()
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", resp.StatusCode)
+		}
+
+		body, _ := io.ReadAll(resp.Body)
+		bodyStr := string(body)
+
+		// Check that RSS feed URLs use HTTPS protocol
+		if !strings.Contains(bodyStr, `href="https://example.com/posts.rss"`) {
+			t.Error("Expected RSS feed URL to use https://example.com")
+		}
+	})
+
+	// Test without proxy headers (should use Host header)
+	t.Run("Without proxy headers (uses Host header)", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/rss", nil)
+		w := httptest.NewRecorder()
+		server.ServeHTTP(w, req)
+
+		resp := w.Result()
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", resp.StatusCode)
+		}
+
+		body, _ := io.ReadAll(resp.Body)
+		bodyStr := string(body)
+
+		// Check that RSS feed URLs use HTTP (not HTTPS) when no proxy headers present
+		if !strings.Contains(bodyStr, `href="http://`) {
+			t.Error("Expected RSS feed URLs to use http:// when no proxy headers present")
+		}
+		// httptest.NewRequest sets Host to "example.com" by default
+		// Should use Host header (http://example.com) since no proxy headers or TLS
+		if strings.Contains(bodyStr, `https://tens.city`) || strings.Contains(bodyStr, `https://example.com`) {
+			// Print first 500 chars to debug
+			t.Logf("Body preview: %s", bodyStr[:min(500, len(bodyStr))])
+			t.Error("Expected to use http:// not https:// when no proxy headers or TLS present")
+		}
+	})
+
+	// Test with X-Forwarded-Ssl on
+	t.Run("With X-Forwarded-Ssl on", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/rss", nil)
+		req.Header.Set("X-Forwarded-Ssl", "on")
+		req.Header.Set("X-Forwarded-Host", "secure.example.com")
+		w := httptest.NewRecorder()
+		server.ServeHTTP(w, req)
+
+		resp := w.Result()
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", resp.StatusCode)
+		}
+
+		body, _ := io.ReadAll(resp.Body)
+		bodyStr := string(body)
+
+		// Check that RSS feed URLs use HTTPS protocol
+		if !strings.Contains(bodyStr, `href="https://secure.example.com/posts.rss"`) {
+			t.Error("Expected RSS feed URL to use https://secure.example.com")
+		}
+	})
+
+	// Test with Forwarded header (RFC 7239)
+	t.Run("With Forwarded header", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/rss", nil)
+		req.Header.Set("Forwarded", "proto=https;host=forwarded.example.com")
+		req.Header.Set("X-Forwarded-Host", "forwarded.example.com")
+		w := httptest.NewRecorder()
+		server.ServeHTTP(w, req)
+
+		resp := w.Result()
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", resp.StatusCode)
+		}
+
+		body, _ := io.ReadAll(resp.Body)
+		bodyStr := string(body)
+
+		// Check that RSS feed URLs use HTTPS protocol
+		if !strings.Contains(bodyStr, `href="https://forwarded.example.com/posts.rss"`) {
+			t.Error("Expected RSS feed URL to use https://forwarded.example.com")
+		}
+	})
+
+	// Test with typical nginx proxy headers (like the user's configuration)
+	t.Run("With nginx proxy headers (production scenario)", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/rss", nil)
+		// Simulate nginx proxy_set_header configuration:
+		// proxy_set_header Host $host;
+		// proxy_set_header X-Forwarded-Proto $scheme;
+		// proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		req.Header.Set("Host", "tens.city")
+		req.Header.Set("X-Forwarded-Proto", "https")
+		req.Header.Set("X-Forwarded-For", "192.0.2.1")
+		req.Host = "tens.city" // Set request Host to match nginx's Host header
+		w := httptest.NewRecorder()
+		server.ServeHTTP(w, req)
+
+		resp := w.Result()
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", resp.StatusCode)
+		}
+
+		body, _ := io.ReadAll(resp.Body)
+		bodyStr := string(body)
+
+		// Verify all RSS URLs use HTTPS with correct domain
+		if !strings.Contains(bodyStr, `href="https://tens.city/posts.rss"`) {
+			t.Error("Expected site-wide RSS feed URL to use https://tens.city")
+		}
+		if !strings.Contains(bodyStr, `>https://tens.city/posts.rss<`) {
+			t.Error("Expected displayed URL to show https://tens.city/posts.rss")
+		}
+
+		// Verify user RSS feeds also use HTTPS
+		if !strings.Contains(bodyStr, `href="https://tens.city/u/alicesmith/posts.rss"`) {
+			t.Error("Expected user RSS feed URL to use https://tens.city")
+		}
+		if !strings.Contains(bodyStr, `>https://tens.city/u/alicesmith/posts.rss<`) {
+			t.Error("Expected displayed user RSS URL to show https://tens.city/u/alicesmith/posts.rss")
+		}
+	})
+}
+
 func TestSiteWideRSSFeed(t *testing.T) {
 	tmpDir := t.TempDir()
 	storage := NewFSStorage(tmpDir)

@@ -48,8 +48,9 @@ func getProxyProtocol(r *http.Request) string {
 // It checks headers in the following order:
 // 1. X-Forwarded-Host with protocol from proxy headers (X-Forwarded-Proto, X-Forwarded-Scheme, X-Forwarded-Ssl, Forwarded)
 // 2. X-Forwarded-Host alone (assumes https if protocol not detected)
-// 3. Host header (with scheme based on TLS)
-// 4. Falls back to the provided fallbackURL
+// 3. Host header with protocol from proxy headers (X-Forwarded-Proto, X-Forwarded-Scheme, X-Forwarded-Ssl, Forwarded)
+// 4. Host header with scheme based on TLS connection state
+// 5. Falls back to the provided fallbackURL
 func GetBaseURL(r *http.Request, fallbackURL string) string {
 	host := r.Header.Get("X-Forwarded-Host")
 
@@ -65,6 +66,13 @@ func GetBaseURL(r *http.Request, fallbackURL string) string {
 
 	// Check the Host header as fallback
 	if r.Host != "" {
+		// Try to detect protocol from proxy headers first (e.g., nginx proxy_set_header X-Forwarded-Proto)
+		proto := getProxyProtocol(r)
+		if proto != "" {
+			return fmt.Sprintf("%s://%s", proto, r.Host)
+		}
+		
+		// Fall back to TLS detection
 		scheme := "http"
 		if r.TLS != nil {
 			scheme = "https"
