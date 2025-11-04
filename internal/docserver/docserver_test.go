@@ -1132,3 +1132,248 @@ Content.
 		t.Error("Expected tag 'web development' in content")
 	}
 }
+
+func TestHandleTagsPage_JSONLD(t *testing.T) {
+	// Create a temporary directory with test content
+	tmpDir := t.TempDir()
+
+	// Create test markdown files with tags
+	doc1 := `---
+title: First Post
+description: A test post
+datePublished: 2025-11-01T10:00:00Z
+author:
+  name: Test Author
+  type: Person
+  url: https://github.com/test
+lang: en
+slug: first-post
+tags:
+  - golang
+  - testing
+---
+
+Content.
+`
+
+	doc2 := `---
+title: Second Post
+description: Another test post
+datePublished: 2025-11-02T10:00:00Z
+author:
+  name: Test Author
+  type: Person
+  url: https://github.com/test
+lang: en
+slug: second-post
+tags:
+  - golang
+  - web
+---
+
+More content.
+`
+
+	os.WriteFile(filepath.Join(tmpDir, "post1.md"), []byte(doc1), 0644)
+	os.WriteFile(filepath.Join(tmpDir, "post2.md"), []byte(doc2), 0644)
+
+	ds := NewDocServer(tmpDir, "http://localhost:8080", 0)
+
+	// Test GET request
+	req := httptest.NewRequest(http.MethodGet, "/tags", nil)
+	rec := httptest.NewRecorder()
+
+	ds.HandleTagsPage(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", rec.Code)
+	}
+
+	body := rec.Body.String()
+
+	// Check for JSON-LD script tag
+	if !strings.Contains(body, `<script type="application/ld+json">`) {
+		t.Error("Expected JSON-LD script tag to be present")
+	}
+
+	// Check for schema.org context
+	if !strings.Contains(body, `"@context": "https://schema.org"`) {
+		t.Error("Expected schema.org context in JSON-LD")
+	}
+
+	// Check for CollectionPage type
+	if !strings.Contains(body, `"@type": "CollectionPage"`) {
+		t.Error("Expected CollectionPage type in JSON-LD")
+	}
+
+	// Check for tags collection name
+	if !strings.Contains(body, `"name": "Tags"`) {
+		t.Error("Expected 'Tags' name in JSON-LD")
+	}
+
+	// Check for itemListElement
+	if !strings.Contains(body, `"itemListElement"`) {
+		t.Error("Expected itemListElement in JSON-LD")
+	}
+
+	// Check for DefinedTerm type for tags
+	if !strings.Contains(body, `"@type": "DefinedTerm"`) {
+		t.Error("Expected DefinedTerm type for tag items")
+	}
+
+	// Check that tag names are included
+	if !strings.Contains(body, `"name": "golang"`) {
+		t.Error("Expected tag 'golang' in JSON-LD")
+	}
+
+	// Check that tag URLs are included
+	if !strings.Contains(body, `"url": "http://localhost:8080/tags/golang"`) {
+		t.Error("Expected tag URL in JSON-LD")
+	}
+
+	// Check for numberOfItems
+	if !strings.Contains(body, `"numberOfItems"`) {
+		t.Error("Expected numberOfItems in JSON-LD")
+	}
+}
+
+func TestHandleTagPage_JSONLD(t *testing.T) {
+	// Create a temporary directory with test content
+	tmpDir := t.TempDir()
+
+	// Create test markdown files
+	doc1 := `---
+title: Golang Tutorial
+description: Learn Golang basics
+datePublished: 2025-11-01T10:00:00Z
+author:
+  name: Test Author
+  type: Person
+  url: https://github.com/test
+lang: en
+slug: golang-tutorial
+tags:
+  - golang
+  - tutorial
+---
+
+Golang content.
+`
+
+	doc2 := `---
+title: Advanced Golang
+description: Advanced Golang concepts
+datePublished: 2025-11-02T10:00:00Z
+author:
+  name: Test Author
+  type: Person
+  url: https://github.com/test
+lang: en
+slug: advanced-golang
+tags:
+  - golang
+  - advanced
+---
+
+More Golang content.
+`
+
+	doc3 := `---
+title: Python Tutorial
+description: Learn Python
+datePublished: 2025-11-03T10:00:00Z
+author:
+  name: Test Author
+  type: Person
+  url: https://github.com/test
+lang: en
+slug: python-tutorial
+tags:
+  - python
+---
+
+Python content.
+`
+
+	os.WriteFile(filepath.Join(tmpDir, "post1.md"), []byte(doc1), 0644)
+	os.WriteFile(filepath.Join(tmpDir, "post2.md"), []byte(doc2), 0644)
+	os.WriteFile(filepath.Join(tmpDir, "post3.md"), []byte(doc3), 0644)
+
+	ds := NewDocServer(tmpDir, "http://localhost:8080", 0)
+
+	// Test filtering by golang tag
+	req := httptest.NewRequest(http.MethodGet, "/tags/golang", nil)
+	rec := httptest.NewRecorder()
+
+	ds.HandleTagPage(rec, req, "golang")
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", rec.Code)
+	}
+
+	body := rec.Body.String()
+
+	// Check for JSON-LD script tag
+	if !strings.Contains(body, `<script type="application/ld+json">`) {
+		t.Error("Expected JSON-LD script tag to be present")
+	}
+
+	// Check for schema.org context
+	if !strings.Contains(body, `"@context": "https://schema.org"`) {
+		t.Error("Expected schema.org context in JSON-LD")
+	}
+
+	// Check for CollectionPage type
+	if !strings.Contains(body, `"@type": "CollectionPage"`) {
+		t.Error("Expected CollectionPage type in JSON-LD")
+	}
+
+	// Check for search results name with tag
+	if !strings.Contains(body, `"name": "Posts tagged with \"golang\""`) {
+		t.Error("Expected 'Posts tagged with \"golang\"' name in JSON-LD")
+	}
+
+	// Check for itemListElement
+	if !strings.Contains(body, `"itemListElement"`) {
+		t.Error("Expected itemListElement in JSON-LD")
+	}
+
+	// Check for Article type in items
+	if !strings.Contains(body, `"@type": "Article"`) {
+		t.Error("Expected Article type for post items")
+	}
+
+	// Check that golang posts are included
+	if !strings.Contains(body, `"headline": "Golang Tutorial"`) {
+		t.Error("Expected 'Golang Tutorial' headline in JSON-LD")
+	}
+
+	if !strings.Contains(body, `"headline": "Advanced Golang"`) {
+		t.Error("Expected 'Advanced Golang' headline in JSON-LD")
+	}
+
+	// Check that non-golang posts are NOT included
+	if strings.Contains(body, `"headline": "Python Tutorial"`) {
+		t.Error("Did not expect 'Python Tutorial' in golang tag results")
+	}
+
+	// Check for post URLs
+	if !strings.Contains(body, `"url": "http://localhost:8080/posts/golang-tutorial"`) {
+		t.Error("Expected post URL in JSON-LD")
+	}
+
+	// Check for numberOfItems (should be 2 golang posts)
+	if !strings.Contains(body, `"numberOfItems": 2`) {
+		t.Error("Expected numberOfItems to be 2 for golang tag")
+	}
+
+	// Check for descriptions
+	if !strings.Contains(body, `"description": "Learn Golang basics"`) {
+		t.Error("Expected post description in JSON-LD")
+	}
+
+	// Check for dates
+	if !strings.Contains(body, `"datePublished": "2025-11-01T10:00:00Z"`) {
+		t.Error("Expected datePublished in JSON-LD")
+	}
+}
