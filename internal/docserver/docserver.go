@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -1010,8 +1011,9 @@ func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
 			}
 
 			escapedTag := html.EscapeString(tagInfo.Tag)
+			urlEncodedTag := url.PathEscape(tagInfo.Tag)
 			fmt.Fprintf(w, `            <a href="/tags/%s" style="font-size: %.2frem;" title="%s (%d post%s)">%s</a>
-`, escapedTag, fontSize, escapedTag, tagInfo.Count, pluralize(tagInfo.Count), escapedTag)
+`, urlEncodedTag, fontSize, escapedTag, tagInfo.Count, pluralize(tagInfo.Count), escapedTag)
 		}
 	}
 

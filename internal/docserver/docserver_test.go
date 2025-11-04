@@ -1068,3 +1068,67 @@ Content.
 		t.Error("Expected 'No posts found' message")
 	}
 }
+
+func TestHandleTagPage_URLEncoding(t *testing.T) {
+	// Create a temporary directory with test content
+	tmpDir := t.TempDir()
+
+	// Create test markdown file with a tag containing special characters
+	doc1 := `---
+title: Test Post
+description: A test post
+datePublished: 2025-11-01T10:00:00Z
+author:
+  name: Test Author
+  type: Person
+  url: https://github.com/test
+lang: en
+slug: test-post
+tags:
+  - schema.org
+  - web development
+---
+
+Content.
+`
+
+	os.WriteFile(filepath.Join(tmpDir, "post1.md"), []byte(doc1), 0644)
+
+	ds := NewDocServer(tmpDir, "http://localhost:8080", 0)
+
+	// Test filtering by a tag with special characters
+	req := httptest.NewRequest(http.MethodGet, "/tags/schema.org", nil)
+	rec := httptest.NewRecorder()
+
+	ds.HandleTagPage(rec, req, "schema.org")
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", rec.Code)
+	}
+
+	body := rec.Body.String()
+
+	if !strings.Contains(body, "schema.org") {
+		t.Error("Expected tag 'schema.org' in content")
+	}
+
+	if !strings.Contains(body, "Test Post") {
+		t.Error("Expected 'Test Post' to be listed")
+	}
+
+	// Test tag with space
+	req = httptest.NewRequest(http.MethodGet, "/tags/web%20development", nil)
+	rec = httptest.NewRecorder()
+
+	ds.HandleTagPage(rec, req, "web development")
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", rec.Code)
+	}
+
+	body = rec.Body.String()
+
+	if !strings.Contains(body, "web development") {
+		t.Error("Expected tag 'web development' in content")
+	}
+}
