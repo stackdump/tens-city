@@ -833,6 +833,71 @@ func (ds *DocServer) collectTags() ([]TagInfo, error) {
 	return tags, nil
 }
 
+// buildTagsCollectionJSONLD creates a JSON-LD CollectionPage for all tags
+func (ds *DocServer) buildTagsCollectionJSONLD(tags []TagInfo) map[string]interface{} {
+	// Build items list for each tag
+	items := make([]interface{}, 0, len(tags))
+	for i, tagInfo := range tags {
+		item := map[string]interface{}{
+			"@type":    "ListItem",
+			"position": i + 1,
+			"item": map[string]interface{}{
+				"@type": "DefinedTerm",
+				"name":  tagInfo.Tag,
+				"url":   fmt.Sprintf("%s/tags/%s", ds.baseURL, url.PathEscape(tagInfo.Tag)),
+			},
+		}
+		items = append(items, item)
+	}
+
+	return map[string]interface{}{
+		"@context":        "https://schema.org",
+		"@type":           "CollectionPage",
+		"name":            "Tags",
+		"description":     "Collection of all tags used in blog posts",
+		"url":             fmt.Sprintf("%s/tags", ds.baseURL),
+		"numberOfItems":   len(items),
+		"itemListElement": items,
+	}
+}
+
+// buildTagSearchResultsJSONLD creates a JSON-LD CollectionPage for tag search results
+func (ds *DocServer) buildTagSearchResultsJSONLD(tag string, docs []*markdown.Document) map[string]interface{} {
+	// Build items list for each document
+	items := make([]interface{}, 0, len(docs))
+	for i, doc := range docs {
+		item := map[string]interface{}{
+			"@type":    "ListItem",
+			"position": i + 1,
+			"item": map[string]interface{}{
+				"@type":    "Article",
+				"headline": doc.Frontmatter.Title,
+				"url":      fmt.Sprintf("%s/posts/%s", ds.baseURL, doc.Frontmatter.Slug),
+			},
+		}
+
+		if doc.Frontmatter.Description != "" {
+			item["item"].(map[string]interface{})["description"] = doc.Frontmatter.Description
+		}
+
+		if doc.Frontmatter.DatePublished != "" {
+			item["item"].(map[string]interface{})["datePublished"] = doc.Frontmatter.DatePublished
+		}
+
+		items = append(items, item)
+	}
+
+	return map[string]interface{}{
+		"@context":        "https://schema.org",
+		"@type":           "CollectionPage",
+		"name":            fmt.Sprintf("Posts tagged with \"%s\"", tag),
+		"description":     fmt.Sprintf("Blog posts tagged with %s", tag),
+		"url":             fmt.Sprintf("%s/tags/%s", ds.baseURL, url.PathEscape(tag)),
+		"numberOfItems":   len(items),
+		"itemListElement": items,
+	}
+}
+
 // HandleTagsPage handles GET /tags - display word cloud of all tags
 func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
@@ -843,6 +908,14 @@ func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
 	tags, err := ds.collectTags()
 	if err != nil {
 		http.Error(w, "Failed to load tags", http.StatusInternalServerError)
+		return
+	}
+
+	// Build JSON-LD for the tags collection
+	jsonld := ds.buildTagsCollectionJSONLD(tags)
+	jsonldBytes, err := json.MarshalIndent(jsonld, "    ", "  ")
+	if err != nil {
+		http.Error(w, "Failed to generate JSON-LD", http.StatusInternalServerError)
 		return
 	}
 
@@ -860,6 +933,9 @@ func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Tags - Tens City</title>
+    <script type="application/ld+json">
+    %s
+    </script>
     <style>
         * {
             margin: 0;
@@ -995,7 +1071,7 @@ func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
         <a href="/" class="back-link">← Back to Home</a>
         
         <div class="tag-cloud">
-`)
+`, jsonldBytes)
 
 	if len(tags) == 0 {
 		fmt.Fprintf(w, `            <div class="empty-state">No tags found</div>
@@ -1078,6 +1154,14 @@ func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag s
 	// Sort by DatePublished descending (newest first), then by Title ascending
 	markdown.SortDocumentsByDate(filteredDocs)
 
+	// Build JSON-LD for the tag search results
+	jsonld := ds.buildTagSearchResultsJSONLD(tag, filteredDocs)
+	jsonldBytes, err := json.MarshalIndent(jsonld, "    ", "  ")
+	if err != nil {
+		http.Error(w, "Failed to generate JSON-LD", http.StatusInternalServerError)
+		return
+	}
+
 	escapedTag := html.EscapeString(tag)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -1087,6 +1171,9 @@ func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag s
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Tag: %s - Tens City</title>
+    <script type="application/ld+json">
+    %s
+    </script>
     <style>
         * {
             margin: 0;
@@ -1238,7 +1325,7 @@ func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag s
         <a href="/tags" class="back-link">← All Tags</a>
         
         <ul class="post-list">
-`, escapedTag, escapedTag, len(filteredDocs), pluralize(len(filteredDocs)), escapedTag)
+`, escapedTag, jsonldBytes, escapedTag, len(filteredDocs), pluralize(len(filteredDocs)), escapedTag)
 
 	if len(filteredDocs) == 0 {
 		fmt.Fprintf(w, `            <div class="empty-state">No posts found with this tag</div>
