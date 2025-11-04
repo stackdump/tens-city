@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -107,13 +108,13 @@ func sanitizeHTML(html string) string {
 	// Allow additional safe elements for documentation
 	p.AllowAttrs("id").Matching(regexp.MustCompile(`^[a-zA-Z0-9\-_]+$`)).OnElements("h1", "h2", "h3", "h4", "h5", "h6")
 	p.AllowAttrs("class").Matching(regexp.MustCompile(`^[a-zA-Z0-9\s\-_]+$`)).OnElements("code", "pre")
-	
+
 	// Allow Mermaid diagram elements - diagrams wrapped in <pre class="mermaid"> for client-side rendering
 	p.AllowAttrs("class").Matching(regexp.MustCompile(`^mermaid$`)).OnElements("pre")
-	
+
 	// Allow SVG elements for diagrams
 	p.AllowElements("svg", "g", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text", "tspan", "defs", "use", "clipPath", "mask", "title", "desc")
-	
+
 	// Allow SVG-specific attributes only on SVG elements (not globally for security)
 	p.AllowAttrs("xmlns", "xmlns:xlink", "version", "viewBox", "width", "height", "preserveAspectRatio").OnElements("svg")
 	p.AllowAttrs("d").OnElements("path")
@@ -126,7 +127,7 @@ func sanitizeHTML(html string) string {
 	p.AllowAttrs("points").OnElements("polyline", "polygon")
 	p.AllowAttrs("x", "y", "font-family", "font-size", "text-anchor", "dominant-baseline").OnElements("text", "tspan")
 	p.AllowAttrs("class", "id").OnElements("svg", "g", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text")
-	
+
 	return p.Sanitize(html)
 }
 
@@ -271,16 +272,29 @@ func ListDocuments(contentDir string) ([]*Document, error) {
 }
 
 // BuildCollectionIndex creates a schema.org CollectionPage index
-func BuildCollectionIndex(docs []*Document, baseURL string) map[string]interface{} {
+// limit controls how many items to include (0 means no limit)
+func BuildCollectionIndex(docs []*Document, baseURL string, limit int) map[string]interface{} {
 	now := time.Now().Format(time.RFC3339)
 
-	items := make([]interface{}, 0)
+	// Filter out drafts and collect non-draft documents
+	var publicDocs []*Document
 	for _, doc := range docs {
-		// Skip drafts in the public index
-		if doc.Frontmatter.Draft {
-			continue
+		if !doc.Frontmatter.Draft {
+			publicDocs = append(publicDocs, doc)
 		}
+	}
 
+	// Sort by DatePublished descending (newest first), then by Title ascending
+	SortDocumentsByDate(publicDocs)
+
+	// Apply limit if specified
+	if limit > 0 && len(publicDocs) > limit {
+		publicDocs = publicDocs[:limit]
+	}
+
+	// Build the items list
+	items := make([]interface{}, 0, len(publicDocs))
+	for _, doc := range publicDocs {
 		item := map[string]interface{}{
 			"@type":    "ListItem",
 			"position": len(items) + 1,
@@ -345,4 +359,35 @@ func ValidateFrontmatter(fm Frontmatter) error {
 // SerializeJSONLD serializes JSON-LD to formatted JSON
 func SerializeJSONLD(jsonld map[string]interface{}) ([]byte, error) {
 	return json.MarshalIndent(jsonld, "", "  ")
+}
+
+// SortDocumentsByDate sorts documents by DatePublished descending (newest first),
+// then by Title ascending for items with the same date
+func SortDocumentsByDate(docs []*Document) {
+	sort.Slice(docs, func(i, j int) bool {
+		// Parse dates for comparison
+		dateI, errI := time.Parse(time.RFC3339, docs[i].Frontmatter.DatePublished)
+		dateJ, errJ := time.Parse(time.RFC3339, docs[j].Frontmatter.DatePublished)
+
+		// If both dates are valid, compare them
+		if errI == nil && errJ == nil {
+			if !dateI.Equal(dateJ) {
+				// Descending order (newest first)
+				return dateI.After(dateJ)
+			}
+			// If dates are equal, sort by title ascending
+			return docs[i].Frontmatter.Title < docs[j].Frontmatter.Title
+		}
+
+		// If one date is invalid, put it after valid dates
+		if errI != nil && errJ == nil {
+			return false
+		}
+		if errI == nil && errJ != nil {
+			return true
+		}
+
+		// If both dates are invalid, sort by title
+		return docs[i].Frontmatter.Title < docs[j].Frontmatter.Title
+	})
 }

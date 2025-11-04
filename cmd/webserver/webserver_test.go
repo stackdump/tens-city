@@ -190,7 +190,7 @@ This is a test post.
 	}
 
 	// Create docserver with the test content
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0)
 	server := NewServer(storage, publicFS, docServer)
 
 	// Test serving index.html at root with JSON-LD
@@ -292,7 +292,7 @@ This is Bob's post.
 	}
 
 	// Create docserver with the test content
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0)
 	server := NewServer(storage, publicFS, docServer)
 
 	// Test serving /rss page
@@ -404,7 +404,7 @@ This is Bob's post.
 	}
 
 	// Create docserver with the test content
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0)
 	server := NewServer(storage, publicFS, docServer)
 
 	// Test serving /posts.rss site-wide feed

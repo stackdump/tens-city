@@ -74,7 +74,7 @@ Content of Bob's post.
 	}
 
 	// Create docserver
-	ds := NewDocServer(tmpDir, "https://tens.city")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0)
 
 	// Create test request
 	req := httptest.NewRequest(http.MethodGet, "/u/alice/posts.rss", nil)
@@ -153,7 +153,7 @@ Content
 		t.Fatal(err)
 	}
 
-	ds := NewDocServer(tmpDir, "https://tens.city")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0)
 
 	// Request Bob's feed
 	req := httptest.NewRequest(http.MethodGet, "/u/bob/posts.rss", nil)
@@ -214,7 +214,7 @@ Content
 		t.Fatal(err)
 	}
 
-	ds := NewDocServer(tmpDir, "https://tens.city")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0)
 
 	req := httptest.NewRequest(http.MethodGet, "/u/alice/posts.rss", nil)
 	rec := httptest.NewRecorder()
@@ -255,7 +255,7 @@ Content
 		t.Fatal(err)
 	}
 
-	ds := NewDocServer(tmpDir, "https://tens.city")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0)
 
 	// Request feed for a user with no posts
 	req := httptest.NewRequest(http.MethodGet, "/u/bob/posts.rss", nil)
@@ -279,7 +279,7 @@ Content
 
 func TestHandleUserRSS_OnlyGetMethod(t *testing.T) {
 	tmpDir := t.TempDir()
-	ds := NewDocServer(tmpDir, "https://tens.city")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0)
 
 	// Test GET is allowed
 	req := httptest.NewRequest(http.MethodGet, "/u/alice/posts.rss", nil)
@@ -343,7 +343,7 @@ Content
 		t.Fatal(err)
 	}
 
-	ds := NewDocServer(tmpDir, "https://tens.city")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0)
 
 	// Request Alice's feed
 	req := httptest.NewRequest(http.MethodGet, "/u/alice/posts.rss", nil)
@@ -381,7 +381,7 @@ Content
 		t.Fatal(err)
 	}
 
-	ds := NewDocServer(tmpDir, "https://tens.city")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0)
 
 	req := httptest.NewRequest(http.MethodGet, "/u/alice/posts.rss", nil)
 	rec := httptest.NewRecorder()
@@ -585,7 +585,7 @@ Content of Alice's second post.
 	}
 
 	// Create docserver
-	ds := NewDocServer(tmpDir, "https://tens.city")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0)
 
 	// Create test request
 	req := httptest.NewRequest(http.MethodGet, "/posts.rss", nil)
@@ -676,7 +676,7 @@ Content
 		t.Fatal(err)
 	}
 
-	ds := NewDocServer(tmpDir, "https://tens.city")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0)
 
 	req := httptest.NewRequest(http.MethodGet, "/posts.rss", nil)
 	rec := httptest.NewRecorder()
@@ -700,7 +700,7 @@ Content
 func TestHandleSiteRSS_EmptyFeed(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	ds := NewDocServer(tmpDir, "https://tens.city")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0)
 
 	// Request site feed with no posts
 	req := httptest.NewRequest(http.MethodGet, "/posts.rss", nil)
@@ -724,7 +724,7 @@ func TestHandleSiteRSS_EmptyFeed(t *testing.T) {
 
 func TestHandleSiteRSS_OnlyGetMethod(t *testing.T) {
 	tmpDir := t.TempDir()
-	ds := NewDocServer(tmpDir, "https://tens.city")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0)
 
 	// Test GET is allowed
 	req := httptest.NewRequest(http.MethodGet, "/posts.rss", nil)

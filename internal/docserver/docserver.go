@@ -21,6 +21,7 @@ import (
 type DocServer struct {
 	contentDir string
 	baseURL    string
+	indexLimit int // Maximum number of items to show in index (0 = no limit)
 	cache      *DocumentCache
 }
 
@@ -46,10 +47,11 @@ type CachedIndex struct {
 }
 
 // NewDocServer creates a new document server
-func NewDocServer(contentDir, baseURL string) *DocServer {
+func NewDocServer(contentDir, baseURL string, indexLimit int) *DocServer {
 	return &DocServer{
 		contentDir: contentDir,
 		baseURL:    baseURL,
+		indexLimit: indexLimit,
 		cache: &DocumentCache{
 			docs: make(map[string]*CachedDoc),
 		},
@@ -158,7 +160,7 @@ func (ds *DocServer) loadIndex() (*CachedIndex, error) {
 		return nil, err
 	}
 
-	index := markdown.BuildCollectionIndex(docs, ds.baseURL)
+	index := markdown.BuildCollectionIndex(docs, ds.baseURL, ds.indexLimit)
 	data, err := json.MarshalIndent(index, "", "  ")
 	if err != nil {
 		return nil, err
@@ -196,6 +198,14 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 		if !doc.Frontmatter.Draft {
 			publicDocs = append(publicDocs, doc)
 		}
+	}
+
+	// Sort by DatePublished descending (newest first), then by Title ascending
+	markdown.SortDocumentsByDate(publicDocs)
+
+	// Apply limit if specified
+	if ds.indexLimit > 0 && len(publicDocs) > ds.indexLimit {
+		publicDocs = publicDocs[:ds.indexLimit]
 	}
 
 	// Load cached JSON-LD index
@@ -626,9 +636,9 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
 
 	// Render HTML page
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	
+
 	allPostsFeedURL := fmt.Sprintf("%s/posts.rss", ds.baseURL)
-	
+
 	fmt.Fprintf(w, `<!DOCTYPE html>
 <html lang="en">
 <head>
