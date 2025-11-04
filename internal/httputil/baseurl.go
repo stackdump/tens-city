@@ -71,7 +71,7 @@ func GetBaseURL(r *http.Request, fallbackURL string) string {
 		if proto != "" {
 			return fmt.Sprintf("%s://%s", proto, r.Host)
 		}
-		
+
 		// Fall back to TLS detection
 		scheme := "http"
 		if r.TLS != nil {

@@ -518,10 +518,9 @@ This is a test post.
 		// proxy_set_header Host $host;
 		// proxy_set_header X-Forwarded-Proto $scheme;
 		// proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-		req.Header.Set("Host", "tens.city")
+		req.Host = "tens.city" // Set request Host to match nginx's Host header
 		req.Header.Set("X-Forwarded-Proto", "https")
 		req.Header.Set("X-Forwarded-For", "192.0.2.1")
-		req.Host = "tens.city" // Set request Host to match nginx's Host header
 		w := httptest.NewRecorder()
 		server.ServeHTTP(w, req)
 
