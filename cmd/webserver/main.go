@@ -53,10 +53,10 @@ func (fs *FSStorage) ReadMarkdownContent(cid string) ([]byte, error) {
 }
 
 type Server struct {
-	storage        Storage
-	publicFS       fs.FS
-	docServer      *docserver.DocServer
-	fallbackURL    string // Fallback Base URL when headers are not available
+	storage     Storage
+	publicFS    fs.FS
+	docServer   *docserver.DocServer
+	fallbackURL string // Fallback Base URL when headers are not available
 }
 
 func NewServer(storage Storage, publicFS fs.FS, docServer *docserver.DocServer, fallbackURL string) *Server {
@@ -179,7 +179,7 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	// If docServer is available, inject JSON-LD script tag and RSS link
 	if s.docServer != nil {
 		baseURL := html.EscapeString(httputil.GetBaseURL(r, s.fallbackURL))
-		
+
 		// Add RSS autodiscovery link
 		rssLink := fmt.Sprintf(`    <link rel="alternate" type="application/rss+xml" title="All Posts - Tens City" href="%s/posts.rss">
 `, baseURL)
@@ -341,7 +341,7 @@ func main() {
 
 	log.Printf("Starting server on %s", *addr)
 	log.Println("Using embedded public files")
-	log.Println("Server will use X-Forwarded-Proto and X-Forwarded-Host headers when available")
+	log.Println("Server will detect protocol from proxy headers (X-Forwarded-Proto, X-Forwarded-Scheme, X-Forwarded-Ssl, Forwarded)")
 	if err := http.ListenAndServe(*addr, server); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}

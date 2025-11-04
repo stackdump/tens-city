@@ -3,26 +3,63 @@ package httputil
 import (
 	"fmt"
 	"net/http"
+	"strings"
 )
+
+// getProxyProtocol detects the protocol from various proxy headers
+// Returns the protocol (http/https) or empty string if not detected
+func getProxyProtocol(r *http.Request) string {
+	// Check X-Forwarded-Proto (most common)
+	if proto := r.Header.Get("X-Forwarded-Proto"); proto != "" {
+		return proto
+	}
+
+	// Check X-Forwarded-Scheme (alternative to X-Forwarded-Proto)
+	if scheme := r.Header.Get("X-Forwarded-Scheme"); scheme != "" {
+		return scheme
+	}
+
+	// Check X-Forwarded-Ssl (on/off indicator)
+	if ssl := r.Header.Get("X-Forwarded-Ssl"); ssl != "" {
+		if ssl == "on" {
+			return "https"
+		}
+		// If X-Forwarded-Ssl is explicitly set to anything other than "on" (e.g., "off"), treat as http
+		return "http"
+	}
+
+	// Check standard Forwarded header (RFC 7239)
+	if forwarded := r.Header.Get("Forwarded"); forwarded != "" {
+		// Parse "proto=https" or "proto=http" from Forwarded header
+		parts := strings.Split(forwarded, ";")
+		for _, part := range parts {
+			part = strings.TrimSpace(part)
+			if strings.HasPrefix(part, "proto=") {
+				proto := strings.TrimPrefix(part, "proto=")
+				return strings.ToLower(proto)
+			}
+		}
+	}
+
+	return ""
+}
 
 // GetBaseURL extracts the base URL from request headers (for nginx proxy) or falls back to configured URL
 // It checks headers in the following order:
-// 1. X-Forwarded-Proto + X-Forwarded-Host (nginx proxy headers)
-// 2. X-Forwarded-Host alone (assumes https)
+// 1. X-Forwarded-Host with protocol from proxy headers (X-Forwarded-Proto, X-Forwarded-Scheme, X-Forwarded-Ssl, Forwarded)
+// 2. X-Forwarded-Host alone (assumes https if protocol not detected)
 // 3. Host header (with scheme based on TLS)
 // 4. Falls back to the provided fallbackURL
 func GetBaseURL(r *http.Request, fallbackURL string) string {
-	// Check for X-Forwarded-Proto and X-Forwarded-Host headers from nginx
-	proto := r.Header.Get("X-Forwarded-Proto")
 	host := r.Header.Get("X-Forwarded-Host")
 
-	// If both headers are present, construct the base URL
-	if proto != "" && host != "" {
-		return fmt.Sprintf("%s://%s", proto, host)
-	}
-
-	// Check for X-Forwarded-Host alone (assume https if proto not specified)
+	// If X-Forwarded-Host is present, try to detect protocol from proxy headers
 	if host != "" {
+		proto := getProxyProtocol(r)
+		if proto != "" {
+			return fmt.Sprintf("%s://%s", proto, host)
+		}
+		// Assume https if protocol not detected but host is forwarded
 		return fmt.Sprintf("https://%s", host)
 	}
 
