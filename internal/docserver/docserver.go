@@ -866,22 +866,24 @@ func (ds *DocServer) buildTagSearchResultsJSONLD(tag string, docs []*markdown.Do
 	// Build items list for each document
 	items := make([]interface{}, 0, len(docs))
 	for i, doc := range docs {
-		item := map[string]interface{}{
-			"@type":    "ListItem",
-			"position": i + 1,
-			"item": map[string]interface{}{
-				"@type":    "Article",
-				"headline": doc.Frontmatter.Title,
-				"url":      fmt.Sprintf("%s/posts/%s", ds.baseURL, doc.Frontmatter.Slug),
-			},
+		article := map[string]interface{}{
+			"@type":    "Article",
+			"headline": doc.Frontmatter.Title,
+			"url":      fmt.Sprintf("%s/posts/%s", ds.baseURL, doc.Frontmatter.Slug),
 		}
 
 		if doc.Frontmatter.Description != "" {
-			item["item"].(map[string]interface{})["description"] = doc.Frontmatter.Description
+			article["description"] = doc.Frontmatter.Description
 		}
 
 		if doc.Frontmatter.DatePublished != "" {
-			item["item"].(map[string]interface{})["datePublished"] = doc.Frontmatter.DatePublished
+			article["datePublished"] = doc.Frontmatter.DatePublished
+		}
+
+		item := map[string]interface{}{
+			"@type":    "ListItem",
+			"position": i + 1,
+			"item":     article,
 		}
 
 		items = append(items, item)
