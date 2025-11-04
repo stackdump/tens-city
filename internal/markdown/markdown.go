@@ -108,13 +108,13 @@ func sanitizeHTML(html string) string {
 	// Allow additional safe elements for documentation
 	p.AllowAttrs("id").Matching(regexp.MustCompile(`^[a-zA-Z0-9\-_]+$`)).OnElements("h1", "h2", "h3", "h4", "h5", "h6")
 	p.AllowAttrs("class").Matching(regexp.MustCompile(`^[a-zA-Z0-9\s\-_]+$`)).OnElements("code", "pre")
-	
+
 	// Allow Mermaid diagram elements - diagrams wrapped in <pre class="mermaid"> for client-side rendering
 	p.AllowAttrs("class").Matching(regexp.MustCompile(`^mermaid$`)).OnElements("pre")
-	
+
 	// Allow SVG elements for diagrams
 	p.AllowElements("svg", "g", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text", "tspan", "defs", "use", "clipPath", "mask", "title", "desc")
-	
+
 	// Allow SVG-specific attributes only on SVG elements (not globally for security)
 	p.AllowAttrs("xmlns", "xmlns:xlink", "version", "viewBox", "width", "height", "preserveAspectRatio").OnElements("svg")
 	p.AllowAttrs("d").OnElements("path")
@@ -127,7 +127,7 @@ func sanitizeHTML(html string) string {
 	p.AllowAttrs("points").OnElements("polyline", "polygon")
 	p.AllowAttrs("x", "y", "font-family", "font-size", "text-anchor", "dominant-baseline").OnElements("text", "tspan")
 	p.AllowAttrs("class", "id").OnElements("svg", "g", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text")
-	
+
 	return p.Sanitize(html)
 }
 

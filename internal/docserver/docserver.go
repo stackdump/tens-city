@@ -661,9 +661,9 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
 
 	// Render HTML page
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	
+
 	allPostsFeedURL := fmt.Sprintf("%s/posts.rss", ds.baseURL)
-	
+
 	fmt.Fprintf(w, `<!DOCTYPE html>
 <html lang="en">
 <head>
