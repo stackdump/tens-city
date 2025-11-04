@@ -32,6 +32,40 @@ make build
 # Author RSS: http://localhost:8080/u/{author}/posts.rss
 ```
 
+## Configuration
+
+### Command-Line Flags
+
+The webserver supports the following configuration options:
+
+- `-addr` - Server address (default: `:8080`)
+- `-store` - Filesystem store directory (default: `data`)
+- `-content` - Content directory for markdown blog posts (default: `content/posts`)
+- `-base-url` - Base URL for the server (default: `http://localhost:8080`)
+- `-index-limit` - Maximum number of posts to show in index (default: `20`, use `0` for no limit)
+
+Example:
+```bash
+./webserver -addr :8080 -store data -content content/posts -base-url http://localhost:8080 -index-limit 10
+```
+
+### Environment Variables
+
+- `INDEX_LIMIT` - Maximum number of posts to show in index (overrides the `-index-limit` flag default)
+
+Example:
+```bash
+INDEX_LIMIT=10 ./webserver -addr :8080 -store data -content content/posts
+```
+
+### Post Ordering
+
+Posts in the index (both at `/posts/index.jsonld` and `/posts`) are automatically sorted by:
+1. **Date Published** (descending - newest first)
+2. **Title** (ascending - alphabetically for posts with the same date)
+
+This ensures your latest content appears first while maintaining a consistent, predictable order.
+
 ## Writing Posts
 
 Create markdown files in `content/posts/` with YAML frontmatter:
