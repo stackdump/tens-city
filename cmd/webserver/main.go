@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"html"
 	"io/fs"
 	"log"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/stackdump/tens-city/internal/docserver"
+	"github.com/stackdump/tens-city/internal/httputil"
 	"github.com/stackdump/tens-city/internal/static"
 	"github.com/stackdump/tens-city/internal/store"
 )
@@ -51,18 +53,18 @@ func (fs *FSStorage) ReadMarkdownContent(cid string) ([]byte, error) {
 }
 
 type Server struct {
-	storage   Storage
-	publicFS  fs.FS
-	docServer *docserver.DocServer
-	baseURL   string // Base URL for the server
+	storage        Storage
+	publicFS       fs.FS
+	docServer      *docserver.DocServer
+	fallbackURL    string // Fallback Base URL when headers are not available
 }
 
-func NewServer(storage Storage, publicFS fs.FS, docServer *docserver.DocServer) *Server {
+func NewServer(storage Storage, publicFS fs.FS, docServer *docserver.DocServer, fallbackURL string) *Server {
 	return &Server{
-		storage:   storage,
-		publicFS:  publicFS,
-		docServer: docServer,
-		baseURL:   "", // Will be set from command line flag
+		storage:     storage,
+		publicFS:    publicFS,
+		docServer:   docServer,
+		fallbackURL: fallbackURL,
 	}
 }
 
@@ -176,9 +178,11 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 	// If docServer is available, inject JSON-LD script tag and RSS link
 	if s.docServer != nil {
+		baseURL := html.EscapeString(httputil.GetBaseURL(r, s.fallbackURL))
+		
 		// Add RSS autodiscovery link
 		rssLink := fmt.Sprintf(`    <link rel="alternate" type="application/rss+xml" title="All Posts - Tens City" href="%s/posts.rss">
-`, s.baseURL)
+`, baseURL)
 		htmlContent = strings.Replace(htmlContent, "</head>", rssLink+"</head>", 1)
 
 		// Get the collection index JSON-LD
@@ -320,7 +324,7 @@ func main() {
 
 	log.Printf("Using filesystem storage: %s", *storeDir)
 	log.Printf("Content directory: %s", *contentDir)
-	log.Printf("Base URL: %s", *baseURL)
+	log.Printf("Fallback Base URL: %s", *baseURL)
 	log.Printf("Index limit: %d", *indexLimit)
 	storage := NewFSStorage(*storeDir)
 
@@ -330,14 +334,14 @@ func main() {
 		log.Fatalf("Failed to access embedded public files: %v", err)
 	}
 
-	// Create document server
+	// Create document server with fallback URL
 	docServer := docserver.NewDocServer(*contentDir, *baseURL, *indexLimit)
 
-	server := NewServer(storage, publicSubFS, docServer)
-	server.baseURL = *baseURL // Set the base URL from command line flag
+	server := NewServer(storage, publicSubFS, docServer, *baseURL)
 
 	log.Printf("Starting server on %s", *addr)
 	log.Println("Using embedded public files")
+	log.Println("Server will use X-Forwarded-Proto and X-Forwarded-Host headers when available")
 	if err := http.ListenAndServe(*addr, server); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}

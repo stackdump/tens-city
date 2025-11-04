@@ -1,0 +1,9 @@
+nohup: ignoring input
+2025/11/04 10:37:08 Using filesystem storage: data
+2025/11/04 10:37:08 Content directory: content/posts
+2025/11/04 10:37:08 Fallback Base URL: http://localhost:8080
+2025/11/04 10:37:08 Index limit: 20
+2025/11/04 10:37:08 Starting server on :8080
+2025/11/04 10:37:08 Using embedded public files
+2025/11/04 10:37:08 Server will use X-Forwarded-Proto and X-Forwarded-Host headers when available
+2025/11/04 10:37:08 Server failed: listen tcp :8080: bind: address already in use
