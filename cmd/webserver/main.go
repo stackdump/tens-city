@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/stackdump/tens-city/internal/docserver"
+	"github.com/stackdump/tens-city/internal/httputil"
 	"github.com/stackdump/tens-city/internal/static"
 	"github.com/stackdump/tens-city/internal/store"
 )
@@ -64,35 +65,6 @@ func NewServer(storage Storage, publicFS fs.FS, docServer *docserver.DocServer, 
 		docServer:   docServer,
 		fallbackURL: fallbackURL,
 	}
-}
-
-// getBaseURL extracts the base URL from request headers (for nginx proxy) or falls back to configured URL
-func (s *Server) getBaseURL(r *http.Request) string {
-	// Check for X-Forwarded-Proto and X-Forwarded-Host headers from nginx
-	proto := r.Header.Get("X-Forwarded-Proto")
-	host := r.Header.Get("X-Forwarded-Host")
-	
-	// If both headers are present, construct the base URL
-	if proto != "" && host != "" {
-		return fmt.Sprintf("%s://%s", proto, host)
-	}
-	
-	// Check for X-Forwarded-Host alone (assume https if proto not specified)
-	if host != "" {
-		return fmt.Sprintf("https://%s", host)
-	}
-	
-	// Check the Host header as fallback
-	if r.Host != "" {
-		scheme := "http"
-		if r.TLS != nil {
-			scheme = "https"
-		}
-		return fmt.Sprintf("%s://%s", scheme, r.Host)
-	}
-	
-	// Use configured fallback URL
-	return s.fallbackURL
 }
 
 // Handler for /o/{cid} - get object by CID
@@ -205,7 +177,7 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 	// If docServer is available, inject JSON-LD script tag and RSS link
 	if s.docServer != nil {
-		baseURL := s.getBaseURL(r)
+		baseURL := httputil.GetBaseURL(r, s.fallbackURL)
 		
 		// Add RSS autodiscovery link
 		rssLink := fmt.Sprintf(`    <link rel="alternate" type="application/rss+xml" title="All Posts - Tens City" href="%s/posts.rss">

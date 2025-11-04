@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/stackdump/tens-city/internal/httputil"
 	"github.com/stackdump/tens-city/internal/markdown"
 	"github.com/stackdump/tens-city/internal/rss"
 )
@@ -57,35 +58,6 @@ func NewDocServer(contentDir, fallbackURL string, indexLimit int) *DocServer {
 			docs: make(map[string]*CachedDoc),
 		},
 	}
-}
-
-// getBaseURL extracts the base URL from request headers (for nginx proxy) or falls back to configured URL
-func (ds *DocServer) getBaseURL(r *http.Request) string {
-	// Check for X-Forwarded-Proto and X-Forwarded-Host headers from nginx
-	proto := r.Header.Get("X-Forwarded-Proto")
-	host := r.Header.Get("X-Forwarded-Host")
-	
-	// If both headers are present, construct the base URL
-	if proto != "" && host != "" {
-		return fmt.Sprintf("%s://%s", proto, host)
-	}
-	
-	// Check for X-Forwarded-Host alone (assume https if proto not specified)
-	if host != "" {
-		return fmt.Sprintf("https://%s", host)
-	}
-	
-	// Check the Host header as fallback
-	if r.Host != "" {
-		scheme := "http"
-		if r.TLS != nil {
-			scheme = "https"
-		}
-		return fmt.Sprintf("%s://%s", scheme, r.Host)
-	}
-	
-	// Use configured fallback URL
-	return ds.fallbackURL
 }
 
 // loadDocument loads and caches a document
@@ -217,7 +189,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	baseURL := ds.getBaseURL(r)
+	baseURL := httputil.GetBaseURL(r, ds.fallbackURL)
 
 	docs, err := markdown.ListDocuments(ds.contentDir)
 	if err != nil {
@@ -309,7 +281,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 		return
 	}
 
-	baseURL := ds.getBaseURL(r)
+	baseURL := httputil.GetBaseURL(r, ds.fallbackURL)
 
 	// Check Accept header for content negotiation
 	accept := r.Header.Get("Accept")
@@ -513,7 +485,7 @@ func (ds *DocServer) HandleDocJSONLD(w http.ResponseWriter, r *http.Request, slu
 		return
 	}
 
-	baseURL := ds.getBaseURL(r)
+	baseURL := httputil.GetBaseURL(r, ds.fallbackURL)
 
 	cached, err := ds.loadDocument(slug)
 	if err != nil {
@@ -598,7 +570,7 @@ func (ds *DocServer) HandleUserRSS(w http.ResponseWriter, r *http.Request, userN
 		return
 	}
 
-	baseURL := ds.getBaseURL(r)
+	baseURL := httputil.GetBaseURL(r, ds.fallbackURL)
 
 	// Load all posts
 	docs, err := markdown.ListDocuments(ds.contentDir)
@@ -640,7 +612,7 @@ func (ds *DocServer) HandleSiteRSS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	baseURL := ds.getBaseURL(r)
+	baseURL := httputil.GetBaseURL(r, ds.fallbackURL)
 
 	// Load all posts
 	docs, err := markdown.ListDocuments(ds.contentDir)
@@ -667,7 +639,7 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	baseURL := ds.getBaseURL(r)
+	baseURL := httputil.GetBaseURL(r, ds.fallbackURL)
 
 	// Load all posts
 	docs, err := markdown.ListDocuments(ds.contentDir)
@@ -977,7 +949,7 @@ func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	baseURL := ds.getBaseURL(r)
+	baseURL := httputil.GetBaseURL(r, ds.fallbackURL)
 
 	tags, err := ds.collectTags()
 	if err != nil {
@@ -1188,7 +1160,7 @@ func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag s
 		return
 	}
 
-	baseURL := ds.getBaseURL(r)
+	baseURL := httputil.GetBaseURL(r, ds.fallbackURL)
 
 	// Load all documents
 	docs, err := markdown.ListDocuments(ds.contentDir)
