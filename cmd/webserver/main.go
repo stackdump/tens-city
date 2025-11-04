@@ -219,6 +219,19 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			s.docServer.HandleRSSList(w, r)
 			return
 		}
+		if r.URL.Path == "/tags" {
+			s.docServer.HandleTagsPage(w, r)
+			return
+		}
+		if strings.HasPrefix(r.URL.Path, "/tags/") {
+			tag := strings.TrimPrefix(r.URL.Path, "/tags/")
+			if tag != "" {
+				s.docServer.HandleTagPage(w, r, tag)
+			} else {
+				s.docServer.HandleTagsPage(w, r)
+			}
+			return
+		}
 		if strings.HasPrefix(r.URL.Path, "/posts/") {
 			slug := strings.TrimPrefix(r.URL.Path, "/posts/")
 			// Check for .jsonld extension

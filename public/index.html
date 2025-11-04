@@ -157,6 +157,8 @@
             font-size: 0.8125rem;
             font-weight: 500;
             transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
         }
         
         .tag:hover {
@@ -241,6 +243,7 @@
     
     <footer>
         <p>
+            <a href="/tags">🏷️ Tags</a> • 
             <a href="/rss">📡 RSS Feeds</a> • 
             Built with <a href="https://github.com/stackdump/tens-city" target="_blank">Tens City</a> • 
             A simple, elegant blog platform
@@ -355,10 +358,11 @@
                     tagsDiv.className = 'post-tags';
                     
                     post.keywords.slice(0, 4).forEach(tag => {
-                        const tagSpan = document.createElement('span');
-                        tagSpan.className = 'tag';
-                        tagSpan.textContent = tag;
-                        tagsDiv.appendChild(tagSpan);
+                        const tagLink = document.createElement('a');
+                        tagLink.href = `/tags/${encodeURIComponent(tag)}`;
+                        tagLink.className = 'tag';
+                        tagLink.textContent = tag;
+                        tagsDiv.appendChild(tagLink);
                     });
                     
                     content.appendChild(tagsDiv);
