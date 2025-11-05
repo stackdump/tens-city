@@ -15,6 +15,7 @@ import (
 
 	"github.com/stackdump/tens-city/internal/docserver"
 	"github.com/stackdump/tens-city/internal/httputil"
+	"github.com/stackdump/tens-city/internal/logger"
 	"github.com/stackdump/tens-city/internal/static"
 	"github.com/stackdump/tens-city/internal/store"
 )
@@ -204,8 +205,6 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Printf("%s %s", r.Method, r.URL.Path)
-
 	// Blog post routes (only if docServer is configured)
 	if s.docServer != nil {
 		if r.URL.Path == "/posts" {
@@ -311,6 +310,8 @@ func main() {
 	contentDir := flag.String("content", "content/posts", "Content directory for markdown blog posts")
 	baseURL := flag.String("base-url", "http://localhost:8080", "Base URL for the server")
 	indexLimit := flag.Int("index-limit", 20, "Maximum number of posts to show in index (0 = no limit)")
+	jsonlLog := flag.Bool("jsonl", false, "Use JSONL format for logging")
+	logHeaders := flag.Bool("log-headers", false, "Log incoming request headers (useful for debugging RSS http/https behavior)")
 	flag.Parse()
 
 	// Check for INDEX_LIMIT environment variable (overrides flag default)
@@ -322,10 +323,20 @@ func main() {
 		}
 	}
 
-	log.Printf("Using filesystem storage: %s", *storeDir)
-	log.Printf("Content directory: %s", *contentDir)
-	log.Printf("Fallback Base URL: %s", *baseURL)
-	log.Printf("Index limit: %d", *indexLimit)
+	// Create logger based on format
+	var appLogger logger.Logger
+	if *jsonlLog {
+		appLogger = logger.NewJSONLLogger(os.Stdout)
+		appLogger.LogInfo("Using JSONL logging format")
+	} else {
+		appLogger = logger.NewTextLogger()
+	}
+
+	appLogger.LogInfo(fmt.Sprintf("Using filesystem storage: %s", *storeDir))
+	appLogger.LogInfo(fmt.Sprintf("Content directory: %s", *contentDir))
+	appLogger.LogInfo(fmt.Sprintf("Fallback Base URL: %s", *baseURL))
+	appLogger.LogInfo(fmt.Sprintf("Index limit: %d", *indexLimit))
+	appLogger.LogInfo(fmt.Sprintf("Header logging: %v", *logHeaders))
 	storage := NewFSStorage(*storeDir)
 
 	// Get the embedded public filesystem
@@ -339,10 +350,13 @@ func main() {
 
 	server := NewServer(storage, publicSubFS, docServer, *baseURL)
 
-	log.Printf("Starting server on %s", *addr)
-	log.Println("Using embedded public files")
-	log.Println("Server will detect protocol from proxy headers (X-Forwarded-Proto, X-Forwarded-Scheme, X-Forwarded-Ssl, Forwarded)")
-	if err := http.ListenAndServe(*addr, server); err != nil {
+	// Wrap server with logging middleware
+	handler := logger.LoggingMiddleware(appLogger, *logHeaders)(server)
+
+	appLogger.LogInfo(fmt.Sprintf("Starting server on %s", *addr))
+	appLogger.LogInfo("Using embedded public files")
+	appLogger.LogInfo("Server will detect protocol from proxy headers (X-Forwarded-Proto, X-Forwarded-Scheme, X-Forwarded-Ssl, Forwarded)")
+	if err := http.ListenAndServe(*addr, handler); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
 }

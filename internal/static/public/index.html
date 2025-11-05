@@ -251,6 +251,45 @@
     </footer>
     
     <script>
+        // Browser-side logging utility
+        const BrowserLogger = {
+            log: function(level, message, data = {}) {
+                const entry = {
+                    timestamp: new Date().toISOString(),
+                    level: level,
+                    message: message,
+                    url: window.location.href,
+                    userAgent: navigator.userAgent,
+                    ...data
+                };
+                
+                // Log to console with appropriate method
+                const consoleMethods = {
+                    'error': 'error',
+                    'warn': 'warn',
+                    'debug': 'log',
+                    'info': 'log'
+                };
+                const consoleMethod = consoleMethods[level] || 'log';
+                console[consoleMethod](`[${level.toUpperCase()}]`, message, data);
+                
+                // Optional: Send to server if needed in the future
+                // this.sendToServer(entry);
+            },
+            
+            info: function(message, data) {
+                this.log('info', message, data);
+            },
+            
+            error: function(message, data) {
+                this.log('error', message, data);
+            },
+            
+            debug: function(message, data) {
+                this.log('debug', message, data);
+            }
+        };
+        
         // Extract slug from URL
         function extractSlugFromUrl(url) {
             if (!url) return null;
@@ -277,13 +316,25 @@
             const postsEl = document.getElementById('posts');
             
             try {
+                BrowserLogger.info('Loading posts from /posts/index.jsonld');
                 const response = await fetch('/posts/index.jsonld');
+                
+                BrowserLogger.debug('Response received', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: {
+                        'content-type': response.headers.get('content-type')
+                    }
+                });
+                
                 if (!response.ok) {
                     throw new Error('Failed to load posts');
                 }
                 
                 const index = await response.json();
                 const items = index.itemListElement || [];
+                
+                BrowserLogger.info(`Loaded ${items.length} posts`);
                 
                 if (items.length === 0) {
                     postsEl.innerHTML = '<div class="error">No posts found</div>';
@@ -293,6 +344,7 @@
                 renderPostGrid(items);
                 
             } catch (err) {
+                BrowserLogger.error('Failed to load posts', { error: err.message });
                 console.error('Failed to load posts:', err);
                 postsEl.innerHTML = '<div class="error">Failed to load posts. Please try again later.</div>';
             }
