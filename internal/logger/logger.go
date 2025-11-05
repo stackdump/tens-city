@@ -142,7 +142,7 @@ func (l *JSONLLogger) LogHeaders(r *http.Request) {
 func (l *JSONLLogger) writeEntry(entry LogEntry) {
 	data, err := json.Marshal(entry)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to marshal log entry: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to marshal log entry (level=%s, message=%s): %v\n", entry.Level, entry.Message, err)
 		return
 	}
 	fmt.Fprintf(l.writer, "%s\n", data)

@@ -264,7 +264,13 @@
                 };
                 
                 // Log to console with appropriate method
-                const consoleMethod = level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log';
+                const consoleMethods = {
+                    'error': 'error',
+                    'warn': 'warn',
+                    'debug': 'log',
+                    'info': 'log'
+                };
+                const consoleMethod = consoleMethods[level] || 'log';
                 console[consoleMethod](`[${level.toUpperCase()}]`, message, data);
                 
                 // Optional: Send to server if needed in the future
