@@ -43,10 +43,17 @@ The webserver supports the following configuration options:
 - `-content` - Content directory for markdown blog posts (default: `content/posts`)
 - `-base-url` - Base URL for the server (default: `http://localhost:8080`)
 - `-index-limit` - Maximum number of posts to show in index (default: `20`, use `0` for no limit)
+- `-jsonl` - Use JSONL (JSON Lines) format for logging (default: `false`)
+- `-log-headers` - Log incoming request headers, useful for debugging RSS http/https behavior (default: `false`)
 
 Example:
 ```bash
 ./webserver -addr :8080 -store data -content content/posts -base-url http://localhost:8080 -index-limit 10
+```
+
+Example with JSONL logging and header logging enabled:
+```bash
+./webserver -addr :8080 -store data -content content/posts -jsonl -log-headers
 ```
 
 ### Environment Variables
@@ -57,6 +64,55 @@ Example:
 ```bash
 INDEX_LIMIT=10 ./webserver -addr :8080 -store data -content content/posts
 ```
+
+### Logging
+
+The webserver supports two logging formats:
+
+#### Text Logging (Default)
+
+Traditional text-based logging for easy reading:
+
+```bash
+./webserver -addr :8080 -store data -content content/posts
+```
+
+Output:
+```
+2025/11/05 14:17:42 INFO: Using filesystem storage: data
+2025/11/05 14:17:42 INFO: Starting server on :8080
+2025/11/05 14:17:45 GET / - 200 - 8.909212ms
+```
+
+#### JSONL Logging
+
+Structured JSON Lines logging for parsing and analysis:
+
+```bash
+./webserver -addr :8080 -store data -content content/posts -jsonl
+```
+
+Output:
+```json
+{"timestamp":"2025-11-05T14:17:56Z","level":"info","message":"Using filesystem storage: data"}
+{"timestamp":"2025-11-05T14:18:16Z","level":"info","method":"GET","path":"/","status":200,"duration":"8.909212ms"}
+```
+
+#### Header Logging
+
+Enable request header logging to debug proxy configurations (especially useful for RSS http/https behavior):
+
+```bash
+./webserver -addr :8080 -store data -content content/posts -jsonl -log-headers
+```
+
+Output includes headers:
+```json
+{"timestamp":"2025-11-05T14:18:42Z","level":"debug","message":"Headers for GET /posts.rss","method":"GET","path":"/posts.rss","headers":{"X-Forwarded-Proto":"https","X-Forwarded-Host":"blog.example.com"}}
+{"timestamp":"2025-11-05T14:18:42Z","level":"info","method":"GET","path":"/posts.rss","status":200,"duration":"8.019868ms"}
+```
+
+The header logging is particularly useful when debugging RSS feed issues related to protocol detection (http vs https) when running behind a proxy or load balancer.
 
 ### Post Ordering
 

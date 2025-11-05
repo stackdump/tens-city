@@ -228,7 +228,7 @@ func TestLoggingMiddleware(t *testing.T) {
 
 			// Parse log output
 			lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
-			
+
 			// Should have at least 1 line (request log)
 			if len(lines) < 1 {
 				t.Fatal("Expected at least one log line")
