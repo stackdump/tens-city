@@ -74,6 +74,8 @@ func (l *TextLogger) LogInfo(msg string) {
 }
 
 // LogHeaders logs request headers with text format
+// WARNING: This may log sensitive data (e.g., Authorization headers).
+// Only enable header logging in development or when debugging specific issues.
 func (l *TextLogger) LogHeaders(r *http.Request) {
 	l.logger.Printf("Headers for %s %s:", r.Method, r.URL.Path)
 	for name, values := range r.Header {
@@ -118,6 +120,8 @@ func (l *JSONLLogger) LogInfo(msg string) {
 }
 
 // LogHeaders logs request headers with JSONL format
+// WARNING: This may log sensitive data (e.g., Authorization headers).
+// Only enable header logging in development or when debugging specific issues.
 func (l *JSONLLogger) LogHeaders(r *http.Request) {
 	headers := make(map[string]interface{})
 	for name, values := range r.Header {

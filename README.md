@@ -114,6 +114,8 @@ Output includes headers:
 
 The header logging is particularly useful when debugging RSS feed issues related to protocol detection (http vs https) when running behind a proxy or load balancer.
 
+**Security Note**: Header logging may expose sensitive data (e.g., Authorization headers). Only enable `-log-headers` in development environments or when debugging specific issues. Never enable it in production with public logs.
+
 ### Post Ordering
 
 Posts in the index (both at `/posts/index.jsonld` and `/posts`) are automatically sorted by:
