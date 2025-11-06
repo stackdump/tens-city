@@ -205,13 +205,19 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+		// HTML-escape values before replacement to prevent XSS
+		escapedTitle := html.EscapeString(pageTitle)
+		escapedDescription := html.EscapeString(pageDescription)
+		escapedIcon := html.EscapeString(pageIcon)
+
 		// Replace placeholders in the HTML
-		htmlContent = strings.Replace(htmlContent, "Tens City - A Minimal Blog Platform", pageTitle, -1)
-		htmlContent = strings.Replace(htmlContent, "Simple, elegant blog platform built on content-addressable storage", pageDescription, -1)
-		htmlContent = strings.Replace(htmlContent, "🏕️", pageIcon, 1) // Only replace first occurrence (the emoji)
-		htmlContent = strings.Replace(htmlContent, "Tens City</h1>", html.EscapeString(pageTitle)+"</h1>", 1)
+		htmlContent = strings.Replace(htmlContent, "Tens City - A Minimal Blog Platform", escapedTitle, -1)
+		htmlContent = strings.Replace(htmlContent, "Simple, elegant blog platform built on content-addressable storage", escapedDescription, -1)
+		htmlContent = strings.Replace(htmlContent, "🏕️", escapedIcon, 1) // Only replace first occurrence (the emoji)
+		htmlContent = strings.Replace(htmlContent, "Tens City</h1>", escapedTitle+"</h1>", 1)
 
 		// Replace the message paragraph if we have custom HTML content
+		// Note: pageMessage is already sanitized HTML from markdown rendering
 		if pageMessage != "" {
 			// Replace the default paragraph with the custom message
 			htmlContent = strings.Replace(htmlContent,
@@ -222,7 +228,7 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 		// Add RSS autodiscovery link
 		rssLink := fmt.Sprintf(`    <link rel="alternate" type="application/rss+xml" title="All Posts - %s" href="%s/posts.rss">
-`, html.EscapeString(pageTitle), baseURL)
+`, escapedTitle, baseURL)
 		htmlContent = strings.Replace(htmlContent, "</head>", rssLink+"</head>", 1)
 
 		// Get the collection index JSON-LD

@@ -111,57 +111,27 @@ func ParseIndexDocument(filePath string) (*Document, error) {
 		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
 
-	matches := frontmatterRegex.FindSubmatch(content)
-	if matches == nil || len(matches) < 3 {
-		return nil, fmt.Errorf("no frontmatter found")
+	// Parse using the standard function
+	doc, err := ParseDocumentFromBytes(content, filePath)
+	if err != nil {
+		return nil, err
 	}
 
-	var fm Frontmatter
-	if err := yaml.Unmarshal(matches[1], &fm); err != nil {
-		return nil, fmt.Errorf("failed to parse frontmatter: %w", err)
+	// Apply defaults for index.md specific fields
+	if doc.Frontmatter.Title == "" {
+		doc.Frontmatter.Title = "Tens City - A Minimal Blog Platform"
+	}
+	if doc.Frontmatter.Description == "" {
+		doc.Frontmatter.Description = "Simple, elegant blog platform built on content-addressable storage"
+	}
+	if doc.Frontmatter.Icon == "" {
+		doc.Frontmatter.Icon = "🏕️"
+	}
+	if doc.Frontmatter.Lang == "" {
+		doc.Frontmatter.Lang = "en"
 	}
 
-	// Set defaults for index.md
-	if fm.Title == "" {
-		fm.Title = "Tens City - A Minimal Blog Platform"
-	}
-	if fm.Description == "" {
-		fm.Description = "Simple, elegant blog platform built on content-addressable storage"
-	}
-	if fm.Icon == "" {
-		fm.Icon = "🏕️"
-	}
-	if fm.Lang == "" {
-		fm.Lang = "en"
-	}
-
-	markdownContent := string(matches[2])
-
-	// Render markdown to HTML
-	var buf bytes.Buffer
-	md := goldmark.New(
-		goldmark.WithExtensions(
-			extension.GFM,
-			extension.Table,
-			extension.Strikethrough,
-			&mermaid.Extender{},
-		),
-		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
-		goldmark.WithRendererOptions(html.WithUnsafe()), // We'll sanitize after
-	)
-	if err := md.Convert([]byte(markdownContent), &buf); err != nil {
-		return nil, fmt.Errorf("failed to render markdown: %w", err)
-	}
-
-	// Sanitize HTML
-	sanitized := sanitizeHTML(buf.String())
-
-	return &Document{
-		Frontmatter: fm,
-		Content:     markdownContent,
-		HTML:        sanitized,
-		FilePath:    filePath,
-	}, nil
+	return doc, nil
 }
 
 // sanitizeHTML sanitizes HTML to prevent XSS attacks
