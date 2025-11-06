@@ -177,13 +177,58 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 	htmlContent := string(data)
 
-	// If docServer is available, inject JSON-LD script tag and RSS link
+	// Default values
+	pageTitle := "Tens City - A Minimal Blog Platform"
+	pageDescription := "Simple, elegant blog platform built on content-addressable storage"
+	pageIcon := "🏕️"
+	pageMessage := ""
+
+	// If docServer is available, get index.md and inject JSON-LD script tag and RSS link
 	if s.docServer != nil {
 		baseURL := html.EscapeString(httputil.GetBaseURL(r, s.fallbackURL))
 
+		// Try to load index.md
+		indexDoc, err := s.docServer.GetIndexDocument()
+		if err == nil && indexDoc != nil {
+			// Use values from index.md
+			if indexDoc.Frontmatter.Title != "" {
+				pageTitle = indexDoc.Frontmatter.Title
+			}
+			if indexDoc.Frontmatter.Description != "" {
+				pageDescription = indexDoc.Frontmatter.Description
+			}
+			if indexDoc.Frontmatter.Icon != "" {
+				pageIcon = indexDoc.Frontmatter.Icon
+			}
+			if indexDoc.HTML != "" {
+				pageMessage = indexDoc.HTML
+			}
+		}
+
+		// HTML-escape values before replacement to prevent XSS
+		escapedTitle := html.EscapeString(pageTitle)
+		escapedDescription := html.EscapeString(pageDescription)
+		escapedIcon := html.EscapeString(pageIcon)
+
+		// Replace placeholders in the HTML
+		htmlContent = strings.Replace(htmlContent, "Tens City - A Minimal Blog Platform", escapedTitle, -1)
+		htmlContent = strings.Replace(htmlContent, "Simple, elegant blog platform built on content-addressable storage", escapedDescription, -1)
+		htmlContent = strings.Replace(htmlContent, "🏕️", escapedIcon, 1) // Only replace first occurrence (the emoji)
+		htmlContent = strings.Replace(htmlContent, "Tens City</h1>", escapedTitle+"</h1>", 1)
+
+		// Replace the message paragraph if we have custom HTML content
+		// Note: pageMessage is already sanitized HTML from markdown rendering
+		if pageMessage != "" {
+			// Replace the default paragraph with the custom message
+			htmlContent = strings.Replace(htmlContent,
+				"<p>A minimal blog platform built on simplicity and content ownership</p>",
+				pageMessage,
+				1)
+		}
+
 		// Add RSS autodiscovery link
-		rssLink := fmt.Sprintf(`    <link rel="alternate" type="application/rss+xml" title="All Posts - Tens City" href="%s/posts.rss">
-`, baseURL)
+		rssLink := fmt.Sprintf(`    <link rel="alternate" type="application/rss+xml" title="All Posts - %s" href="%s/posts.rss">
+`, escapedTitle, baseURL)
 		htmlContent = strings.Replace(htmlContent, "</head>", rssLink+"</head>", 1)
 
 		// Get the collection index JSON-LD

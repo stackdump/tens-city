@@ -565,3 +565,79 @@ graph TD;
 		t.Error("Expected HTML to contain mermaid diagram content")
 	}
 }
+
+func TestParseIndexDocument(t *testing.T) {
+	content := []byte(`---
+title: My Custom Blog
+description: A personal blog about technology
+icon: 🚀
+lang: en
+---
+
+Welcome to my blog! Here I share my thoughts and experiences.
+`)
+
+	doc, err := ParseDocumentFromBytes(content, "index.md")
+	if err != nil {
+		t.Fatalf("ParseDocumentFromBytes failed: %v", err)
+	}
+
+	if doc.Frontmatter.Title != "My Custom Blog" {
+		t.Errorf("Expected title 'My Custom Blog', got '%s'", doc.Frontmatter.Title)
+	}
+
+	if doc.Frontmatter.Description != "A personal blog about technology" {
+		t.Errorf("Expected description 'A personal blog about technology', got '%s'", doc.Frontmatter.Description)
+	}
+
+	if doc.Frontmatter.Icon != "🚀" {
+		t.Errorf("Expected icon '🚀', got '%s'", doc.Frontmatter.Icon)
+	}
+
+	if doc.Frontmatter.Lang != "en" {
+		t.Errorf("Expected lang 'en', got '%s'", doc.Frontmatter.Lang)
+	}
+
+	if !strings.Contains(doc.HTML, "Welcome to my blog") {
+		t.Error("Expected HTML to contain content from markdown body")
+	}
+}
+
+func TestParseIndexDocument_WithDefaults(t *testing.T) {
+	// Create a temporary directory and file
+	tmpDir := t.TempDir()
+	indexPath := filepath.Join(tmpDir, "index.md")
+
+	content := []byte(`---
+# Minimal frontmatter - should use defaults
+---
+
+Some content here.
+`)
+
+	if err := os.WriteFile(indexPath, content, 0644); err != nil {
+		t.Fatalf("Failed to write test file: %v", err)
+	}
+
+	doc, err := ParseIndexDocument(indexPath)
+	if err != nil {
+		t.Fatalf("ParseIndexDocument failed: %v", err)
+	}
+
+	// Should use default values
+	if doc.Frontmatter.Title != "Tens City - A Minimal Blog Platform" {
+		t.Errorf("Expected default title, got '%s'", doc.Frontmatter.Title)
+	}
+
+	if doc.Frontmatter.Description != "Simple, elegant blog platform built on content-addressable storage" {
+		t.Errorf("Expected default description, got '%s'", doc.Frontmatter.Description)
+	}
+
+	if doc.Frontmatter.Icon != "🏕️" {
+		t.Errorf("Expected default icon, got '%s'", doc.Frontmatter.Icon)
+	}
+
+	if doc.Frontmatter.Lang != "en" {
+		t.Errorf("Expected default lang 'en', got '%s'", doc.Frontmatter.Lang)
+	}
+}

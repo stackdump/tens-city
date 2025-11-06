@@ -29,9 +29,10 @@ type DocServer struct {
 
 // DocumentCache caches rendered documents
 type DocumentCache struct {
-	mu    sync.RWMutex
-	docs  map[string]*CachedDoc
-	index *CachedIndex
+	mu       sync.RWMutex
+	docs     map[string]*CachedDoc
+	index    *CachedIndex
+	indexDoc *CachedDoc // Cached index.md document
 }
 
 // CachedDoc represents a cached document
@@ -125,6 +126,75 @@ func (ds *DocServer) loadDocument(slug string) (*CachedDoc, error) {
 	// Update cache
 	ds.cache.mu.Lock()
 	ds.cache.docs[slug] = cached
+	ds.cache.mu.Unlock()
+
+	return cached, nil
+}
+
+// loadIndexDocument loads and caches the index.md document
+// If the file doesn't exist, it creates a default one to help users discover customization
+func (ds *DocServer) loadIndexDocument() (*CachedDoc, error) {
+	ds.cache.mu.RLock()
+	cached := ds.cache.indexDoc
+	ds.cache.mu.RUnlock()
+
+	// Determine the base content directory (parent of posts directory)
+	baseContentDir := filepath.Dir(ds.contentDir)
+	indexPath := filepath.Join(baseContentDir, "index.md")
+
+	// Check if index.md exists
+	fileInfo, err := os.Stat(indexPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// Create default index.md to help users discover customization
+			defaultContent := `---
+title: Tens City - A Minimal Blog Platform
+description: Simple, elegant blog platform built on content-addressable storage
+icon: 🏕️
+lang: en
+---
+
+A minimal blog platform built on simplicity and content ownership.
+
+<!-- Edit this file (content/index.md) to customize your blog's homepage -->
+`
+			if err := os.WriteFile(indexPath, []byte(defaultContent), 0644); err != nil {
+				// If we can't create the file (e.g., read-only filesystem), just use defaults
+				return nil, nil
+			}
+			// Re-stat the file we just created
+			fileInfo, err = os.Stat(indexPath)
+			if err != nil {
+				return nil, nil
+			}
+		} else {
+			return nil, err
+		}
+	}
+
+	// Return cached version if still valid
+	if cached != nil && !fileInfo.ModTime().After(cached.Modified) {
+		return cached, nil
+	}
+
+	// Parse the index document
+	doc, err := markdown.ParseIndexDocument(indexPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate ETag
+	etag := generateETag(doc.HTML)
+
+	cached = &CachedDoc{
+		Doc:      doc,
+		ETag:     etag,
+		Modified: fileInfo.ModTime(),
+	}
+
+	// Update cache
+	ds.cache.mu.Lock()
+	ds.cache.indexDoc = cached
 	ds.cache.mu.Unlock()
 
 	return cached, nil
@@ -561,6 +631,18 @@ func (ds *DocServer) GetIndexJSONLD() ([]byte, error) {
 		return nil, err
 	}
 	return cached.Data, nil
+}
+
+// GetIndexDocument returns the parsed index.md document, or nil if not found
+func (ds *DocServer) GetIndexDocument() (*markdown.Document, error) {
+	cached, err := ds.loadIndexDocument()
+	if err != nil {
+		return nil, err
+	}
+	if cached == nil {
+		return nil, nil
+	}
+	return cached.Doc, nil
 }
 
 // HandleUserRSS handles GET /u/{user}/posts.rss - return RSS feed for user's blog posts

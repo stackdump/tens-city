@@ -24,16 +24,17 @@ import (
 type Frontmatter struct {
 	Title         string      `yaml:"title" json:"title"`
 	Description   string      `yaml:"description,omitempty" json:"description,omitempty"`
-	DatePublished string      `yaml:"datePublished" json:"datePublished"`
+	DatePublished string      `yaml:"datePublished,omitempty" json:"datePublished,omitempty"`
 	DateModified  string      `yaml:"dateModified,omitempty" json:"dateModified,omitempty"`
-	Author        interface{} `yaml:"author" json:"author"`
+	Author        interface{} `yaml:"author,omitempty" json:"author,omitempty"`
 	Tags          []string    `yaml:"tags,omitempty" json:"tags,omitempty"`
 	Collection    string      `yaml:"collection,omitempty" json:"collection,omitempty"`
-	Lang          string      `yaml:"lang" json:"lang"`
+	Lang          string      `yaml:"lang,omitempty" json:"lang,omitempty"`
 	Draft         bool        `yaml:"draft,omitempty" json:"draft,omitempty"`
 	Slug          string      `yaml:"slug,omitempty" json:"slug,omitempty"`
 	Image         string      `yaml:"image,omitempty" json:"image,omitempty"`
 	Keywords      []string    `yaml:"keywords,omitempty" json:"keywords,omitempty"`
+	Icon          string      `yaml:"icon,omitempty" json:"icon,omitempty"`
 }
 
 // Document represents a parsed markdown document
@@ -100,6 +101,37 @@ func ParseDocumentFromBytes(content []byte, filePath string) (*Document, error) 
 		HTML:        sanitized,
 		FilePath:    filePath,
 	}, nil
+}
+
+// ParseIndexDocument parses an index.md file with minimal frontmatter requirements
+// Unlike regular documents, index.md doesn't require datePublished, author, or lang
+func ParseIndexDocument(filePath string) (*Document, error) {
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file: %w", err)
+	}
+
+	// Parse using the standard function
+	doc, err := ParseDocumentFromBytes(content, filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply defaults for index.md specific fields
+	if doc.Frontmatter.Title == "" {
+		doc.Frontmatter.Title = "Tens City - A Minimal Blog Platform"
+	}
+	if doc.Frontmatter.Description == "" {
+		doc.Frontmatter.Description = "Simple, elegant blog platform built on content-addressable storage"
+	}
+	if doc.Frontmatter.Icon == "" {
+		doc.Frontmatter.Icon = "🏕️"
+	}
+	if doc.Frontmatter.Lang == "" {
+		doc.Frontmatter.Lang = "en"
+	}
+
+	return doc, nil
 }
 
 // sanitizeHTML sanitizes HTML to prevent XSS attacks
