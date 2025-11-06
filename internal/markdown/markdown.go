@@ -24,16 +24,17 @@ import (
 type Frontmatter struct {
 	Title         string      `yaml:"title" json:"title"`
 	Description   string      `yaml:"description,omitempty" json:"description,omitempty"`
-	DatePublished string      `yaml:"datePublished" json:"datePublished"`
+	DatePublished string      `yaml:"datePublished,omitempty" json:"datePublished,omitempty"`
 	DateModified  string      `yaml:"dateModified,omitempty" json:"dateModified,omitempty"`
-	Author        interface{} `yaml:"author" json:"author"`
+	Author        interface{} `yaml:"author,omitempty" json:"author,omitempty"`
 	Tags          []string    `yaml:"tags,omitempty" json:"tags,omitempty"`
 	Collection    string      `yaml:"collection,omitempty" json:"collection,omitempty"`
-	Lang          string      `yaml:"lang" json:"lang"`
+	Lang          string      `yaml:"lang,omitempty" json:"lang,omitempty"`
 	Draft         bool        `yaml:"draft,omitempty" json:"draft,omitempty"`
 	Slug          string      `yaml:"slug,omitempty" json:"slug,omitempty"`
 	Image         string      `yaml:"image,omitempty" json:"image,omitempty"`
 	Keywords      []string    `yaml:"keywords,omitempty" json:"keywords,omitempty"`
+	Icon          string      `yaml:"icon,omitempty" json:"icon,omitempty"`
 }
 
 // Document represents a parsed markdown document
@@ -71,6 +72,67 @@ func ParseDocumentFromBytes(content []byte, filePath string) (*Document, error) 
 	// Auto-generate slug from filename if not provided
 	if fm.Slug == "" {
 		fm.Slug = generateSlug(filepath.Base(filePath))
+	}
+
+	markdownContent := string(matches[2])
+
+	// Render markdown to HTML
+	var buf bytes.Buffer
+	md := goldmark.New(
+		goldmark.WithExtensions(
+			extension.GFM,
+			extension.Table,
+			extension.Strikethrough,
+			&mermaid.Extender{},
+		),
+		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
+		goldmark.WithRendererOptions(html.WithUnsafe()), // We'll sanitize after
+	)
+	if err := md.Convert([]byte(markdownContent), &buf); err != nil {
+		return nil, fmt.Errorf("failed to render markdown: %w", err)
+	}
+
+	// Sanitize HTML
+	sanitized := sanitizeHTML(buf.String())
+
+	return &Document{
+		Frontmatter: fm,
+		Content:     markdownContent,
+		HTML:        sanitized,
+		FilePath:    filePath,
+	}, nil
+}
+
+// ParseIndexDocument parses an index.md file with minimal frontmatter requirements
+// Unlike regular documents, index.md doesn't require datePublished, author, or lang
+func ParseIndexDocument(filePath string) (*Document, error) {
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file: %w", err)
+	}
+
+	matches := frontmatterRegex.FindSubmatch(content)
+	if matches == nil || len(matches) < 3 {
+		return nil, fmt.Errorf("no frontmatter found")
+	}
+
+	var fm Frontmatter
+	if err := yaml.Unmarshal(matches[1], &fm); err != nil {
+		return nil, fmt.Errorf("failed to parse frontmatter: %w", err)
+	}
+
+	// Set defaults for index.md
+	if fm.Title == "" {
+		fm.Title = "Tens City - A Minimal Blog Platform"
+	}
+	if fm.Description == "" {
+		fm.Description = "Simple, elegant blog platform built on content-addressable storage"
+	}
+	if fm.Icon == "" {
+		fm.Icon = "🏕️"
+	}
+	if fm.Lang == "" {
+		fm.Lang = "en"
 	}
 
 	markdownContent := string(matches[2])

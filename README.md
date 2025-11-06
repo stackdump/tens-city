@@ -147,6 +147,34 @@ slug: my-first-post
 Your content goes here!
 ```
 
+## Customizing the Index Page
+
+You can customize the index page (homepage) by creating an `index.md` file in the `content/` directory (not in `content/posts/`).
+
+### index.md Example
+
+```markdown
+---
+title: My Custom Blog
+description: A personal blog about technology and life
+icon: 🚀
+lang: en
+---
+
+Welcome to my custom blog! This is a space where I share my thoughts and experiences.
+```
+
+### Supported Fields
+
+- `title` - The title shown in the browser tab and hero section (default: "Tens City - A Minimal Blog Platform")
+- `description` - Meta description for SEO and the hero subtitle (default: "Simple, elegant blog platform built on content-addressable storage")
+- `icon` - The emoji/icon shown in the hero section (default: "🏕️")
+- `lang` - The language code for the page (default: "en")
+
+The content body (after the frontmatter) will be displayed as a message in the hero section.
+
+If `index.md` is not present, the default Tens City branding will be used.
+
 ## Philosophy: Tent City
 
 - Not skyscrapers; actual encampments
