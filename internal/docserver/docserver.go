@@ -132,6 +132,7 @@ func (ds *DocServer) loadDocument(slug string) (*CachedDoc, error) {
 }
 
 // loadIndexDocument loads and caches the index.md document
+// If the file doesn't exist, it creates a default one to help users discover customization
 func (ds *DocServer) loadIndexDocument() (*CachedDoc, error) {
 	ds.cache.mu.RLock()
 	cached := ds.cache.indexDoc
@@ -145,10 +146,30 @@ func (ds *DocServer) loadIndexDocument() (*CachedDoc, error) {
 	fileInfo, err := os.Stat(indexPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			// No index.md file, return nil (will use defaults)
-			return nil, nil
+			// Create default index.md to help users discover customization
+			defaultContent := `---
+title: Tens City - A Minimal Blog Platform
+description: Simple, elegant blog platform built on content-addressable storage
+icon: 🏕️
+lang: en
+---
+
+A minimal blog platform built on simplicity and content ownership.
+
+<!-- Edit this file (content/index.md) to customize your blog's homepage -->
+`
+			if err := os.WriteFile(indexPath, []byte(defaultContent), 0644); err != nil {
+				// If we can't create the file (e.g., read-only filesystem), just use defaults
+				return nil, nil
+			}
+			// Re-stat the file we just created
+			fileInfo, err = os.Stat(indexPath)
+			if err != nil {
+				return nil, nil
+			}
+		} else {
+			return nil, err
 		}
-		return nil, err
 	}
 
 	// Return cached version if still valid

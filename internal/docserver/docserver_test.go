@@ -1383,3 +1383,91 @@ Python content.
 		t.Error("Expected datePublished in JSON-LD")
 	}
 }
+
+func TestLoadIndexDocument_AutoCreation(t *testing.T) {
+	// Create a temporary directory for content
+	tmpDir := t.TempDir()
+	postsDir := filepath.Join(tmpDir, "posts")
+	if err := os.MkdirAll(postsDir, 0755); err != nil {
+		t.Fatalf("Failed to create posts directory: %v", err)
+	}
+
+	// Create a DocServer
+	ds := NewDocServer(postsDir, "http://localhost:8080", 20)
+
+	// index.md should not exist yet
+	indexPath := filepath.Join(tmpDir, "index.md")
+	if _, err := os.Stat(indexPath); !os.IsNotExist(err) {
+		t.Fatal("index.md should not exist initially")
+	}
+
+	// Load the index document (this should create it)
+	doc, err := ds.loadIndexDocument()
+	if err != nil {
+		t.Fatalf("loadIndexDocument failed: %v", err)
+	}
+
+	// Should have created and returned a document
+	if doc == nil {
+		t.Fatal("Expected document to be created, got nil")
+	}
+
+	// Verify the file was created
+	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
+		t.Fatal("index.md should have been created")
+	}
+
+	// Read the file and verify it has the expected content
+	content, err := os.ReadFile(indexPath)
+	if err != nil {
+		t.Fatalf("Failed to read created index.md: %v", err)
+	}
+
+	contentStr := string(content)
+	if !strings.Contains(contentStr, "title: Tens City - A Minimal Blog Platform") {
+		t.Error("Expected default title in created index.md")
+	}
+	if !strings.Contains(contentStr, "icon: 🏕️") {
+		t.Error("Expected default icon in created index.md")
+	}
+	if !strings.Contains(contentStr, "Edit this file") {
+		t.Error("Expected help comment in created index.md")
+	}
+
+	// Verify the document has the expected frontmatter
+	if doc.Doc.Frontmatter.Title != "Tens City - A Minimal Blog Platform" {
+		t.Errorf("Expected default title, got '%s'", doc.Doc.Frontmatter.Title)
+	}
+	if doc.Doc.Frontmatter.Icon != "🏕️" {
+		t.Errorf("Expected default icon, got '%s'", doc.Doc.Frontmatter.Icon)
+	}
+}
+
+func TestLoadIndexDocument_ReadOnlyFilesystem(t *testing.T) {
+	// Create a temporary directory for content
+	tmpDir := t.TempDir()
+	postsDir := filepath.Join(tmpDir, "posts")
+	if err := os.MkdirAll(postsDir, 0755); err != nil {
+		t.Fatalf("Failed to create posts directory: %v", err)
+	}
+
+	// Make the directory read-only
+	if err := os.Chmod(tmpDir, 0555); err != nil {
+		t.Fatalf("Failed to make directory read-only: %v", err)
+	}
+	defer os.Chmod(tmpDir, 0755) // Restore permissions for cleanup
+
+	// Create a DocServer
+	ds := NewDocServer(postsDir, "http://localhost:8080", 20)
+
+	// Load the index document (should not fail, just return nil)
+	doc, err := ds.loadIndexDocument()
+	if err != nil {
+		t.Fatalf("loadIndexDocument should not fail on read-only filesystem: %v", err)
+	}
+
+	// Should return nil when it can't create the file
+	if doc != nil {
+		t.Error("Expected nil document when filesystem is read-only")
+	}
+}

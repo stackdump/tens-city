@@ -149,7 +149,9 @@ Your content goes here!
 
 ## Customizing the Index Page
 
-You can customize the index page (homepage) by creating an `index.md` file in the `content/` directory (not in `content/posts/`).
+You can customize the index page (homepage) by editing the `index.md` file in the `content/` directory (not in `content/posts/`).
+
+**Note**: The first time you access the homepage, if `index.md` doesn't exist, it will be automatically created with default values. This helps you discover how to customize your blog.
 
 ### index.md Example
 
@@ -172,8 +174,6 @@ Welcome to my custom blog! This is a space where I share my thoughts and experie
 - `lang` - The language code for the page (default: "en")
 
 The content body (after the frontmatter) will be displayed as a message in the hero section.
-
-If `index.md` is not present, the default Tens City branding will be used.
 
 ## Philosophy: Tent City
 
