@@ -35,6 +35,7 @@ type Frontmatter struct {
 	Image         string      `yaml:"image,omitempty" json:"image,omitempty"`
 	Keywords      []string    `yaml:"keywords,omitempty" json:"keywords,omitempty"`
 	Icon          string      `yaml:"icon,omitempty" json:"icon,omitempty"`
+	SameAs        []string    `yaml:"sameAs,omitempty" json:"sameAs,omitempty"`
 }
 
 // Document represents a parsed markdown document
@@ -306,6 +307,13 @@ func ListDocuments(contentDir string) ([]*Document, error) {
 // BuildCollectionIndex creates a schema.org CollectionPage index
 // limit controls how many items to include (0 means no limit)
 func BuildCollectionIndex(docs []*Document, baseURL string, limit int) map[string]interface{} {
+	return BuildCollectionIndexWithMeta(docs, baseURL, limit, nil)
+}
+
+// BuildCollectionIndexWithMeta creates a schema.org CollectionPage index with optional metadata from index.md
+// limit controls how many items to include (0 means no limit)
+// indexDoc contains optional metadata like sameAs from the site's index.md
+func BuildCollectionIndexWithMeta(docs []*Document, baseURL string, limit int, indexDoc *Document) map[string]interface{} {
 	now := time.Now().Format(time.RFC3339)
 
 	// Filter out drafts and collect non-draft documents
@@ -361,7 +369,7 @@ func BuildCollectionIndex(docs []*Document, baseURL string, limit int) map[strin
 		items = append(items, item)
 	}
 
-	return map[string]interface{}{
+	result := map[string]interface{}{
 		"@context":        "https://schema.org",
 		"@type":           "CollectionPage",
 		"name":            "Blog Posts Index",
@@ -370,6 +378,13 @@ func BuildCollectionIndex(docs []*Document, baseURL string, limit int) map[strin
 		"numberOfItems":   len(items),
 		"itemListElement": items,
 	}
+
+	// Add sameAs if available from index document
+	if indexDoc != nil && len(indexDoc.Frontmatter.SameAs) > 0 {
+		result["sameAs"] = indexDoc.Frontmatter.SameAs
+	}
+
+	return result
 }
 
 // ValidateFrontmatter validates frontmatter against required fields

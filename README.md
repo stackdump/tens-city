@@ -172,8 +172,28 @@ Welcome to my custom blog! This is a space where I share my thoughts and experie
 - `description` - Meta description for SEO and the hero subtitle (default: "Simple, elegant blog platform built on content-addressable storage")
 - `icon` - The emoji/icon shown in the hero section (default: "🏕️")
 - `lang` - The language code for the page (default: "en")
+- `sameAs` - Array of URLs representing the same entity (e.g., social media profiles, other websites) - used in JSON-LD for SEO
 
 The content body (after the frontmatter) will be displayed as a message in the hero section.
+
+### Example with Social Media Links
+
+```markdown
+---
+title: My Blog
+description: Thoughts on technology and design
+icon: 🚀
+lang: en
+sameAs:
+  - https://github.com/yourusername
+  - https://twitter.com/yourusername
+  - https://mastodon.social/@yourusername
+---
+
+Welcome! Follow me on social media for updates.
+```
+
+The `sameAs` URLs will be included in the JSON-LD structured data on your homepage, improving SEO and helping search engines understand your online presence.
 
 ## Philosophy: Tent City
 
@@ -240,12 +260,28 @@ make dev
 
 ## Routes
 
+### Content Routes
 - `GET /` - Blog home page with post grid
 - `GET /posts` - List all posts
 - `GET /posts/index.jsonld` - JSON-LD index of all posts
 - `GET /posts/{slug}` - Individual post as HTML
 - `GET /posts/{slug}.jsonld` - Individual post as JSON-LD
+
+### RSS Feeds
+- `GET /posts.rss` - Site-wide RSS feed (all posts)
+- `GET /feed.xml` - Alias for site-wide RSS feed
+- `GET /rss.xml` - Alias for site-wide RSS feed
 - `GET /u/{user}/posts.rss` - RSS feed for user's posts
+- `GET /rss` - HTML page listing all available RSS feeds
+
+### SEO & Discovery
+- `GET /robots.txt` - Robots.txt for search engine crawlers
+- `GET /.well-known/security.txt` - Security contact information
+
+### Features
+- **RSS Autodiscovery** - `<link rel="alternate">` tag automatically added to homepage
+- **JSON-LD with sameAs** - Add social media profiles to `content/index.md` for better SEO
+- **Multiple RSS URLs** - RSS feed available at `/posts.rss`, `/feed.xml`, and `/rss.xml`
 
 ## License
 

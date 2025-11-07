@@ -669,3 +669,306 @@ This is Bob's post.
 		t.Error("Expected Bob's post URL in feed")
 	}
 }
+
+func TestRobotsTxt(t *testing.T) {
+	server := NewServer(nil, nil, nil, "http://localhost:8080")
+
+	req := httptest.NewRequest("GET", "/robots.txt", nil)
+	w := httptest.NewRecorder()
+	server.ServeHTTP(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", resp.StatusCode)
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	if contentType != "text/plain; charset=utf-8" {
+		t.Errorf("Expected Content-Type text/plain; charset=utf-8, got %s", contentType)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	bodyStr := string(body)
+
+	if !strings.Contains(bodyStr, "User-agent: *") {
+		t.Error("Expected User-agent in robots.txt")
+	}
+
+	if !strings.Contains(bodyStr, "Allow: /") {
+		t.Error("Expected Allow directive in robots.txt")
+	}
+
+	if !strings.Contains(bodyStr, "Sitemap:") {
+		t.Error("Expected Sitemap directive in robots.txt")
+	}
+}
+
+func TestWellKnownSecurityTxt(t *testing.T) {
+	server := NewServer(nil, nil, nil, "http://localhost:8080")
+
+	req := httptest.NewRequest("GET", "/.well-known/security.txt", nil)
+	w := httptest.NewRecorder()
+	server.ServeHTTP(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", resp.StatusCode)
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	if contentType != "text/plain; charset=utf-8" {
+		t.Errorf("Expected Content-Type text/plain; charset=utf-8, got %s", contentType)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	bodyStr := string(body)
+
+	if !strings.Contains(bodyStr, "Contact:") {
+		t.Error("Expected Contact field in security.txt")
+	}
+
+	if !strings.Contains(bodyStr, "Expires:") {
+		t.Error("Expected Expires field in security.txt")
+	}
+}
+
+func TestWellKnownNotFound(t *testing.T) {
+	server := NewServer(nil, nil, nil, "http://localhost:8080")
+
+	req := httptest.NewRequest("GET", "/.well-known/nonexistent.txt", nil)
+	w := httptest.NewRecorder()
+	server.ServeHTTP(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("Expected status 404, got %d", resp.StatusCode)
+	}
+}
+
+func TestRSSFeedAliases(t *testing.T) {
+	tmpDir := t.TempDir()
+	contentDir := tmpDir + "/posts"
+	if err := os.MkdirAll(contentDir, 0755); err != nil {
+		t.Fatalf("Failed to create content directory: %v", err)
+	}
+
+	// Create a test post
+	testPost := `---
+title: Test Post
+description: A test post
+datePublished: 2025-11-03T00:00:00Z
+author:
+  name: Alice
+  type: Person
+  url: https://github.com/alice
+lang: en
+slug: test-post
+---
+
+# Test Post
+
+Test content.`
+
+	if err := os.WriteFile(contentDir+"/test-post.md", []byte(testPost), 0644); err != nil {
+		t.Fatalf("Failed to create test post: %v", err)
+	}
+
+	publicFS, err := static.Public()
+	if err != nil {
+		t.Fatalf("Failed to get public FS: %v", err)
+	}
+
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20)
+	server := NewServer(nil, publicFS, docServer, "http://localhost:8080")
+
+	// Test /feed.xml
+	t.Run("/feed.xml", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/feed.xml", nil)
+		w := httptest.NewRecorder()
+		server.ServeHTTP(w, req)
+
+		resp := w.Result()
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", resp.StatusCode)
+		}
+
+		contentType := resp.Header.Get("Content-Type")
+		if contentType != "application/rss+xml; charset=utf-8" {
+			t.Errorf("Expected Content-Type application/rss+xml; charset=utf-8, got %s", contentType)
+		}
+
+		body, _ := io.ReadAll(resp.Body)
+		bodyStr := string(body)
+
+		if !strings.Contains(bodyStr, "<rss") {
+			t.Error("Expected RSS feed XML")
+		}
+
+		if !strings.Contains(bodyStr, "Test Post") {
+			t.Error("Expected test post in feed")
+		}
+	})
+
+	// Test /rss.xml
+	t.Run("/rss.xml", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/rss.xml", nil)
+		w := httptest.NewRecorder()
+		server.ServeHTTP(w, req)
+
+		resp := w.Result()
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", resp.StatusCode)
+		}
+
+		contentType := resp.Header.Get("Content-Type")
+		if contentType != "application/rss+xml; charset=utf-8" {
+			t.Errorf("Expected Content-Type application/rss+xml; charset=utf-8, got %s", contentType)
+		}
+	})
+
+	// Test /posts.rss (original)
+	t.Run("/posts.rss", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/posts.rss", nil)
+		w := httptest.NewRecorder()
+		server.ServeHTTP(w, req)
+
+		resp := w.Result()
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("Expected status 200, got %d", resp.StatusCode)
+		}
+	})
+}
+
+func TestIndexPageWithSameAs(t *testing.T) {
+	tmpDir := t.TempDir()
+	contentDir := tmpDir + "/posts"
+	if err := os.MkdirAll(contentDir, 0755); err != nil {
+		t.Fatalf("Failed to create content directory: %v", err)
+	}
+
+	// Create index.md with sameAs
+	indexContent := `---
+title: Test Blog
+description: A test blog
+icon: 🏕️
+lang: en
+sameAs:
+  - https://github.com/test
+  - https://twitter.com/test
+---
+
+Test blog content.`
+
+	if err := os.WriteFile(tmpDir+"/index.md", []byte(indexContent), 0644); err != nil {
+		t.Fatalf("Failed to create index.md: %v", err)
+	}
+
+	// Create a test post
+	testPost := `---
+title: Test Post
+description: A test post
+datePublished: 2025-11-03T00:00:00Z
+author:
+  name: Alice
+  type: Person
+  url: https://github.com/alice
+lang: en
+slug: test-post
+---
+
+# Test Post
+
+Test content.`
+
+	if err := os.WriteFile(contentDir+"/test-post.md", []byte(testPost), 0644); err != nil {
+		t.Fatalf("Failed to create test post: %v", err)
+	}
+
+	publicFS, err := static.Public()
+	if err != nil {
+		t.Fatalf("Failed to get public FS: %v", err)
+	}
+
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20)
+	server := NewServer(nil, publicFS, docServer, "http://localhost:8080")
+
+	req := httptest.NewRequest("GET", "/", nil)
+	w := httptest.NewRecorder()
+	server.ServeHTTP(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", resp.StatusCode)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	bodyStr := string(body)
+
+	// Check for RSS autodiscovery link
+	if !strings.Contains(bodyStr, `<link rel="alternate" type="application/rss+xml"`) {
+		t.Error("Expected RSS autodiscovery link in homepage")
+	}
+
+	// Check for JSON-LD script tag
+	if !strings.Contains(bodyStr, `<script type="application/ld+json">`) {
+		t.Error("Expected JSON-LD script tag in homepage")
+	}
+
+	// Extract and check the JSON-LD
+	startIdx := strings.Index(bodyStr, `<script type="application/ld+json">`)
+	if startIdx == -1 {
+		t.Fatal("Could not find JSON-LD script tag")
+	}
+	endIdx := strings.Index(bodyStr[startIdx:], `</script>`)
+	if endIdx == -1 {
+		t.Fatal("Could not find end of JSON-LD script tag")
+	}
+
+	// Extract JSON content
+	jsonStart := strings.Index(bodyStr[startIdx:], "\n") + startIdx + 1
+	jsonContent := bodyStr[jsonStart : startIdx+endIdx]
+	jsonContent = strings.TrimSpace(jsonContent)
+
+	// Parse the JSON-LD
+	var jsonld map[string]interface{}
+	if err := json.Unmarshal([]byte(jsonContent), &jsonld); err != nil {
+		t.Fatalf("Failed to parse JSON-LD: %v", err)
+	}
+
+	// Check for sameAs field
+	sameAs, ok := jsonld["sameAs"]
+	if !ok {
+		t.Error("Expected sameAs field in JSON-LD")
+	}
+
+	sameAsArray, ok := sameAs.([]interface{})
+	if !ok {
+		t.Error("Expected sameAs to be an array")
+	}
+
+	if len(sameAsArray) != 2 {
+		t.Errorf("Expected 2 items in sameAs, got %d", len(sameAsArray))
+	}
+
+	// Check for expected URLs
+	expectedURLs := map[string]bool{
+		"https://github.com/test":  false,
+		"https://twitter.com/test": false,
+	}
+
+	for _, url := range sameAsArray {
+		urlStr, ok := url.(string)
+		if !ok {
+			continue
+		}
+		if _, exists := expectedURLs[urlStr]; exists {
+			expectedURLs[urlStr] = true
+		}
+	}
+
+	for url, found := range expectedURLs {
+		if !found {
+			t.Errorf("Expected URL %s in sameAs", url)
+		}
+	}
+}

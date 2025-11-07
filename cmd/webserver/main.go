@@ -166,6 +166,36 @@ func (s *Server) handleGetHistory(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(history)
 }
 
+// handleRobotsTxt serves a default robots.txt file
+func (s *Server) handleRobotsTxt(w http.ResponseWriter, r *http.Request) {
+	robotsTxt := `User-agent: *
+Allow: /
+
+Sitemap: ` + html.EscapeString(httputil.GetBaseURL(r, s.fallbackURL)) + `/sitemap.xml`
+
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Write([]byte(robotsTxt))
+}
+
+// handleWellKnown serves default files for .well-known directory
+func (s *Server) handleWellKnown(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/.well-known/")
+	
+	// Handle common .well-known endpoints with defaults
+	switch path {
+	case "security.txt":
+		securityTxt := `Contact: mailto:security@example.com
+Expires: 2026-12-31T23:59:59.000Z
+Preferred-Languages: en`
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Write([]byte(securityTxt))
+		return
+	default:
+		http.NotFound(w, r)
+		return
+	}
+}
+
 // handleIndex serves the index page with embedded JSON-LD
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	// Read the index.html template
@@ -250,13 +280,26 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// robots.txt
+	if r.URL.Path == "/robots.txt" {
+		s.handleRobotsTxt(w, r)
+		return
+	}
+
+	// .well-known directory
+	if strings.HasPrefix(r.URL.Path, "/.well-known/") {
+		s.handleWellKnown(w, r)
+		return
+	}
+
 	// Blog post routes (only if docServer is configured)
 	if s.docServer != nil {
 		if r.URL.Path == "/posts" {
 			s.docServer.HandleDocList(w, r)
 			return
 		}
-		if r.URL.Path == "/posts.rss" {
+		// RSS feed - support multiple standard URLs
+		if r.URL.Path == "/posts.rss" || r.URL.Path == "/feed.xml" || r.URL.Path == "/rss.xml" {
 			s.docServer.HandleSiteRSS(w, r)
 			return
 		}
