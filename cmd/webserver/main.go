@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/stackdump/tens-city/internal/docserver"
 	"github.com/stackdump/tens-city/internal/httputil"
@@ -169,9 +170,7 @@ func (s *Server) handleGetHistory(w http.ResponseWriter, r *http.Request) {
 // handleRobotsTxt serves a default robots.txt file
 func (s *Server) handleRobotsTxt(w http.ResponseWriter, r *http.Request) {
 	robotsTxt := `User-agent: *
-Allow: /
-
-Sitemap: ` + html.EscapeString(httputil.GetBaseURL(r, s.fallbackURL)) + `/sitemap.xml`
+Allow: /`
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte(robotsTxt))
@@ -184,9 +183,19 @@ func (s *Server) handleWellKnown(w http.ResponseWriter, r *http.Request) {
 	// Handle common .well-known endpoints with defaults
 	switch path {
 	case "security.txt":
-		securityTxt := `Contact: mailto:security@example.com
-Expires: 2026-12-31T23:59:59.000Z
-Preferred-Languages: en`
+		// Calculate expiration date (1 year from now)
+		expirationDate := time.Now().AddDate(1, 0, 0).UTC().Format("2006-01-02T15:04:05.000Z")
+		
+		// Use a placeholder that makes it clear this should be customized
+		securityTxt := fmt.Sprintf(`# Security contact information
+# Please customize this file with your actual security contact
+Contact: mailto:security@example.com
+Expires: %s
+Preferred-Languages: en
+
+# To customize: Create your own .well-known/security.txt file
+# and serve it from your web root or update this handler`, expirationDate)
+		
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Write([]byte(securityTxt))
 		return

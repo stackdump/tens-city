@@ -697,10 +697,6 @@ func TestRobotsTxt(t *testing.T) {
 	if !strings.Contains(bodyStr, "Allow: /") {
 		t.Error("Expected Allow directive in robots.txt")
 	}
-
-	if !strings.Contains(bodyStr, "Sitemap:") {
-		t.Error("Expected Sitemap directive in robots.txt")
-	}
 }
 
 func TestWellKnownSecurityTxt(t *testing.T) {
