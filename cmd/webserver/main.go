@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/stackdump/tens-city/internal/docserver"
 	"github.com/stackdump/tens-city/internal/httputil"
@@ -166,6 +167,44 @@ func (s *Server) handleGetHistory(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(history)
 }
 
+// handleRobotsTxt serves a default robots.txt file
+func (s *Server) handleRobotsTxt(w http.ResponseWriter, r *http.Request) {
+	robotsTxt := `User-agent: *
+Allow: /`
+
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Write([]byte(robotsTxt))
+}
+
+// handleWellKnown serves default files for .well-known directory
+func (s *Server) handleWellKnown(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/.well-known/")
+	
+	// Handle common .well-known endpoints with defaults
+	switch path {
+	case "security.txt":
+		// Calculate expiration date (1 year from now)
+		expirationDate := time.Now().AddDate(1, 0, 0).UTC().Format("2006-01-02T15:04:05.000Z")
+		
+		// Use a placeholder that makes it clear this should be customized
+		securityTxt := fmt.Sprintf(`# Security contact information
+# Please customize this file with your actual security contact
+Contact: mailto:security@example.com
+Expires: %s
+Preferred-Languages: en
+
+# To customize: Create your own .well-known/security.txt file
+# and serve it from your web root or update this handler`, expirationDate)
+		
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Write([]byte(securityTxt))
+		return
+	default:
+		http.NotFound(w, r)
+		return
+	}
+}
+
 // handleIndex serves the index page with embedded JSON-LD
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	// Read the index.html template
@@ -250,13 +289,26 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// robots.txt
+	if r.URL.Path == "/robots.txt" {
+		s.handleRobotsTxt(w, r)
+		return
+	}
+
+	// .well-known directory
+	if strings.HasPrefix(r.URL.Path, "/.well-known/") {
+		s.handleWellKnown(w, r)
+		return
+	}
+
 	// Blog post routes (only if docServer is configured)
 	if s.docServer != nil {
 		if r.URL.Path == "/posts" {
 			s.docServer.HandleDocList(w, r)
 			return
 		}
-		if r.URL.Path == "/posts.rss" {
+		// RSS feed - support multiple standard URLs
+		if r.URL.Path == "/posts.rss" || r.URL.Path == "/feed.xml" || r.URL.Path == "/rss.xml" {
 			s.docServer.HandleSiteRSS(w, r)
 			return
 		}

@@ -232,8 +232,15 @@ func (ds *DocServer) loadIndex() (*CachedIndex, error) {
 		return nil, err
 	}
 
+	// Try to load the index.md document for sameAs metadata
+	var indexDoc *markdown.Document
+	cachedIndexDoc, err := ds.loadIndexDocument()
+	if err == nil && cachedIndexDoc != nil {
+		indexDoc = cachedIndexDoc.Doc
+	}
+
 	// Use fallback URL for the cached index (will be used when serving via GetIndexJSONLD)
-	index := markdown.BuildCollectionIndex(docs, ds.fallbackURL, ds.indexLimit)
+	index := markdown.BuildCollectionIndexWithMeta(docs, ds.fallbackURL, ds.indexLimit, indexDoc)
 	data, err := json.MarshalIndent(index, "", "  ")
 	if err != nil {
 		return nil, err
