@@ -2,7 +2,7 @@
 
 ## A Minimal Blog Platform 🏕️
 
-Tens City is a simple, elegant blog platform built on markdown files and content-addressable storage. Write in markdown, publish instantly—no database, no complexity.
+Tens City https://tens.city is a simple, elegant blog platform built on markdown files and content-addressable storage. Write in markdown, publish instantly—no database, no complexity.
 
 ### Features
 
