@@ -968,3 +968,163 @@ Test content.`
 		}
 	}
 }
+
+func TestDraftPosts(t *testing.T) {
+	tmpDir := t.TempDir()
+	contentDir := tmpDir + "/posts"
+	if err := os.MkdirAll(contentDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a published post
+	publishedPost := `---
+title: Published Post
+description: This is published
+datePublished: 2025-11-01T10:00:00Z
+author:
+  name: Test Author
+  type: Person
+  url: https://github.com/testauthor
+lang: en
+slug: published-post
+draft: false
+---
+
+# Published Post
+
+This post is published.
+`
+
+	// Create a draft post
+	draftPost := `---
+title: Draft Post
+description: This is a draft
+datePublished: 2025-11-02T10:00:00Z
+author:
+  name: Test Author
+  type: Person
+  url: https://github.com/testauthor
+lang: en
+slug: draft-post
+draft: true
+---
+
+# Draft Post
+
+This post is a draft.
+`
+
+	if err := os.WriteFile(contentDir+"/published.md", []byte(publishedPost), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(contentDir+"/draft.md", []byte(draftPost), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	storage := NewFSStorage(tmpDir)
+	publicFS, err := static.Public()
+	if err != nil {
+		t.Fatalf("Failed to get public filesystem: %v", err)
+	}
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20)
+	server := NewServer(storage, publicFS, docServer, "http://localhost:8080")
+
+	// Test 1: Draft post should return 404 when accessed directly
+	t.Run("draft post returns 404", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/posts/draft-post", nil)
+		w := httptest.NewRecorder()
+		server.ServeHTTP(w, req)
+
+		if w.Code != http.StatusNotFound {
+			t.Errorf("Expected status 404 for draft post, got %d", w.Code)
+		}
+	})
+
+	// Test 2: Published post should be accessible
+	t.Run("published post returns 200", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/posts/published-post", nil)
+		w := httptest.NewRecorder()
+		server.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected status 200 for published post, got %d", w.Code)
+		}
+
+		body := w.Body.String()
+		if !strings.Contains(body, "Published Post") {
+			t.Error("Expected published post title in response")
+		}
+	})
+
+	// Test 3: Draft post should not appear in index
+	t.Run("draft post not in index", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/posts/index.jsonld", nil)
+		w := httptest.NewRecorder()
+		server.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected status 200 for index, got %d", w.Code)
+		}
+
+		var index struct {
+			ItemListElement []struct {
+				Item struct {
+					Headline string `json:"headline"`
+				} `json:"item"`
+			} `json:"itemListElement"`
+		}
+
+		if err := json.Unmarshal(w.Body.Bytes(), &index); err != nil {
+			t.Fatalf("Failed to parse index JSON: %v", err)
+		}
+
+		// Check that only the published post appears
+		if len(index.ItemListElement) != 1 {
+			t.Errorf("Expected 1 post in index, got %d", len(index.ItemListElement))
+		}
+
+		if len(index.ItemListElement) > 0 && index.ItemListElement[0].Item.Headline != "Published Post" {
+			t.Errorf("Expected 'Published Post' in index, got '%s'", index.ItemListElement[0].Item.Headline)
+		}
+
+		// Ensure draft post is not in the index
+		for _, item := range index.ItemListElement {
+			if item.Item.Headline == "Draft Post" {
+				t.Error("Draft post should not appear in index")
+			}
+		}
+	})
+
+	// Test 4: Title should not have "- Tens City" suffix
+	t.Run("title has no suffix", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/posts/published-post", nil)
+		w := httptest.NewRecorder()
+		server.ServeHTTP(w, req)
+
+		body := w.Body.String()
+		if strings.Contains(body, "<title>Published Post - Tens City</title>") {
+			t.Error("Title should not have '- Tens City' suffix")
+		}
+		if !strings.Contains(body, "<title>Published Post</title>") {
+			t.Error("Title should be 'Published Post' without suffix")
+		}
+	})
+
+	// Test 5: Footer should have both Home and All Posts links
+	t.Run("footer has home and all posts links", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/posts/published-post", nil)
+		w := httptest.NewRecorder()
+		server.ServeHTTP(w, req)
+
+		body := w.Body.String()
+		if !strings.Contains(body, `<a href="/">← Home</a>`) {
+			t.Error("Footer should contain Home link")
+		}
+		if !strings.Contains(body, `<a href="/posts">All Posts</a>`) {
+			t.Error("Footer should contain All Posts link")
+		}
+		if !strings.Contains(body, `<span>•</span>`) {
+			t.Error("Footer should contain separator between links")
+		}
+	})
+}

@@ -427,7 +427,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>%s - Tens City</title>`, escapedLang, escapedTitle)
+    <title>%s</title>`, escapedLang, escapedTitle)
 
 	// Add RSS autodiscovery link if we have a username
 	if userName != "" {
@@ -499,7 +499,9 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
     %s
     <div class="footer">
         <div class="footer-menu">
-            <a href="/posts">← All Posts</a>`,
+            <a href="/">← Home</a>
+            <span>•</span>
+            <a href="/posts">All Posts</a>`,
 		doc.HTML)
 
 	// Add edit link (will be shown/hidden by JavaScript based on authorship)
