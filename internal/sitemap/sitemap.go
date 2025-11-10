@@ -51,6 +51,13 @@ func GenerateSitemap(docs []*markdown.Document, baseURL string) ([]byte, error) 
 		Priority:   0.7,
 	})
 
+	// Add search page
+	urlset.URLs = append(urlset.URLs, URL{
+		Loc:        baseURL + "/search",
+		ChangeFreq: "monthly",
+		Priority:   0.6,
+	})
+
 	// Add RSS feeds page
 	urlset.URLs = append(urlset.URLs, URL{
 		Loc:        baseURL + "/rss",

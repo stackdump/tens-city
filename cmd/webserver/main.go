@@ -320,6 +320,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			s.docServer.HandleDocList(w, r)
 			return
 		}
+		// Search page
+		if r.URL.Path == "/search" {
+			s.docServer.HandleSearch(w, r)
+			return
+		}
 		// RSS feed - support multiple standard URLs
 		if r.URL.Path == "/posts.rss" || r.URL.Path == "/feed.xml" || r.URL.Path == "/rss.xml" {
 			s.docServer.HandleSiteRSS(w, r)
