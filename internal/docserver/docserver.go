@@ -17,6 +17,7 @@ import (
 	"github.com/stackdump/tens-city/internal/httputil"
 	"github.com/stackdump/tens-city/internal/markdown"
 	"github.com/stackdump/tens-city/internal/rss"
+	"github.com/stackdump/tens-city/internal/sitemap"
 )
 
 // DocServer handles markdown document requests
@@ -317,7 +318,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
         .doc-item h2 { margin: 0 0 0.5rem 0; }
         .doc-item a { color: #0066cc; text-decoration: none; }
         .doc-item a:hover { text-decoration: underline; }
-        .doc-meta { color: #666; font-size: 0.9rem; }
+        .doc-meta { color: #666; font-size: 0.9375rem; }
         .doc-description { margin-top: 0.5rem; }
     </style>
 </head>
@@ -450,9 +451,9 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
         a { color: #0066cc; }
         .post-header { margin-bottom: 2rem; }
         .post-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
-        .tag { background: #e6f3ff; color: #0066cc; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500; text-decoration: none; display: inline-block; transition: all 0.2s; }
+        .tag { background: #e6f3ff; color: #0066cc; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.9375rem; font-weight: 500; text-decoration: none; display: inline-block; transition: all 0.2s; }
         .tag:hover { background: #0066cc; color: white; }
-        .footer { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e0e0e0; color: #666; font-size: 0.85rem; }
+        .footer { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e0e0e0; color: #666; font-size: 0.9375rem; }
         .footer-menu { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 1rem; }
         .footer-menu a { color: #0066cc; text-decoration: none; }
         .footer-menu a:hover { text-decoration: underline; }
@@ -789,7 +790,7 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
         .feed-item h2 { margin: 0 0 0.5rem 0; font-size: 1.25rem; }
         .feed-item a { color: #0066cc; text-decoration: none; font-family: monospace; }
         .feed-item a:hover { text-decoration: underline; }
-        .feed-meta { color: #666; font-size: 0.9rem; margin-top: 0.5rem; }
+        .feed-meta { color: #666; font-size: 0.9375rem; margin-top: 0.5rem; }
         .author-link { color: #0066cc; text-decoration: none; }
         .author-link:hover { text-decoration: underline; }
         .back-link { display: inline-block; margin-bottom: 1rem; color: #0066cc; text-decoration: none; }
@@ -1236,6 +1237,7 @@ func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
     <footer>
         <p>
             <a href="/posts">📝 All Posts</a> • 
+            <a href="/search">🔍 Search</a> • 
             <a href="/rss">📡 RSS Feeds</a> • 
             Built with <a href="https://github.com/stackdump/tens-city" target="_blank">Tens City</a>
         </p>
@@ -1413,7 +1415,7 @@ func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag s
         
         .post-meta {
             color: var(--text-light);
-            font-size: 0.9rem;
+            font-size: 0.9375rem;
             margin-bottom: 0.75rem;
         }
         
@@ -1502,6 +1504,7 @@ func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag s
         <p>
             <a href="/posts">📝 All Posts</a> • 
             <a href="/tags">🏷️ All Tags</a> • 
+            <a href="/search">🔍 Search</a> • 
             <a href="/rss">📡 RSS Feeds</a> • 
             Built with <a href="https://github.com/stackdump/tens-city" target="_blank">Tens City</a>
         </p>
@@ -1516,4 +1519,368 @@ func pluralize(count int) string {
 		return ""
 	}
 	return "s"
+}
+
+// HandleSitemap handles GET /sitemap.xml - return XML sitemap for all pages
+func (ds *DocServer) HandleSitemap(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	baseURL := httputil.GetBaseURL(r, ds.fallbackURL)
+
+	// Load all posts
+	docs, err := markdown.ListDocuments(ds.contentDir)
+	if err != nil {
+		http.Error(w, "Failed to load posts", http.StatusInternalServerError)
+		return
+	}
+
+	// Generate sitemap
+	sitemapData, err := sitemap.GenerateSitemap(docs, baseURL)
+	if err != nil {
+		http.Error(w, "Failed to generate sitemap", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+	w.Write(sitemapData)
+}
+
+// HandleSearch handles GET /search - client-side search page
+func (ds *DocServer) HandleSearch(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	baseURL := httputil.GetBaseURL(r, ds.fallbackURL)
+
+	// Load all posts for client-side search
+	docs, err := markdown.ListDocuments(ds.contentDir)
+	if err != nil {
+		http.Error(w, "Failed to load posts", http.StatusInternalServerError)
+		return
+	}
+
+	// Filter out drafts and prepare search data
+	type SearchResult struct {
+		Title       string   `json:"title"`
+		Description string   `json:"description"`
+		Slug        string   `json:"slug"`
+		URL         string   `json:"url"`
+		Tags        []string `json:"tags"`
+		DatePublished string `json:"datePublished"`
+	}
+
+	var searchData []SearchResult
+	for _, doc := range docs {
+		if doc.Frontmatter.Draft {
+			continue
+		}
+
+		allTags := append([]string{}, doc.Frontmatter.Tags...)
+		allTags = append(allTags, doc.Frontmatter.Keywords...)
+
+		searchData = append(searchData, SearchResult{
+			Title:       doc.Frontmatter.Title,
+			Description: doc.Frontmatter.Description,
+			Slug:        doc.Frontmatter.Slug,
+			URL:         fmt.Sprintf("%s/posts/%s", baseURL, doc.Frontmatter.Slug),
+			Tags:        allTags,
+			DatePublished: doc.Frontmatter.DatePublished,
+		})
+	}
+
+	searchDataJSON, err := json.Marshal(searchData)
+	if err != nil {
+		http.Error(w, "Failed to prepare search data", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprintf(w, `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Search - Tens City</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --bg: #ffffff;
+            --bg-alt: #f9fafb;
+            --border: #e5e7eb;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--text);
+            background: var(--bg-alt);
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%%, var(--primary-dark) 100%%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            box-shadow: 0 4px 6px var(--shadow);
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .search-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .search-box {
+            width: 100%%;
+            padding: 1rem 1.5rem;
+            font-size: 1.125rem;
+            border: 2px solid white;
+            border-radius: 8px;
+            outline: none;
+        }
+        
+        .search-box:focus {
+            border-color: var(--bg-alt);
+        }
+        
+        main {
+            max-width: 900px;
+            margin: 3rem auto;
+            padding: 0 1.5rem;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 2rem;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .results-info {
+            margin-bottom: 1.5rem;
+            color: var(--text-light);
+        }
+        
+        .search-results {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .result-item {
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px var(--shadow);
+            transition: all 0.3s ease;
+        }
+        
+        .result-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px var(--shadow);
+            border-color: var(--primary);
+        }
+        
+        .result-item h2 {
+            margin: 0 0 0.75rem 0;
+            font-size: 1.5rem;
+        }
+        
+        .result-item a {
+            color: var(--text);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .result-item a:hover {
+            color: var(--primary);
+        }
+        
+        .result-meta {
+            color: var(--text-light);
+            font-size: 0.9375rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .result-description {
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+        
+        .result-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        
+        .tag {
+            background: #e6f3ff;
+            color: var(--primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.9375rem;
+            font-weight: 500;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-light);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-light);
+            font-size: 0.9375rem;
+        }
+        
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .search-box {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>🔍 Search</h1>
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-box" placeholder="Search posts..." autofocus>
+        </div>
+    </div>
+    
+    <main>
+        <a href="/" class="back-link">← Back to Home</a>
+        
+        <div id="resultsInfo" class="results-info"></div>
+        
+        <ul id="searchResults" class="search-results"></ul>
+    </main>
+    
+    <footer>
+        <p>
+            <a href="/posts">📝 All Posts</a> • 
+            <a href="/tags">🏷️ All Tags</a> • 
+            <a href="/rss">📡 RSS Feeds</a> • 
+            Built with <a href="https://github.com/stackdump/tens-city" target="_blank">Tens City</a>
+        </p>
+    </footer>
+    
+    <script>
+        const searchData = %s;
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const resultsInfo = document.getElementById('resultsInfo');
+        
+        function performSearch() {
+            const query = searchInput.value.toLowerCase().trim();
+            
+            if (!query) {
+                searchResults.innerHTML = '<div class="empty-state">Enter a search term to find posts</div>';
+                resultsInfo.textContent = '';
+                return;
+            }
+            
+            const results = searchData.filter(post => {
+                return post.title.toLowerCase().includes(query) ||
+                       post.description.toLowerCase().includes(query) ||
+                       post.tags.some(tag => tag.toLowerCase().includes(query));
+            });
+            
+            if (results.length === 0) {
+                searchResults.innerHTML = '<div class="empty-state">No posts found matching "' + escapeHtml(query) + '"</div>';
+                resultsInfo.textContent = '';
+                return;
+            }
+            
+            resultsInfo.textContent = 'Found ' + results.length + ' post' + (results.length === 1 ? '' : 's');
+            
+            searchResults.innerHTML = results.map(post => {
+                let html = '<li class="result-item">';
+                html += '<h2><a href="' + escapeHtml(post.url) + '">' + escapeHtml(post.title) + '</a></h2>';
+                
+                if (post.datePublished) {
+                    html += '<div class="result-meta">Published: ' + escapeHtml(new Date(post.datePublished).toLocaleDateString()) + '</div>';
+                }
+                
+                if (post.description) {
+                    html += '<p class="result-description">' + escapeHtml(post.description) + '</p>';
+                }
+                
+                if (post.tags && post.tags.length > 0) {
+                    html += '<div class="result-tags">';
+                    post.tags.forEach(tag => {
+                        html += '<span class="tag">' + escapeHtml(tag) + '</span>';
+                    });
+                    html += '</div>';
+                }
+                
+                html += '</li>';
+                return html;
+            }).join('');
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Search on input
+        searchInput.addEventListener('input', performSearch);
+        
+        // Initial search if there's a query parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialQuery = urlParams.get('q');
+        if (initialQuery) {
+            searchInput.value = initialQuery;
+            performSearch();
+        }
+    </script>
+</body>
+</html>`, string(searchDataJSON))
 }

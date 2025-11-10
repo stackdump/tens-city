@@ -266,6 +266,9 @@ make dev
 - `GET /posts/index.jsonld` - JSON-LD index of all posts
 - `GET /posts/{slug}` - Individual post as HTML
 - `GET /posts/{slug}.jsonld` - Individual post as JSON-LD
+- `GET /search` - Client-side search page for finding posts
+- `GET /tags` - Tag cloud showing all tags
+- `GET /tags/{tag}` - Posts with specific tag
 
 ### RSS Feeds
 - `GET /posts.rss` - Site-wide RSS feed (all posts)
@@ -275,13 +278,16 @@ make dev
 - `GET /rss` - HTML page listing all available RSS feeds
 
 ### SEO & Discovery
-- `GET /robots.txt` - Robots.txt for search engine crawlers
+- `GET /robots.txt` - Robots.txt for search engine crawlers with sitemap reference
+- `GET /sitemap.xml` - XML sitemap of all pages, posts, and tags
 - `GET /.well-known/security.txt` - Security contact information
 
 ### Features
 - **RSS Autodiscovery** - `<link rel="alternate">` tag automatically added to homepage
 - **JSON-LD with sameAs** - Add social media profiles to `content/index.md` for better SEO
 - **Multiple RSS URLs** - RSS feed available at `/posts.rss`, `/feed.xml`, and `/rss.xml`
+- **XML Sitemap** - Automatically generated sitemap with all pages, posts, and tags
+- **Client-Side Search** - Fast search functionality for finding posts by title, description, or tags
 
 ## License
 
