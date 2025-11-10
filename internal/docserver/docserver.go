@@ -17,6 +17,7 @@ import (
 	"github.com/stackdump/tens-city/internal/httputil"
 	"github.com/stackdump/tens-city/internal/markdown"
 	"github.com/stackdump/tens-city/internal/rss"
+	"github.com/stackdump/tens-city/internal/sitemap"
 )
 
 // DocServer handles markdown document requests
@@ -1516,4 +1517,31 @@ func pluralize(count int) string {
 		return ""
 	}
 	return "s"
+}
+
+// HandleSitemap handles GET /sitemap.xml - return XML sitemap for all pages
+func (ds *DocServer) HandleSitemap(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	baseURL := httputil.GetBaseURL(r, ds.fallbackURL)
+
+	// Load all posts
+	docs, err := markdown.ListDocuments(ds.contentDir)
+	if err != nil {
+		http.Error(w, "Failed to load posts", http.StatusInternalServerError)
+		return
+	}
+
+	// Generate sitemap
+	sitemapData, err := sitemap.GenerateSitemap(docs, baseURL)
+	if err != nil {
+		http.Error(w, "Failed to generate sitemap", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+	w.Write(sitemapData)
 }

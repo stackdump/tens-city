@@ -169,8 +169,11 @@ func (s *Server) handleGetHistory(w http.ResponseWriter, r *http.Request) {
 
 // handleRobotsTxt serves a default robots.txt file
 func (s *Server) handleRobotsTxt(w http.ResponseWriter, r *http.Request) {
-	robotsTxt := `User-agent: *
-Allow: /`
+	baseURL := httputil.GetBaseURL(r, s.fallbackURL)
+	robotsTxt := fmt.Sprintf(`User-agent: *
+Allow: /
+
+Sitemap: %s/sitemap.xml`, baseURL)
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte(robotsTxt))
@@ -292,6 +295,16 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// robots.txt
 	if r.URL.Path == "/robots.txt" {
 		s.handleRobotsTxt(w, r)
+		return
+	}
+
+	// sitemap.xml
+	if r.URL.Path == "/sitemap.xml" {
+		if s.docServer != nil {
+			s.docServer.HandleSitemap(w, r)
+			return
+		}
+		http.NotFound(w, r)
 		return
 	}
 
