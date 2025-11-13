@@ -377,12 +377,6 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 
 	doc := cached.Doc
 
-	// Check draft status
-	if doc.Frontmatter.Draft {
-		http.Error(w, "Document not found", http.StatusNotFound)
-		return
-	}
-
 	// Set cache headers
 	w.Header().Set("ETag", cached.ETag)
 	w.Header().Set("Last-Modified", cached.Modified.UTC().Format(http.TimeFormat))
@@ -578,12 +572,6 @@ func (ds *DocServer) HandleDocJSONLD(w http.ResponseWriter, r *http.Request, slu
 	}
 
 	doc := cached.Doc
-
-	// Check draft status
-	if doc.Frontmatter.Draft {
-		http.Error(w, "Document not found", http.StatusNotFound)
-		return
-	}
 
 	// Set cache headers
 	w.Header().Set("ETag", cached.ETag)
@@ -1566,12 +1554,12 @@ func (ds *DocServer) HandleSearch(w http.ResponseWriter, r *http.Request) {
 
 	// Filter out drafts and prepare search data
 	type SearchResult struct {
-		Title       string   `json:"title"`
-		Description string   `json:"description"`
-		Slug        string   `json:"slug"`
-		URL         string   `json:"url"`
-		Tags        []string `json:"tags"`
-		DatePublished string `json:"datePublished"`
+		Title         string   `json:"title"`
+		Description   string   `json:"description"`
+		Slug          string   `json:"slug"`
+		URL           string   `json:"url"`
+		Tags          []string `json:"tags"`
+		DatePublished string   `json:"datePublished"`
 	}
 
 	var searchData []SearchResult
@@ -1584,11 +1572,11 @@ func (ds *DocServer) HandleSearch(w http.ResponseWriter, r *http.Request) {
 		allTags = append(allTags, doc.Frontmatter.Keywords...)
 
 		searchData = append(searchData, SearchResult{
-			Title:       doc.Frontmatter.Title,
-			Description: doc.Frontmatter.Description,
-			Slug:        doc.Frontmatter.Slug,
-			URL:         fmt.Sprintf("%s/posts/%s", baseURL, doc.Frontmatter.Slug),
-			Tags:        allTags,
+			Title:         doc.Frontmatter.Title,
+			Description:   doc.Frontmatter.Description,
+			Slug:          doc.Frontmatter.Slug,
+			URL:           fmt.Sprintf("%s/posts/%s", baseURL, doc.Frontmatter.Slug),
+			Tags:          allTags,
 			DatePublished: doc.Frontmatter.DatePublished,
 		})
 	}
