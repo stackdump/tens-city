@@ -1138,18 +1138,18 @@ This post is a draft.
 }
 
 func TestSitemapXML(t *testing.T) {
-tmpDir := t.TempDir()
-storage := NewFSStorage(tmpDir)
+	tmpDir := t.TempDir()
+	storage := NewFSStorage(tmpDir)
 
-publicFS, err := static.Public()
-if err != nil {
-t.Fatalf("Failed to get public filesystem: %v", err)
-}
+	publicFS, err := static.Public()
+	if err != nil {
+		t.Fatalf("Failed to get public filesystem: %v", err)
+	}
 
-// Create a temporary content directory with test posts
-contentDir := t.TempDir()
+	// Create a temporary content directory with test posts
+	contentDir := t.TempDir()
 
-testPost1 := `---
+	testPost1 := `---
 title: First Post
 description: Test post one
 datePublished: 2025-01-01T00:00:00Z
@@ -1167,7 +1167,7 @@ author:
 # First Post
 Test content.
 `
-testPost2 := `---
+	testPost2 := `---
 title: Second Post
 description: Test post two
 datePublished: 2025-01-03T00:00:00Z
@@ -1183,117 +1183,117 @@ author:
 # Second Post
 More test content.
 `
-if err := os.WriteFile(contentDir+"/first-post.md", []byte(testPost1), 0644); err != nil {
-t.Fatalf("Failed to write test post: %v", err)
-}
-if err := os.WriteFile(contentDir+"/second-post.md", []byte(testPost2), 0644); err != nil {
-t.Fatalf("Failed to write test post: %v", err)
-}
+	if err := os.WriteFile(contentDir+"/first-post.md", []byte(testPost1), 0644); err != nil {
+		t.Fatalf("Failed to write test post: %v", err)
+	}
+	if err := os.WriteFile(contentDir+"/second-post.md", []byte(testPost2), 0644); err != nil {
+		t.Fatalf("Failed to write test post: %v", err)
+	}
 
-docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20)
-server := NewServer(storage, publicFS, docServer, "http://localhost:8080")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20)
+	server := NewServer(storage, publicFS, docServer, "http://localhost:8080")
 
-req := httptest.NewRequest("GET", "/sitemap.xml", nil)
-req.Host = "localhost:8080"
-w := httptest.NewRecorder()
-server.ServeHTTP(w, req)
+	req := httptest.NewRequest("GET", "/sitemap.xml", nil)
+	req.Host = "localhost:8080"
+	w := httptest.NewRecorder()
+	server.ServeHTTP(w, req)
 
-resp := w.Result()
-if resp.StatusCode != http.StatusOK {
-t.Errorf("Expected status 200, got %d", resp.StatusCode)
-}
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", resp.StatusCode)
+	}
 
-contentType := resp.Header.Get("Content-Type")
-if contentType != "application/xml; charset=utf-8" {
-t.Errorf("Expected Content-Type application/xml; charset=utf-8, got %s", contentType)
-}
+	contentType := resp.Header.Get("Content-Type")
+	if contentType != "application/xml; charset=utf-8" {
+		t.Errorf("Expected Content-Type application/xml; charset=utf-8, got %s", contentType)
+	}
 
-body, _ := io.ReadAll(resp.Body)
-bodyStr := string(body)
+	body, _ := io.ReadAll(resp.Body)
+	bodyStr := string(body)
 
-// Debug: print the actual response
-if testing.Verbose() {
-	t.Logf("Response body:\n%s", bodyStr)
-}
+	// Debug: print the actual response
+	if testing.Verbose() {
+		t.Logf("Response body:\n%s", bodyStr)
+	}
 
-// Check for XML header
-if !strings.Contains(bodyStr, "<?xml") {
-t.Error("Sitemap should contain XML header")
-}
+	// Check for XML header
+	if !strings.Contains(bodyStr, "<?xml") {
+		t.Error("Sitemap should contain XML header")
+	}
 
-// Check for sitemap namespace
-if !strings.Contains(bodyStr, `xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"`) {
-t.Error("Sitemap should contain proper namespace")
-}
+	// Check for sitemap namespace
+	if !strings.Contains(bodyStr, `xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"`) {
+		t.Error("Sitemap should contain proper namespace")
+	}
 
-// Check for required pages
-requiredPages := []string{
-"<loc>http://localhost:8080/</loc>",
-"<loc>http://localhost:8080/posts</loc>",
-"<loc>http://localhost:8080/tags</loc>",
-"<loc>http://localhost:8080/rss</loc>",
-"<loc>http://localhost:8080/posts/first-post</loc>",
-"<loc>http://localhost:8080/posts/second-post</loc>",
-"<loc>http://localhost:8080/tags/test</loc>",
-"<loc>http://localhost:8080/tags/blog</loc>",
-"<loc>http://localhost:8080/tags/example</loc>",
-}
+	// Check for required pages
+	requiredPages := []string{
+		"<loc>http://localhost:8080/</loc>",
+		"<loc>http://localhost:8080/posts</loc>",
+		"<loc>http://localhost:8080/tags</loc>",
+		"<loc>http://localhost:8080/rss</loc>",
+		"<loc>http://localhost:8080/posts/first-post</loc>",
+		"<loc>http://localhost:8080/posts/second-post</loc>",
+		"<loc>http://localhost:8080/tags/test</loc>",
+		"<loc>http://localhost:8080/tags/blog</loc>",
+		"<loc>http://localhost:8080/tags/example</loc>",
+	}
 
-for _, page := range requiredPages {
-if !strings.Contains(bodyStr, page) {
-t.Errorf("Sitemap should contain %s", page)
-}
-}
+	for _, page := range requiredPages {
+		if !strings.Contains(bodyStr, page) {
+			t.Errorf("Sitemap should contain %s", page)
+		}
+	}
 
-// Check for lastmod dates
-if !strings.Contains(bodyStr, "<lastmod>2025-01-02</lastmod>") {
-t.Error("Sitemap should contain lastmod date for first post")
-}
-if !strings.Contains(bodyStr, "<lastmod>2025-01-03</lastmod>") {
-t.Error("Sitemap should contain lastmod date for second post")
-}
+	// Check for lastmod dates
+	if !strings.Contains(bodyStr, "<lastmod>2025-01-02</lastmod>") {
+		t.Error("Sitemap should contain lastmod date for first post")
+	}
+	if !strings.Contains(bodyStr, "<lastmod>2025-01-03</lastmod>") {
+		t.Error("Sitemap should contain lastmod date for second post")
+	}
 
-// Check for priorities
-if !strings.Contains(bodyStr, "<priority>1") {
-t.Error("Sitemap should contain priority values")
-}
+	// Check for priorities
+	if !strings.Contains(bodyStr, "<priority>1") {
+		t.Error("Sitemap should contain priority values")
+	}
 }
 
 func TestRobotsTxtWithSitemap(t *testing.T) {
-tmpDir := t.TempDir()
-storage := NewFSStorage(tmpDir)
-server := NewServer(storage, nil, nil, "http://localhost:8080")
+	tmpDir := t.TempDir()
+	storage := NewFSStorage(tmpDir)
+	server := NewServer(storage, nil, nil, "http://localhost:8080")
 
-req := httptest.NewRequest("GET", "/robots.txt", nil)
-req.Host = "localhost:8080"
-w := httptest.NewRecorder()
-server.ServeHTTP(w, req)
+	req := httptest.NewRequest("GET", "/robots.txt", nil)
+	req.Host = "localhost:8080"
+	w := httptest.NewRecorder()
+	server.ServeHTTP(w, req)
 
-resp := w.Result()
-if resp.StatusCode != http.StatusOK {
-t.Errorf("Expected status 200, got %d", resp.StatusCode)
-}
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", resp.StatusCode)
+	}
 
-contentType := resp.Header.Get("Content-Type")
-if contentType != "text/plain; charset=utf-8" {
-t.Errorf("Expected Content-Type text/plain; charset=utf-8, got %s", contentType)
-}
+	contentType := resp.Header.Get("Content-Type")
+	if contentType != "text/plain; charset=utf-8" {
+		t.Errorf("Expected Content-Type text/plain; charset=utf-8, got %s", contentType)
+	}
 
-body, _ := io.ReadAll(resp.Body)
-bodyStr := string(body)
+	body, _ := io.ReadAll(resp.Body)
+	bodyStr := string(body)
 
-// Check for basic robots.txt content
-if !strings.Contains(bodyStr, "User-agent: *") {
-t.Error("robots.txt should contain User-agent directive")
-}
-if !strings.Contains(bodyStr, "Allow: /") {
-t.Error("robots.txt should contain Allow directive")
-}
+	// Check for basic robots.txt content
+	if !strings.Contains(bodyStr, "User-agent: *") {
+		t.Error("robots.txt should contain User-agent directive")
+	}
+	if !strings.Contains(bodyStr, "Allow: /") {
+		t.Error("robots.txt should contain Allow directive")
+	}
 
-// Check for sitemap reference
-if !strings.Contains(bodyStr, "Sitemap: http://localhost:8080/sitemap.xml") {
-t.Error("robots.txt should reference sitemap.xml")
-}
+	// Check for sitemap reference
+	if !strings.Contains(bodyStr, "Sitemap: http://localhost:8080/sitemap.xml") {
+		t.Error("robots.txt should reference sitemap.xml")
+	}
 }
 
 func TestRobotsTxtWithProxyHeaders(t *testing.T) {
@@ -1532,4 +1532,3 @@ This is a published article.
 		}
 	})
 }
-

@@ -1554,12 +1554,12 @@ func (ds *DocServer) HandleSearch(w http.ResponseWriter, r *http.Request) {
 
 	// Filter out drafts and prepare search data
 	type SearchResult struct {
-		Title       string   `json:"title"`
-		Description string   `json:"description"`
-		Slug        string   `json:"slug"`
-		URL         string   `json:"url"`
-		Tags        []string `json:"tags"`
-		DatePublished string `json:"datePublished"`
+		Title         string   `json:"title"`
+		Description   string   `json:"description"`
+		Slug          string   `json:"slug"`
+		URL           string   `json:"url"`
+		Tags          []string `json:"tags"`
+		DatePublished string   `json:"datePublished"`
 	}
 
 	var searchData []SearchResult
@@ -1572,11 +1572,11 @@ func (ds *DocServer) HandleSearch(w http.ResponseWriter, r *http.Request) {
 		allTags = append(allTags, doc.Frontmatter.Keywords...)
 
 		searchData = append(searchData, SearchResult{
-			Title:       doc.Frontmatter.Title,
-			Description: doc.Frontmatter.Description,
-			Slug:        doc.Frontmatter.Slug,
-			URL:         fmt.Sprintf("%s/posts/%s", baseURL, doc.Frontmatter.Slug),
-			Tags:        allTags,
+			Title:         doc.Frontmatter.Title,
+			Description:   doc.Frontmatter.Description,
+			Slug:          doc.Frontmatter.Slug,
+			URL:           fmt.Sprintf("%s/posts/%s", baseURL, doc.Frontmatter.Slug),
+			Tags:          allTags,
 			DatePublished: doc.Frontmatter.DatePublished,
 		})
 	}

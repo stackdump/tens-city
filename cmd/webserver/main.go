@@ -182,13 +182,13 @@ Sitemap: %s/sitemap.xml`, baseURL)
 // handleWellKnown serves default files for .well-known directory
 func (s *Server) handleWellKnown(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimPrefix(r.URL.Path, "/.well-known/")
-	
+
 	// Handle common .well-known endpoints with defaults
 	switch path {
 	case "security.txt":
 		// Calculate expiration date (1 year from now)
 		expirationDate := time.Now().AddDate(1, 0, 0).UTC().Format("2006-01-02T15:04:05.000Z")
-		
+
 		// Use a placeholder that makes it clear this should be customized
 		securityTxt := fmt.Sprintf(`# Security contact information
 # Please customize this file with your actual security contact
@@ -198,7 +198,7 @@ Preferred-Languages: en
 
 # To customize: Create your own .well-known/security.txt file
 # and serve it from your web root or update this handler`, expirationDate)
-		
+
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Write([]byte(securityTxt))
 		return
