@@ -377,12 +377,6 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 
 	doc := cached.Doc
 
-	// Check draft status
-	if doc.Frontmatter.Draft {
-		http.Error(w, "Document not found", http.StatusNotFound)
-		return
-	}
-
 	// Set cache headers
 	w.Header().Set("ETag", cached.ETag)
 	w.Header().Set("Last-Modified", cached.Modified.UTC().Format(http.TimeFormat))
@@ -578,12 +572,6 @@ func (ds *DocServer) HandleDocJSONLD(w http.ResponseWriter, r *http.Request, slu
 	}
 
 	doc := cached.Doc
-
-	// Check draft status
-	if doc.Frontmatter.Draft {
-		http.Error(w, "Document not found", http.StatusNotFound)
-		return
-	}
 
 	// Set cache headers
 	w.Header().Set("ETag", cached.ETag)
