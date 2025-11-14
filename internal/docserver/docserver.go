@@ -443,6 +443,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
         pre { background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; }
         pre code { background: none; padding: 0; }
         a { color: #0066cc; }
+        img { max-width: 100%%; height: auto; display: block; margin: 1rem 0; }
         .post-header { margin-bottom: 2rem; }
         .post-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
         .tag { background: #e6f3ff; color: #0066cc; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.9375rem; font-weight: 500; text-decoration: none; display: inline-block; transition: all 0.2s; }
