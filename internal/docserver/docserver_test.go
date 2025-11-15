@@ -1471,3 +1471,68 @@ func TestLoadIndexDocument_ReadOnlyFilesystem(t *testing.T) {
 		t.Error("Expected nil document when filesystem is read-only")
 	}
 }
+
+func TestHandleDoc_IIFEWrapper(t *testing.T) {
+	// Create a temporary directory with test content
+	tmpDir := t.TempDir()
+
+	// Create test markdown file
+	doc := `---
+title: Test Post
+description: Testing IIFE wrapper in footer script
+datePublished: 2025-11-15T10:00:00Z
+author:
+  name: TestUser
+  type: Person
+  url: https://github.com/testuser
+lang: en
+slug: test-post
+---
+
+# Test Content
+
+This is a test post.
+`
+
+	// Write test file
+	if err := os.WriteFile(filepath.Join(tmpDir, "test.md"), []byte(doc), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create docserver
+	ds := NewDocServer(tmpDir, "https://test.example.com", 0)
+
+	// Create test request
+	req := httptest.NewRequest(http.MethodGet, "/posts/test-post", nil)
+	rec := httptest.NewRecorder()
+
+	// Handle request
+	ds.HandleDoc(rec, req, "test-post")
+
+	// Check response
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", rec.Code)
+	}
+
+	body := rec.Body.String()
+
+	// Check that the script contains the IIFE wrapper
+	if !strings.Contains(body, "(function() {") {
+		t.Error("Expected HTML to contain IIFE opening '(function() {'")
+	}
+
+	// Check that the script contains the closing IIFE
+	if !strings.Contains(body, "})();") {
+		t.Error("Expected HTML to contain IIFE closing '})();'")
+	}
+
+	// Check that the script checks for editLink element
+	if !strings.Contains(body, "const editLink = document.getElementById('editLink');") {
+		t.Error("Expected HTML to contain editLink element check")
+	}
+
+	// Check that the script has proper early returns
+	if !strings.Contains(body, "if (!editLink) return;") {
+		t.Error("Expected HTML to contain early return for missing editLink")
+	}
+}

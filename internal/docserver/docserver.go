@@ -517,6 +517,9 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
     </div>
 
     <script>
+        (function() {
+            const editLink = document.getElementById('editLink');
+            if (!editLink) return;
             
             const authorURL = editLink.getAttribute('data-author-url');
             if (!authorURL) return;
