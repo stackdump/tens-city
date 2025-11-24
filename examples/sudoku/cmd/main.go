@@ -59,11 +59,11 @@ func main() {
 
 	// Find the model file - try multiple possible locations
 	possiblePaths := []string{
-		"sudoku-4x4-simple.jsonld",                                    // Running from examples/sudoku
-		filepath.Join("examples", "sudoku", "sudoku-4x4-simple.jsonld"), // Running from repo root
+		"sudoku-4x4-simple.jsonld",                                                  // Running from examples/sudoku
+		filepath.Join("examples", "sudoku", "sudoku-4x4-simple.jsonld"),             // Running from repo root
 		filepath.Join("..", "..", "examples", "sudoku", "sudoku-4x4-simple.jsonld"), // Running from examples/sudoku/cmd
 	}
-	
+
 	modelPath := ""
 	for _, path := range possiblePaths {
 		if _, err := os.Stat(path); err == nil {
@@ -71,7 +71,7 @@ func main() {
 			break
 		}
 	}
-	
+
 	if modelPath == "" {
 		fmt.Println("Error: Could not find sudoku-4x4-simple.jsonld")
 		fmt.Println("Usage: Run from the repository root or examples/sudoku directory")
