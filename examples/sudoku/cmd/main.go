@@ -8,16 +8,19 @@ import (
 )
 
 // SudokuPetriNet represents the structure of our Sudoku Petri net model
+// This example demonstrates the JSON-LD structure for Petri nets compatible
+// with go-pflow. Future enhancements could use go-pflow for simulation and
+// state space analysis.
 type SudokuPetriNet struct {
-	Context     interface{}            `json:"@context"`
-	Type        string                 `json:"@type"`
-	Version     string                 `json:"@version"`
-	Description string                 `json:"description"`
-	Puzzle      PuzzleInfo             `json:"puzzle"`
-	Token       []string               `json:"token"`
-	Places      map[string]Place       `json:"places"`
-	Transitions map[string]Transition  `json:"transitions"`
-	Arcs        []Arc                  `json:"arcs"`
+	Context     interface{}           `json:"@context"`
+	Type        string                `json:"@type"`
+	Version     string                `json:"@version"`
+	Description string                `json:"description"`
+	Puzzle      PuzzleInfo            `json:"puzzle"`
+	Token       []string              `json:"token"`
+	Places      map[string]Place      `json:"places"`
+	Transitions map[string]Transition `json:"transitions"`
+	Arcs        []Arc                 `json:"arcs"`
 }
 
 type PuzzleInfo struct {
@@ -27,12 +30,12 @@ type PuzzleInfo struct {
 }
 
 type Place struct {
-	Type     string   `json:"@type"`
-	Label    string   `json:"label"`
-	Initial  []int    `json:"initial"`
-	Capacity []int    `json:"capacity"`
-	X        int      `json:"x"`
-	Y        int      `json:"y"`
+	Type     string `json:"@type"`
+	Label    string `json:"label"`
+	Initial  []int  `json:"initial"`
+	Capacity []int  `json:"capacity"`
+	X        int    `json:"x"`
+	Y        int    `json:"y"`
 }
 
 type Transition struct {
@@ -43,10 +46,10 @@ type Transition struct {
 }
 
 type Arc struct {
-	Type   string   `json:"@type"`
-	Source string   `json:"source"`
-	Target string   `json:"target"`
-	Weight []int    `json:"weight"`
+	Type   string `json:"@type"`
+	Source string `json:"source"`
+	Target string `json:"target"`
+	Weight []int  `json:"weight"`
 }
 
 func main() {
@@ -54,18 +57,31 @@ func main() {
 	fmt.Println("==========================")
 	fmt.Println()
 
-	// Find the model file
-	modelPath := "sudoku-4x4-simple.jsonld"
-	if _, err := os.Stat(modelPath); os.IsNotExist(err) {
-		// Try relative path from examples/sudoku
-		modelPath = filepath.Join("..", "..", "examples", "sudoku", "sudoku-4x4-simple.jsonld")
+	// Find the model file - try multiple possible locations
+	possiblePaths := []string{
+		"sudoku-4x4-simple.jsonld",                                    // Running from examples/sudoku
+		filepath.Join("examples", "sudoku", "sudoku-4x4-simple.jsonld"), // Running from repo root
+		filepath.Join("..", "..", "examples", "sudoku", "sudoku-4x4-simple.jsonld"), // Running from examples/sudoku/cmd
+	}
+	
+	modelPath := ""
+	for _, path := range possiblePaths {
+		if _, err := os.Stat(path); err == nil {
+			modelPath = path
+			break
+		}
+	}
+	
+	if modelPath == "" {
+		fmt.Println("Error: Could not find sudoku-4x4-simple.jsonld")
+		fmt.Println("Usage: Run from the repository root or examples/sudoku directory")
+		os.Exit(1)
 	}
 
 	// Load the Petri net model
 	data, err := os.ReadFile(modelPath)
 	if err != nil {
 		fmt.Printf("Error reading model file: %v\n", err)
-		fmt.Println("Usage: Run from the examples/sudoku directory or repository root")
 		os.Exit(1)
 	}
 

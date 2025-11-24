@@ -81,11 +81,17 @@ The Petri net model allows us to:
 
 ## Using go-pflow
 
-The `go-pflow` library provides tools for:
-- Loading and parsing Petri net models (JSON/JSON-LD format)
+This example provides a foundation for using the `go-pflow` library. The current implementation:
+- Demonstrates the JSON-LD structure for Petri nets compatible with go-pflow
+- Shows how to model Sudoku constraints as a Petri net
+- Validates the solution manually to verify correctness
+
+Future enhancements could leverage go-pflow for:
+- Loading and parsing Petri net models programmatically
 - Simulating token flow and transitions
 - Analyzing reachability and state spaces
 - Visualizing Petri net execution
+- Automated solution finding through state space search
 
 ## References
 
