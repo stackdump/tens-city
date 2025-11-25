@@ -1,6 +1,6 @@
 # Sudoku Petri Net Example
 
-This example demonstrates how to model a Sudoku puzzle using Petri nets with the `pflow-xyz/go-pflow` library.
+This example demonstrates how to model Sudoku puzzles using Petri nets with the `pflow-xyz/go-pflow` library.
 
 ## Overview
 
@@ -9,7 +9,32 @@ Sudoku is a constraint satisfaction puzzle where numbers must be placed in a gri
 - Each column contains unique values
 - Each sub-grid (block) contains unique values
 
-This example uses a **4x4 Sudoku** (simpler than the traditional 9x9) to demonstrate the concepts clearly.
+This example includes both **4x4** and **9x9** Sudoku puzzles to demonstrate the concepts.
+
+## Available Puzzles
+
+### 4x4 Sudoku (`sudoku-4x4-simple.jsonld`)
+- Simpler variant with 2x2 blocks
+- Uses numbers 1-4
+- Great for understanding the basic concepts
+
+### 9x9 Sudoku (`sudoku-9x9.jsonld`)
+- Standard Sudoku with 3x3 blocks
+- Uses numbers 1-9
+- Classic puzzle format
+
+## Running the Analyzer
+
+```bash
+# From repository root - run 9x9 (default)
+go run examples/sudoku/cmd/main.go
+
+# Run 4x4 puzzle
+go run examples/sudoku/cmd/main.go -size 4x4
+
+# Run 9x9 puzzle explicitly
+go run examples/sudoku/cmd/main.go -size 9x9
+```
 
 ## Petri Net Model
 
@@ -28,9 +53,9 @@ This example uses a **4x4 Sudoku** (simpler than the traditional 9x9) to demonst
   - Define the flow of tokens (number assignments)
   - Encode constraint checking logic
 
-### Example Puzzle
+### Example Puzzles
 
-The `sudoku-4x4-simple.jsonld` file contains a simple 4x4 Sudoku puzzle:
+#### 4x4 Puzzle (`sudoku-4x4-simple.jsonld`)
 
 **Initial State:**
 ```
@@ -42,10 +67,42 @@ _ _ _ 4
 
 **Solution:**
 ```
-1 2 3 4
+1 2 4 3
 3 4 2 1
-2 3 4 1
-4 1 2 3
+2 3 1 4
+4 1 3 2
+```
+
+#### 9x9 Puzzle (`sudoku-9x9.jsonld`)
+
+**Initial State:**
+```
+5 3 _ | _ 7 _ | _ _ _
+6 _ _ | 1 9 5 | _ _ _
+_ 9 8 | _ _ _ | _ 6 _
+------+-------+------
+8 _ _ | _ 6 _ | _ _ 3
+4 _ _ | 8 _ 3 | _ _ 1
+7 _ _ | _ 2 _ | _ _ 6
+------+-------+------
+_ 6 _ | _ _ _ | 2 8 _
+_ _ _ | 4 1 9 | _ _ 5
+_ _ _ | _ 8 _ | _ 7 9
+```
+
+**Solution:**
+```
+5 3 4 | 6 7 8 | 9 1 2
+6 7 2 | 1 9 5 | 3 4 8
+1 9 8 | 3 4 2 | 5 6 7
+------+-------+------
+8 5 9 | 7 6 1 | 4 2 3
+4 2 6 | 8 5 3 | 7 9 1
+7 1 3 | 9 2 4 | 8 5 6
+------+-------+------
+9 6 1 | 5 3 7 | 2 8 4
+2 8 7 | 4 1 9 | 6 3 5
+3 4 5 | 2 8 6 | 1 7 9
 ```
 
 ## Sudoku Constraints as Petri Nets

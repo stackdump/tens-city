@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 )
@@ -25,6 +27,8 @@ type SudokuPetriNet struct {
 
 type PuzzleInfo struct {
 	Description  string  `json:"description"`
+	Size         int     `json:"size"`
+	BlockSize    int     `json:"block_size"`
 	InitialState [][]int `json:"initial_state"`
 	Solution     [][]int `json:"solution"`
 }
@@ -53,15 +57,31 @@ type Arc struct {
 }
 
 func main() {
+	// Parse command line flags
+	size := flag.String("size", "9x9", "Sudoku size: 4x4 or 9x9")
+	flag.Parse()
+
 	fmt.Println("Sudoku Petri Net Analyzer")
 	fmt.Println("==========================")
 	fmt.Println()
 
+	// Determine which model file to use
+	var modelFile string
+	switch *size {
+	case "4x4", "4":
+		modelFile = "sudoku-4x4-simple.jsonld"
+	case "9x9", "9":
+		modelFile = "sudoku-9x9.jsonld"
+	default:
+		fmt.Printf("Error: Invalid size '%s'. Use 4x4 or 9x9\n", *size)
+		os.Exit(1)
+	}
+
 	// Find the model file - try multiple possible locations
 	possiblePaths := []string{
-		"sudoku-4x4-simple.jsonld",                                                  // Running from examples/sudoku
-		filepath.Join("examples", "sudoku", "sudoku-4x4-simple.jsonld"),             // Running from repo root
-		filepath.Join("..", "..", "examples", "sudoku", "sudoku-4x4-simple.jsonld"), // Running from examples/sudoku/cmd
+		modelFile,                                                  // Running from examples/sudoku
+		filepath.Join("examples", "sudoku", modelFile),             // Running from repo root
+		filepath.Join("..", "..", "examples", "sudoku", modelFile), // Running from examples/sudoku/cmd
 	}
 
 	modelPath := ""
@@ -73,7 +93,7 @@ func main() {
 	}
 
 	if modelPath == "" {
-		fmt.Println("Error: Could not find sudoku-4x4-simple.jsonld")
+		fmt.Printf("Error: Could not find %s\n", modelFile)
 		fmt.Println("Usage: Run from the repository root or examples/sudoku directory")
 		os.Exit(1)
 	}
@@ -91,19 +111,31 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Determine puzzle size
+	puzzleSize := model.Puzzle.Size
+	if puzzleSize == 0 {
+		puzzleSize = len(model.Puzzle.Solution)
+	}
+	blockSize := model.Puzzle.BlockSize
+	if blockSize == 0 {
+		blockSize = int(math.Sqrt(float64(puzzleSize)))
+	}
+
 	// Display puzzle information
 	fmt.Println("Puzzle Information:")
 	fmt.Printf("  Description: %s\n", model.Puzzle.Description)
+	fmt.Printf("  Size: %dx%d\n", puzzleSize, puzzleSize)
+	fmt.Printf("  Block Size: %dx%d\n", blockSize, blockSize)
 	fmt.Println()
 
 	// Display initial state
 	fmt.Println("Initial State:")
-	printGrid(model.Puzzle.InitialState)
+	printGrid(model.Puzzle.InitialState, puzzleSize, blockSize)
 	fmt.Println()
 
 	// Display solution
 	fmt.Println("Solution:")
-	printGrid(model.Puzzle.Solution)
+	printGrid(model.Puzzle.Solution, puzzleSize, blockSize)
 	fmt.Println()
 
 	// Analyze the Petri net structure
@@ -132,11 +164,11 @@ func main() {
 
 	// Verify solution
 	fmt.Println("Solution Verification:")
-	if verifySolution(model.Puzzle.Solution) {
+	if verifySolution(model.Puzzle.Solution, puzzleSize, blockSize) {
 		fmt.Println("  ✓ Solution is valid!")
 		fmt.Println("  ✓ All rows contain unique values")
 		fmt.Println("  ✓ All columns contain unique values")
-		fmt.Println("  ✓ All 2x2 blocks contain unique values")
+		fmt.Printf("  ✓ All %dx%d blocks contain unique values\n", blockSize, blockSize)
 	} else {
 		fmt.Println("  ✗ Solution is invalid")
 	}
@@ -159,65 +191,99 @@ func main() {
 	fmt.Println("  • Token flow represents the solving process")
 }
 
-// printGrid displays a 4x4 Sudoku grid
-func printGrid(grid [][]int) {
-	if len(grid) != 4 || len(grid[0]) != 4 {
+// printGrid displays a Sudoku grid with appropriate formatting
+func printGrid(grid [][]int, size, blockSize int) {
+	if len(grid) != size {
 		fmt.Println("  Invalid grid size")
 		return
 	}
 
-	fmt.Println("  +---+---+---+---+")
+	// Build the separator line
+	cellWidth := 2
+	if size > 9 {
+		cellWidth = 3
+	}
+
+	blockSep := "+"
+	for b := 0; b < size/blockSize; b++ {
+		for c := 0; c < blockSize; c++ {
+			blockSep += fmt.Sprintf("%s+", repeatStr("-", cellWidth+1))
+		}
+	}
+
+	fmt.Printf("  %s\n", blockSep)
 	for i, row := range grid {
 		fmt.Print("  |")
-		for _, val := range row {
+		for j, val := range row {
 			if val == 0 {
-				fmt.Print(" _ |")
+				fmt.Printf(" %s|", repeatStr("_", cellWidth-1))
 			} else {
-				fmt.Printf(" %d |", val)
+				fmt.Printf(" %*d|", cellWidth-1, val)
+			}
+			// Add block separator
+			if (j+1)%blockSize == 0 && j+1 < size {
+				fmt.Print("|")
 			}
 		}
 		fmt.Println()
-		if i < 3 {
-			fmt.Println("  +---+---+---+---+")
+		// Add block separator row
+		if (i+1)%blockSize == 0 {
+			fmt.Printf("  %s\n", blockSep)
+		} else if i+1 < size {
+			// Regular row separator
+			rowSep := "+"
+			for b := 0; b < size/blockSize; b++ {
+				for c := 0; c < blockSize; c++ {
+					rowSep += fmt.Sprintf("%s+", repeatStr("-", cellWidth+1))
+				}
+			}
+			fmt.Printf("  %s\n", rowSep)
 		}
 	}
-	fmt.Println("  +---+---+---+---+")
 }
 
-// verifySolution checks if a 4x4 Sudoku solution is valid
-func verifySolution(grid [][]int) bool {
-	if len(grid) != 4 {
+func repeatStr(s string, count int) string {
+	result := ""
+	for i := 0; i < count; i++ {
+		result += s
+	}
+	return result
+}
+
+// verifySolution checks if a Sudoku solution is valid
+func verifySolution(grid [][]int, size, blockSize int) bool {
+	if len(grid) != size {
 		return false
 	}
 
 	// Check rows
-	for i := 0; i < 4; i++ {
-		if !isUnique(grid[i]) {
+	for i := 0; i < size; i++ {
+		if !isUnique(grid[i], size) {
 			return false
 		}
 	}
 
 	// Check columns
-	for j := 0; j < 4; j++ {
-		col := make([]int, 4)
-		for i := 0; i < 4; i++ {
+	for j := 0; j < size; j++ {
+		col := make([]int, size)
+		for i := 0; i < size; i++ {
 			col[i] = grid[i][j]
 		}
-		if !isUnique(col) {
+		if !isUnique(col, size) {
 			return false
 		}
 	}
 
-	// Check 2x2 blocks
-	for blockRow := 0; blockRow < 2; blockRow++ {
-		for blockCol := 0; blockCol < 2; blockCol++ {
-			block := make([]int, 0, 4)
-			for i := 0; i < 2; i++ {
-				for j := 0; j < 2; j++ {
-					block = append(block, grid[blockRow*2+i][blockCol*2+j])
+	// Check blocks
+	for blockRow := 0; blockRow < size/blockSize; blockRow++ {
+		for blockCol := 0; blockCol < size/blockSize; blockCol++ {
+			block := make([]int, 0, blockSize*blockSize)
+			for i := 0; i < blockSize; i++ {
+				for j := 0; j < blockSize; j++ {
+					block = append(block, grid[blockRow*blockSize+i][blockCol*blockSize+j])
 				}
 			}
-			if !isUnique(block) {
+			if !isUnique(block, size) {
 				return false
 			}
 		}
@@ -226,11 +292,11 @@ func verifySolution(grid [][]int) bool {
 	return true
 }
 
-// isUnique checks if all values in a slice are unique and in range 1-4
-func isUnique(values []int) bool {
+// isUnique checks if all values in a slice are unique and in range 1-size
+func isUnique(values []int, size int) bool {
 	seen := make(map[int]bool)
 	for _, v := range values {
-		if v < 1 || v > 4 {
+		if v < 1 || v > size {
 			return false
 		}
 		if seen[v] {
@@ -238,5 +304,5 @@ func isUnique(values []int) bool {
 		}
 		seen[v] = true
 	}
-	return len(seen) == 4
+	return len(seen) == size
 }
