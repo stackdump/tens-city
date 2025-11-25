@@ -252,8 +252,8 @@ func main() {
 	clues := 0
 	emptyCells := 0
 	for name, place := range model.Places {
-		// Skip non-cell places (like row_available, solved, history places, etc.)
-		isCell := strings.HasPrefix(place.Label, "Cell(") || (len(name) == 3 && name[0] == 'P')
+		// Identify cell places using a helper function for clarity
+		isCell := isCellPlace(name, place.Label)
 		if !isCell {
 			continue
 		}
@@ -262,15 +262,20 @@ func main() {
 			// Colored Petri Net marking
 			clues++
 		} else if len(place.Initial) > 0 && place.Initial[0] > 0 {
-			// Standard Petri Net marking - for ODE model, initial=0 means clue (cell is filled)
+			// Standard Petri Net: initial=1 means clue present
+			// ODE model: initial=1 means cell is EMPTY (token available for digit transition)
+			// This inversion matches the tic-tac-toe pattern where cell places with tokens
+			// are available for moves, and empty places are already filled
 			if isODE {
 				emptyCells++
 			} else {
 				clues++
 			}
 		} else {
+			// Standard Petri Net: initial=0 means empty cell
+			// ODE model: initial=0 means cell is already FILLED (no token = clue present)
 			if isODE {
-				clues++  // For ODE model, initial=0 means cell is already filled
+				clues++
 			} else {
 				emptyCells++
 			}
@@ -345,13 +350,48 @@ func main() {
 	}
 }
 
+// isCellPlace identifies whether a place represents a Sudoku cell
+// Cell places use these naming conventions:
+// - Standard models: "Cell(row,col)" labels like "Cell(0,0)"
+// - ODE models: "P##" names like "P00", "P01" (3 chars starting with 'P')
+func isCellPlace(name, label string) bool {
+	// Check label-based naming (standard and colored models)
+	if strings.HasPrefix(label, "Cell(") {
+		return true
+	}
+	// Check ODE naming convention: P followed by 2 digits (e.g., P00, P33)
+	if len(name) == 3 && name[0] == 'P' && isDigit(name[1]) && isDigit(name[2]) {
+		return true
+	}
+	return false
+}
+
+// isDigit checks if a byte is an ASCII digit
+func isDigit(b byte) bool {
+	return b >= '0' && b <= '9'
+}
+
+// isDigitRole checks if a role string indicates a digit placement transition
+// Digit roles are "d1", "d2", etc. (2 chars starting with 'd' followed by a digit)
+func isDigitRole(role string) bool {
+	if len(role) != 2 {
+		return false
+	}
+	return role[0] == 'd' && isDigit(role[1])
+}
+
 // analyzeODEModel examines the Petri net structure for ODE-compatible patterns
+// The ODE model follows the tic-tac-toe pattern from go-pflow:
+// - Cell places (P##) hold tokens for available moves
+// - History places (_D#_##) track which digit was placed
+// - Constraint collectors fire when row/col/block is complete
+// - Solved place accumulates tokens from all constraint collectors
 func analyzeODEModel(model SudokuPetriNet) ODEAnalysis {
 	analysis := ODEAnalysis{}
 	
 	for name, place := range model.Places {
 		// Cell places are named P## (like P00, P01, etc.)
-		if len(name) == 3 && name[0] == 'P' {
+		if isCellPlace(name, place.Label) {
 			analysis.CellPlaces++
 		}
 		// History places start with _D (like _D1_00)
@@ -370,7 +410,7 @@ func analyzeODEModel(model SudokuPetriNet) ODEAnalysis {
 			analysis.ConstraintCollectors++
 		}
 		// Digit placement transitions have role like "d1", "d2", etc.
-		if len(trans.Role) == 2 && trans.Role[0] == 'd' {
+		if isDigitRole(trans.Role) {
 			analysis.DigitTransitions++
 		}
 	}

@@ -11,7 +11,7 @@
       [1, 0, 0, 0],
       [0, 0, 2, 0],
       [0, 3, 0, 0],
-      [0, 0, 0, 4]
+      [4, 0, 0, 0]
     ],
     "solution": [
       [1, 2, 4, 3],
@@ -20,14 +20,19 @@
       [4, 1, 3, 2]
     ],
     "constraints_count": 12,
-    "ode_compatible": true
+    "ode_compatible": true,
+    "marking_convention": {
+      "description": "Like tic-tac-toe: cell places with tokens are EMPTY (available for moves), without tokens are FILLED (clues)",
+      "cell_places": "P## places with initial=[1] are empty cells; initial=[0] are given clues",
+      "history_places": "_D#_## places with initial=[1] already have that digit (clues); initial=[0] are to be filled"
+    }
   },
   "token": [
     "https://pflow.xyz/tokens/black"
   ],
   "places": {
-    "P00": { "@type": "Place", "label": "Cell(0,0)", "initial": [0], "capacity": [1], "x": 100, "y": 100 },
-    "P01": { "@type": "Place", "label": "Cell(0,1)", "initial": [1], "capacity": [1], "x": 200, "y": 100 },
+    "P00": { "@type": "Place", "label": "Cell(0,0)", "initial": [0], "capacity": [1], "x": 100, "y": 100, "_comment": "Clue: digit 1 is here" },
+    "P01": { "@type": "Place", "label": "Cell(0,1)", "initial": [1], "capacity": [1], "x": 200, "y": 100, "_comment": "Empty: needs to be filled" },
     "P02": { "@type": "Place", "label": "Cell(0,2)", "initial": [1], "capacity": [1], "x": 300, "y": 100 },
     "P03": { "@type": "Place", "label": "Cell(0,3)", "initial": [1], "capacity": [1], "x": 400, "y": 100 },
     "P10": { "@type": "Place", "label": "Cell(1,0)", "initial": [1], "capacity": [1], "x": 100, "y": 200 },
@@ -38,27 +43,27 @@
     "P21": { "@type": "Place", "label": "Cell(2,1)", "initial": [0], "capacity": [1], "x": 200, "y": 300 },
     "P22": { "@type": "Place", "label": "Cell(2,2)", "initial": [1], "capacity": [1], "x": 300, "y": 300 },
     "P23": { "@type": "Place", "label": "Cell(2,3)", "initial": [1], "capacity": [1], "x": 400, "y": 300 },
-    "P30": { "@type": "Place", "label": "Cell(3,0)", "initial": [1], "capacity": [1], "x": 100, "y": 400 },
-    "P31": { "@type": "Place", "label": "Cell(3,1)", "initial": [1], "capacity": [1], "x": 200, "y": 400 },
-    "P32": { "@type": "Place", "label": "Cell(3,2)", "initial": [1], "capacity": [1], "x": 300, "y": 400 },
-    "P33": { "@type": "Place", "label": "Cell(3,3)", "initial": [0], "capacity": [1], "x": 400, "y": 400 },
+    "P30": { "@type": "Place", "label": "Cell(3,0)", "initial": [0], "capacity": [1], "x": 100, "y": 400, "_comment": "Clue: digit 4" },
+    "P31": { "@type": "Place", "label": "Cell(3,1)", "initial": [1], "capacity": [1], "x": 200, "y": 400, "_comment": "Empty" },
+    "P32": { "@type": "Place", "label": "Cell(3,2)", "initial": [1], "capacity": [1], "x": 300, "y": 400, "_comment": "Empty" },
+    "P33": { "@type": "Place", "label": "Cell(3,3)", "initial": [1], "capacity": [1], "x": 400, "y": 400, "_comment": "Empty" },
 
-    "_D1_00": { "@type": "Place", "label": "Digit1@(0,0)", "initial": [1], "capacity": [1], "x": 500, "y": 100 },
-    "_D2_01": { "@type": "Place", "label": "Digit2@(0,1)", "initial": [0], "capacity": [1], "x": 550, "y": 100 },
-    "_D4_02": { "@type": "Place", "label": "Digit4@(0,2)", "initial": [0], "capacity": [1], "x": 600, "y": 100 },
-    "_D3_03": { "@type": "Place", "label": "Digit3@(0,3)", "initial": [0], "capacity": [1], "x": 650, "y": 100 },
-    "_D3_10": { "@type": "Place", "label": "Digit3@(1,0)", "initial": [0], "capacity": [1], "x": 500, "y": 200 },
-    "_D4_11": { "@type": "Place", "label": "Digit4@(1,1)", "initial": [0], "capacity": [1], "x": 550, "y": 200 },
-    "_D2_12": { "@type": "Place", "label": "Digit2@(1,2)", "initial": [1], "capacity": [1], "x": 600, "y": 200 },
-    "_D1_13": { "@type": "Place", "label": "Digit1@(1,3)", "initial": [0], "capacity": [1], "x": 650, "y": 200 },
-    "_D2_20": { "@type": "Place", "label": "Digit2@(2,0)", "initial": [0], "capacity": [1], "x": 500, "y": 300 },
-    "_D3_21": { "@type": "Place", "label": "Digit3@(2,1)", "initial": [1], "capacity": [1], "x": 550, "y": 300 },
-    "_D1_22": { "@type": "Place", "label": "Digit1@(2,2)", "initial": [0], "capacity": [1], "x": 600, "y": 300 },
-    "_D4_23": { "@type": "Place", "label": "Digit4@(2,3)", "initial": [0], "capacity": [1], "x": 650, "y": 300 },
-    "_D4_30": { "@type": "Place", "label": "Digit4@(3,0)", "initial": [0], "capacity": [1], "x": 500, "y": 400 },
-    "_D1_31": { "@type": "Place", "label": "Digit1@(3,1)", "initial": [0], "capacity": [1], "x": 550, "y": 400 },
-    "_D3_32": { "@type": "Place", "label": "Digit3@(3,2)", "initial": [0], "capacity": [1], "x": 600, "y": 400 },
-    "_D2_33": { "@type": "Place", "label": "Digit2@(3,3)", "initial": [1], "capacity": [1], "x": 650, "y": 400 },
+    "_D1_00": { "@type": "Place", "label": "Digit1@(0,0)", "initial": [1], "capacity": [1], "x": 500, "y": 100, "_comment": "Clue: cell(0,0)=1 is given" },
+    "_D2_01": { "@type": "Place", "label": "Digit2@(0,1)", "initial": [0], "capacity": [1], "x": 550, "y": 100, "_comment": "Solution: will be filled" },
+    "_D4_02": { "@type": "Place", "label": "Digit4@(0,2)", "initial": [0], "capacity": [1], "x": 600, "y": 100, "_comment": "Solution: will be filled" },
+    "_D3_03": { "@type": "Place", "label": "Digit3@(0,3)", "initial": [0], "capacity": [1], "x": 650, "y": 100, "_comment": "Solution: will be filled" },
+    "_D3_10": { "@type": "Place", "label": "Digit3@(1,0)", "initial": [0], "capacity": [1], "x": 500, "y": 200, "_comment": "Solution: will be filled" },
+    "_D4_11": { "@type": "Place", "label": "Digit4@(1,1)", "initial": [0], "capacity": [1], "x": 550, "y": 200, "_comment": "Solution: will be filled" },
+    "_D2_12": { "@type": "Place", "label": "Digit2@(1,2)", "initial": [1], "capacity": [1], "x": 600, "y": 200, "_comment": "Clue: cell(1,2)=2 is given" },
+    "_D1_13": { "@type": "Place", "label": "Digit1@(1,3)", "initial": [0], "capacity": [1], "x": 650, "y": 200, "_comment": "Solution: will be filled" },
+    "_D2_20": { "@type": "Place", "label": "Digit2@(2,0)", "initial": [0], "capacity": [1], "x": 500, "y": 300, "_comment": "Solution: will be filled" },
+    "_D3_21": { "@type": "Place", "label": "Digit3@(2,1)", "initial": [1], "capacity": [1], "x": 550, "y": 300, "_comment": "Clue: cell(2,1)=3 is given" },
+    "_D1_22": { "@type": "Place", "label": "Digit1@(2,2)", "initial": [0], "capacity": [1], "x": 600, "y": 300, "_comment": "Solution: will be filled" },
+    "_D4_23": { "@type": "Place", "label": "Digit4@(2,3)", "initial": [0], "capacity": [1], "x": 650, "y": 300, "_comment": "Solution: will be filled" },
+    "_D4_30": { "@type": "Place", "label": "Digit4@(3,0)", "initial": [1], "capacity": [1], "x": 500, "y": 400, "_comment": "Clue: cell(3,0)=4 is given" },
+    "_D1_31": { "@type": "Place", "label": "Digit1@(3,1)", "initial": [0], "capacity": [1], "x": 550, "y": 400, "_comment": "Solution: will be filled" },
+    "_D3_32": { "@type": "Place", "label": "Digit3@(3,2)", "initial": [0], "capacity": [1], "x": 600, "y": 400, "_comment": "Solution: will be filled" },
+    "_D2_33": { "@type": "Place", "label": "Digit2@(3,3)", "initial": [0], "capacity": [1], "x": 650, "y": 400, "_comment": "Solution: will be filled" },
 
     "solved": { "@type": "Place", "label": "Puzzle Solved (accumulates from 12 constraints)", "initial": [0], "capacity": [12], "x": 400, "y": 700 }
   },
