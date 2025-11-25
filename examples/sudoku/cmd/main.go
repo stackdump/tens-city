@@ -28,12 +28,23 @@ type SudokuPetriNet struct {
 	Constraints *Constraints          `json:"constraints,omitempty"`
 }
 
+// ODEAnalysis tracks tokens flowing through constraint collectors
+type ODEAnalysis struct {
+	ConstraintCollectors int
+	SolvedPlace          string
+	HistoryPlaces        int
+	CellPlaces           int
+	DigitTransitions     int
+}
+
 type PuzzleInfo struct {
-	Description  string  `json:"description"`
-	Size         int     `json:"size"`
-	BlockSize    int     `json:"block_size"`
-	InitialState [][]int `json:"initial_state"`
-	Solution     [][]int `json:"solution"`
+	Description      string  `json:"description"`
+	Size             int     `json:"size"`
+	BlockSize        int     `json:"block_size"`
+	InitialState     [][]int `json:"initial_state"`
+	Solution         [][]int `json:"solution"`
+	ConstraintsCount int     `json:"constraints_count,omitempty"`
+	ODECompatible    bool    `json:"ode_compatible,omitempty"`
 }
 
 // ColorDefinition represents the color set for Colored Petri Nets
@@ -72,6 +83,7 @@ type Transition struct {
 	Type  string `json:"@type"`
 	Label string `json:"label"`
 	Guard string `json:"guard,omitempty"`
+	Role  string `json:"role,omitempty"`
 	X     int    `json:"x"`
 	Y     int    `json:"y"`
 }
@@ -97,6 +109,7 @@ func main() {
 	// Parse command line flags
 	size := flag.String("size", "9x9", "Sudoku size: 4x4 or 9x9")
 	colored := flag.Bool("colored", false, "Use Colored Petri Net model (colors represent digits)")
+	ode := flag.Bool("ode", false, "Use ODE-compatible model (constraint collectors like tic-tac-toe)")
 	flag.Parse()
 
 	fmt.Println("Sudoku Petri Net Analyzer")
@@ -107,7 +120,11 @@ func main() {
 	var modelFile string
 	switch *size {
 	case "4x4", "4":
-		modelFile = "sudoku-4x4-simple.jsonld"
+		if *ode {
+			modelFile = "sudoku-4x4-ode.jsonld"
+		} else {
+			modelFile = "sudoku-4x4-simple.jsonld"
+		}
 	case "9x9", "9":
 		if *colored {
 			modelFile = "sudoku-9x9-colored.jsonld"
@@ -163,15 +180,20 @@ func main() {
 		blockSize = int(math.Sqrt(float64(puzzleSize)))
 	}
 
+	// Check model type
+	isColored := model.Type == "ColoredPetriNet" || model.Colors != nil
+	isODE := model.Puzzle.ODECompatible || *ode
+
 	// Display puzzle information
 	fmt.Println("Puzzle Information:")
 	fmt.Printf("  Description: %s\n", model.Puzzle.Description)
 	fmt.Printf("  Size: %dx%d\n", puzzleSize, puzzleSize)
 	fmt.Printf("  Block Size: %dx%d\n", blockSize, blockSize)
 	
-	// Check if this is a Colored Petri Net
-	isColored := model.Type == "ColoredPetriNet" || model.Colors != nil
-	if isColored {
+	// Display model type
+	if isODE {
+		fmt.Println("  Model Type: ODE-Compatible Petri Net (like tic-tac-toe)")
+	} else if isColored {
 		fmt.Println("  Model Type: Colored Petri Net")
 	} else {
 		fmt.Println("  Model Type: Standard Petri Net")
@@ -206,12 +228,33 @@ func main() {
 	fmt.Printf("  Arcs: %d\n", len(model.Arcs))
 	fmt.Println()
 
+	// ODE-specific analysis
+	if isODE {
+		odeAnalysis := analyzeODEModel(model)
+		fmt.Println("ODE Analysis (tic-tac-toe style):")
+		fmt.Printf("  Cell Places (P##): %d\n", odeAnalysis.CellPlaces)
+		fmt.Printf("  History Places (_D#_##): %d\n", odeAnalysis.HistoryPlaces)
+		fmt.Printf("  Digit Transitions (D#_##): %d\n", odeAnalysis.DigitTransitions)
+		fmt.Printf("  Constraint Collectors: %d\n", odeAnalysis.ConstraintCollectors)
+		fmt.Printf("  Solved Place: %s\n", odeAnalysis.SolvedPlace)
+		fmt.Println()
+		fmt.Println("ODE Win Detection Pattern:")
+		fmt.Println("  1. Cell places (P##) hold tokens for empty cells")
+		fmt.Println("  2. Digit transitions (D#_##) place digits and create history")
+		fmt.Println("  3. History places (_D#_##) track which digit is in each cell")
+		fmt.Println("  4. Constraint collectors fire when all cells in row/col/block filled")
+		fmt.Println("  5. All constraints feed into 'solved' place")
+		fmt.Println("  6. ODE simulation measures token flow to 'solved'")
+		fmt.Println()
+	}
+
 	// Count given numbers (clues) - handle both colored and regular markings
 	clues := 0
 	emptyCells := 0
-	for _, place := range model.Places {
-		// Skip non-cell places (like row_available, solved, etc.)
-		if !strings.HasPrefix(place.Label, "Cell(") {
+	for name, place := range model.Places {
+		// Skip non-cell places (like row_available, solved, history places, etc.)
+		isCell := strings.HasPrefix(place.Label, "Cell(") || (len(name) == 3 && name[0] == 'P')
+		if !isCell {
 			continue
 		}
 		
@@ -219,10 +262,18 @@ func main() {
 			// Colored Petri Net marking
 			clues++
 		} else if len(place.Initial) > 0 && place.Initial[0] > 0 {
-			// Standard Petri Net marking
-			clues++
+			// Standard Petri Net marking - for ODE model, initial=0 means clue (cell is filled)
+			if isODE {
+				emptyCells++
+			} else {
+				clues++
+			}
 		} else {
-			emptyCells++
+			if isODE {
+				clues++  // For ODE model, initial=0 means cell is already filled
+			} else {
+				emptyCells++
+			}
 		}
 	}
 
@@ -245,17 +296,33 @@ func main() {
 	fmt.Println()
 
 	// Display transition information
-	fmt.Println("Available Transitions:")
-	for name, trans := range model.Transitions {
-		fmt.Printf("  - %s: %s\n", name, trans.Label)
+	if isODE {
+		fmt.Println("Constraint Collectors (like tic-tac-toe win patterns):")
+		for name, trans := range model.Transitions {
+			if trans.Role == "constraint" {
+				fmt.Printf("  - %s: %s\n", name, trans.Label)
+			}
+		}
+		fmt.Println()
+	} else {
+		fmt.Println("Available Transitions:")
+		for name, trans := range model.Transitions {
+			fmt.Printf("  - %s: %s\n", name, trans.Label)
+		}
+		fmt.Println()
 	}
-	fmt.Println()
 
 	fmt.Println("This Petri net model demonstrates how Sudoku constraints")
 	fmt.Println("can be encoded as places, transitions, and arcs.")
 	fmt.Println()
 	fmt.Println("Key Concepts:")
-	if isColored {
+	if isODE {
+		fmt.Println("  • Like tic-tac-toe: cells hold tokens, moves create history")
+		fmt.Println("  • Constraint collectors fire when row/col/block is complete")
+		fmt.Println("  • 'solved' place accumulates tokens from all collectors")
+		fmt.Println("  • ODE simulation predicts solution feasibility")
+		fmt.Println("  • Can use go-pflow for state space analysis")
+	} else if isColored {
 		fmt.Println("  • Places represent cells that can hold colored tokens")
 		fmt.Println("  • Token colors represent Sudoku digits (1-9)")
 		fmt.Println("  • Each cell can hold at most one colored token")
@@ -276,6 +343,43 @@ func main() {
 		fmt.Printf("  Column: %s\n", model.Constraints.ColumnConstraint)
 		fmt.Printf("  Block: %s\n", model.Constraints.BlockConstraint)
 	}
+}
+
+// analyzeODEModel examines the Petri net structure for ODE-compatible patterns
+func analyzeODEModel(model SudokuPetriNet) ODEAnalysis {
+	analysis := ODEAnalysis{}
+	
+	for name, place := range model.Places {
+		// Cell places are named P## (like P00, P01, etc.)
+		if len(name) == 3 && name[0] == 'P' {
+			analysis.CellPlaces++
+		}
+		// History places start with _D (like _D1_00)
+		if strings.HasPrefix(name, "_D") {
+			analysis.HistoryPlaces++
+		}
+		// Solved place
+		if name == "solved" {
+			analysis.SolvedPlace = place.Label
+		}
+	}
+	
+	for _, trans := range model.Transitions {
+		// Constraint collectors have role "constraint"
+		if trans.Role == "constraint" {
+			analysis.ConstraintCollectors++
+		}
+		// Digit placement transitions have role like "d1", "d2", etc.
+		if len(trans.Role) == 2 && trans.Role[0] == 'd' {
+			analysis.DigitTransitions++
+		}
+	}
+	
+	if analysis.SolvedPlace == "" {
+		analysis.SolvedPlace = "solved"
+	}
+	
+	return analysis
 }
 
 // printGrid displays a Sudoku grid with appropriate formatting

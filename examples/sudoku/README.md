@@ -9,7 +9,9 @@ Sudoku is a constraint satisfaction puzzle where numbers must be placed in a gri
 - Each column contains unique values
 - Each sub-grid (block) contains unique values
 
-This example includes both **4x4** and **9x9** Sudoku puzzles, with support for **Colored Petri Nets** where token colors represent digits.
+This example includes both **4x4** and **9x9** Sudoku puzzles, with support for:
+- **Colored Petri Nets** where token colors represent digits
+- **ODE-Compatible Models** structured like the go-pflow tic-tac-toe example for solution detection
 
 ## Available Models
 
@@ -33,6 +35,23 @@ This example includes both **4x4** and **9x9** Sudoku puzzles, with support for 
 - More elegant constraint modeling using color restrictions
 - Places track available colors per row/column/block
 
+### ODE-Compatible Model (like tic-tac-toe)
+
+#### 4x4 ODE Sudoku (`sudoku-4x4-ode.jsonld`)
+- **Structured like the go-pflow tic-tac-toe example**
+- Uses pattern collector transitions for constraint detection
+- Win detection through token accumulation in `solved` place
+- Compatible with go-pflow ODE simulation for solution prediction
+
+**Model Structure:**
+```
+Cell Places (P##)  ──>  Digit Transitions (D#_##)  ──>  History Places (_D#_##)
+                                                              │
+                                                              v
+                            Constraint Collectors ──> solved place
+                     (Row/Column/Block Complete)
+```
+
 ## Running the Analyzer
 
 ```bash
@@ -47,6 +66,54 @@ go run examples/sudoku/cmd/main.go -size 9x9
 
 # Run 9x9 Colored Petri Net model
 go run examples/sudoku/cmd/main.go -size 9x9 -colored
+
+# Run 4x4 ODE-compatible model (tic-tac-toe style)
+go run examples/sudoku/cmd/main.go -size 4x4 -ode
+```
+
+## ODE-Compatible Model (tic-tac-toe style)
+
+The ODE model follows the same pattern as the tic-tac-toe example in go-pflow:
+
+### Pattern Overview
+
+1. **Cell Places (P00-P33)**: Represent empty cells, hold tokens when cell is available
+2. **Digit Transitions (D#_##)**: Fire to place a digit, consume cell token and create history
+3. **History Places (_D#_##)**: Record which digit is in each cell (like _X00, _O00 in tic-tac-toe)
+4. **Constraint Collectors**: Transitions that fire when all cells in a row/column/block are filled
+   - `Row0_Complete`, `Row1_Complete`, etc. (4 row collectors)
+   - `Col0_Complete`, `Col1_Complete`, etc. (4 column collectors)
+   - `Block00_Complete`, `Block01_Complete`, etc. (4 block collectors)
+5. **Solved Place**: Accumulates tokens from all 12 constraint collectors
+
+### ODE Win Detection
+
+Just like tic-tac-toe uses ODE simulation to predict win likelihood by measuring token flow to `win_x` and `win_o`, Sudoku can use ODE simulation to:
+
+- **Measure solution progress**: Token count in `solved` place indicates how many constraints are satisfied
+- **Predict solution feasibility**: ODE simulation shows if current state leads to full solution
+- **Evaluate moves**: Compare different digit placements by their effect on `solved` token accumulation
+
+### Usage with go-pflow
+
+```go
+import (
+    "github.com/pflow-xyz/go-pflow/parser"
+    "github.com/pflow-xyz/go-pflow/engine"
+)
+
+// Load the model
+jsonData, _ := os.ReadFile("examples/sudoku/sudoku-4x4-ode.jsonld")
+net, _ := parser.FromJSON(jsonData)
+
+// Run ODE simulation
+eng := engine.New(net)
+eng.RunODE(3.0)  // Simulate for t=3.0
+
+// Check 'solved' place token count
+state := eng.GetState()
+solvedTokens := state["solved"]
+fmt.Printf("Constraints satisfied: %.0f/12\n", solvedTokens)
 ```
 
 ## Petri Net Models
@@ -180,6 +247,7 @@ This example provides a foundation for using the `go-pflow` library. The current
 - Demonstrates the JSON-LD structure for Petri nets compatible with go-pflow
 - Shows how to model Sudoku constraints as a Petri net
 - Validates the solution manually to verify correctness
+- **ODE model follows tic-tac-toe pattern for solution detection**
 
 Future enhancements could leverage go-pflow for:
 - Loading and parsing Petri net models programmatically
@@ -187,10 +255,12 @@ Future enhancements could leverage go-pflow for:
 - Analyzing reachability and state spaces
 - Visualizing Petri net execution
 - Automated solution finding through state space search
+- **ODE simulation for move evaluation (like tic-tac-toe AI)**
 
 ## References
 
 - [pflow-xyz/go-pflow](https://github.com/pflow-xyz/go-pflow) - Petri net simulation library
+- [go-pflow tic-tac-toe example](https://github.com/pflow-xyz/go-pflow/tree/main/examples/tictactoe) - ODE-based AI pattern
 - [Petri Nets for Sudoku](https://ceur-ws.org/Vol-3721/paper2.pdf) - Academic paper on modeling puzzles with Petri nets
 - [pflow.xyz](https://pflow.xyz) - Interactive Petri net editor and visualizer
 
@@ -201,7 +271,8 @@ To create a more complete Sudoku solver:
 1. **Add all constraint transitions**: Encode row, column, and block constraints
 2. **Implement search**: Use Petri net reachability analysis to find solutions
 3. **Add backtracking**: Model the search tree as transition sequences
-4. **Scale to 9x9**: Extend the model to standard Sudoku puzzles
+4. **Scale to 9x9**: Extend the ODE model to standard Sudoku puzzles
+5. **ODE-based AI**: Use go-pflow ODE simulation to evaluate moves like tic-tac-toe
 
 ## Educational Value
 
@@ -210,6 +281,7 @@ This example demonstrates:
 - **Declarative representation** of game rules
 - **State space exploration** for puzzle solving
 - **Constraint propagation** through token flow
+- **ODE analysis** for solution prediction (like tic-tac-toe)
 - **Integration** of Petri nets with modern Go applications
 
 Sudoku Petri nets show how formal methods can be applied to everyday puzzles, making abstract concepts tangible and visual.
