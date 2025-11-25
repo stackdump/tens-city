@@ -9,36 +9,49 @@ Sudoku is a constraint satisfaction puzzle where numbers must be placed in a gri
 - Each column contains unique values
 - Each sub-grid (block) contains unique values
 
-This example includes both **4x4** and **9x9** Sudoku puzzles to demonstrate the concepts.
+This example includes both **4x4** and **9x9** Sudoku puzzles, with support for **Colored Petri Nets** where token colors represent digits.
 
-## Available Puzzles
+## Available Models
 
-### 4x4 Sudoku (`sudoku-4x4-simple.jsonld`)
+### Standard Petri Net Models
+
+#### 4x4 Sudoku (`sudoku-4x4-simple.jsonld`)
 - Simpler variant with 2x2 blocks
 - Uses numbers 1-4
 - Great for understanding the basic concepts
 
-### 9x9 Sudoku (`sudoku-9x9.jsonld`)
+#### 9x9 Sudoku (`sudoku-9x9.jsonld`)
 - Standard Sudoku with 3x3 blocks
 - Uses numbers 1-9
 - Classic puzzle format
 
+### Colored Petri Net Model
+
+#### 9x9 Colored Sudoku (`sudoku-9x9-colored.jsonld`)
+- **Token colors represent digits 1-9**
+- Each color has a unique hex value for visualization
+- More elegant constraint modeling using color restrictions
+- Places track available colors per row/column/block
+
 ## Running the Analyzer
 
 ```bash
-# From repository root - run 9x9 (default)
+# From repository root - run 9x9 standard (default)
 go run examples/sudoku/cmd/main.go
 
 # Run 4x4 puzzle
 go run examples/sudoku/cmd/main.go -size 4x4
 
-# Run 9x9 puzzle explicitly
+# Run 9x9 standard puzzle
 go run examples/sudoku/cmd/main.go -size 9x9
+
+# Run 9x9 Colored Petri Net model
+go run examples/sudoku/cmd/main.go -size 9x9 -colored
 ```
 
-## Petri Net Model
+## Petri Net Models
 
-### Representation
+### Standard Petri Net Representation
 
 - **Places**: Each cell in the Sudoku grid is represented as a place
   - Initial marking represents given numbers (clues)
@@ -52,6 +65,31 @@ go run examples/sudoku/cmd/main.go -size 9x9
 - **Arcs**: Connect places to transitions
   - Define the flow of tokens (number assignments)
   - Encode constraint checking logic
+
+### Colored Petri Net Representation
+
+In the Colored Petri Net model:
+
+- **Colors**: Define a color set `DIGIT` with 9 colors (d1-d9) representing digits 1-9
+  - Each color has a unique hex value for visualization:
+    - d1 (1): `#FF6B6B` (red)
+    - d2 (2): `#4ECDC4` (teal)
+    - d3 (3): `#45B7D1` (blue)
+    - d4 (4): `#96CEB4` (green)
+    - d5 (5): `#FFEAA7` (yellow)
+    - d6 (6): `#DDA0DD` (plum)
+    - d7 (7): `#98D8C8` (mint)
+    - d8 (8): `#F7DC6F` (gold)
+    - d9 (9): `#BB8FCE` (purple)
+
+- **Places**: Each cell can hold one colored token
+  - `initialMarking` specifies the color of pre-filled cells
+  - Empty cells have no tokens
+
+- **Constraints**: Enforced through color restrictions
+  - Row constraint: Each row can have at most one token of each color
+  - Column constraint: Each column can have at most one token of each color
+  - Block constraint: Each 3x3 block can have at most one token of each color
 
 ### Example Puzzles
 

@@ -21,9 +21,11 @@ type SudokuPetriNet struct {
 	Description string                `json:"description"`
 	Puzzle      PuzzleInfo            `json:"puzzle"`
 	Token       []string              `json:"token"`
+	Colors      *ColorDefinition      `json:"colors,omitempty"`
 	Places      map[string]Place      `json:"places"`
 	Transitions map[string]Transition `json:"transitions"`
 	Arcs        []Arc                 `json:"arcs"`
+	Constraints *Constraints          `json:"constraints,omitempty"`
 }
 
 type PuzzleInfo struct {
@@ -34,32 +36,67 @@ type PuzzleInfo struct {
 	Solution     [][]int `json:"solution"`
 }
 
+// ColorDefinition represents the color set for Colored Petri Nets
+type ColorDefinition struct {
+	Description string       `json:"description"`
+	ColorSet    string       `json:"colorSet"`
+	Values      []ColorValue `json:"values"`
+}
+
+// ColorValue represents a single color in the color set
+type ColorValue struct {
+	ID    string `json:"id"`
+	Value int    `json:"value"`
+	Label string `json:"label"`
+	Hex   string `json:"hex"`
+}
+
+// ColoredMarking represents a colored token marking
+type ColoredMarking struct {
+	Color string `json:"color"`
+	Count int    `json:"count"`
+}
+
 type Place struct {
-	Type     string `json:"@type"`
-	Label    string `json:"label"`
-	Initial  []int  `json:"initial"`
-	Capacity []int  `json:"capacity"`
-	X        int    `json:"x"`
-	Y        int    `json:"y"`
+	Type           string           `json:"@type"`
+	Label          string           `json:"label"`
+	ColorSet       string           `json:"colorSet,omitempty"`
+	Initial        []int            `json:"initial,omitempty"`
+	InitialMarking []ColoredMarking `json:"initialMarking,omitempty"`
+	Capacity       []int            `json:"capacity"`
+	X              int              `json:"x"`
+	Y              int              `json:"y"`
 }
 
 type Transition struct {
 	Type  string `json:"@type"`
 	Label string `json:"label"`
+	Guard string `json:"guard,omitempty"`
 	X     int    `json:"x"`
 	Y     int    `json:"y"`
 }
 
 type Arc struct {
-	Type   string `json:"@type"`
-	Source string `json:"source"`
-	Target string `json:"target"`
-	Weight []int  `json:"weight"`
+	Type        string `json:"@type"`
+	Source      string `json:"source"`
+	Target      string `json:"target"`
+	Weight      []int  `json:"weight"`
+	Inscription string `json:"inscription,omitempty"`
+}
+
+// Constraints describes how Sudoku constraints are encoded
+type Constraints struct {
+	Description      string `json:"description"`
+	RowConstraint    string `json:"row_constraint"`
+	ColumnConstraint string `json:"column_constraint"`
+	BlockConstraint  string `json:"block_constraint"`
+	Implementation   string `json:"implementation"`
 }
 
 func main() {
 	// Parse command line flags
 	size := flag.String("size", "9x9", "Sudoku size: 4x4 or 9x9")
+	colored := flag.Bool("colored", false, "Use Colored Petri Net model (colors represent digits)")
 	flag.Parse()
 
 	fmt.Println("Sudoku Petri Net Analyzer")
@@ -72,7 +109,11 @@ func main() {
 	case "4x4", "4":
 		modelFile = "sudoku-4x4-simple.jsonld"
 	case "9x9", "9":
-		modelFile = "sudoku-9x9.jsonld"
+		if *colored {
+			modelFile = "sudoku-9x9-colored.jsonld"
+		} else {
+			modelFile = "sudoku-9x9.jsonld"
+		}
 	default:
 		fmt.Printf("Error: Invalid size '%s'. Use 4x4 or 9x9\n", *size)
 		os.Exit(1)
@@ -127,7 +168,25 @@ func main() {
 	fmt.Printf("  Description: %s\n", model.Puzzle.Description)
 	fmt.Printf("  Size: %dx%d\n", puzzleSize, puzzleSize)
 	fmt.Printf("  Block Size: %dx%d\n", blockSize, blockSize)
+	
+	// Check if this is a Colored Petri Net
+	isColored := model.Type == "ColoredPetriNet" || model.Colors != nil
+	if isColored {
+		fmt.Println("  Model Type: Colored Petri Net")
+	} else {
+		fmt.Println("  Model Type: Standard Petri Net")
+	}
 	fmt.Println()
+
+	// Display color information for Colored Petri Nets
+	if isColored && model.Colors != nil {
+		fmt.Println("Color Set (DIGIT):")
+		fmt.Println("  Colors represent Sudoku digits 1-9")
+		for _, c := range model.Colors.Values {
+			fmt.Printf("  • %s = %d (color: %s)\n", c.ID, c.Value, c.Hex)
+		}
+		fmt.Println()
+	}
 
 	// Display initial state
 	fmt.Println("Initial State:")
@@ -141,18 +200,28 @@ func main() {
 
 	// Analyze the Petri net structure
 	fmt.Println("Petri Net Structure:")
+	fmt.Printf("  Type: %s\n", model.Type)
 	fmt.Printf("  Places: %d\n", len(model.Places))
 	fmt.Printf("  Transitions: %d\n", len(model.Transitions))
 	fmt.Printf("  Arcs: %d\n", len(model.Arcs))
 	fmt.Println()
 
-	// Count given numbers (clues)
+	// Count given numbers (clues) - handle both colored and regular markings
 	clues := 0
 	emptyCells := 0
 	for _, place := range model.Places {
-		if len(place.Initial) > 0 && place.Initial[0] > 0 {
+		// Skip non-cell places (like row_available, solved, etc.)
+		if !strings.HasPrefix(place.Label, "Cell(") {
+			continue
+		}
+		
+		if len(place.InitialMarking) > 0 {
+			// Colored Petri Net marking
 			clues++
-		} else if len(place.Initial) > 0 && place.Initial[0] == 0 {
+		} else if len(place.Initial) > 0 && place.Initial[0] > 0 {
+			// Standard Petri Net marking
+			clues++
+		} else {
 			emptyCells++
 		}
 	}
@@ -186,10 +255,27 @@ func main() {
 	fmt.Println("can be encoded as places, transitions, and arcs.")
 	fmt.Println()
 	fmt.Println("Key Concepts:")
-	fmt.Println("  • Places represent cell states")
-	fmt.Println("  • Transitions represent valid moves")
-	fmt.Println("  • Arcs enforce Sudoku constraints")
-	fmt.Println("  • Token flow represents the solving process")
+	if isColored {
+		fmt.Println("  • Places represent cells that can hold colored tokens")
+		fmt.Println("  • Token colors represent Sudoku digits (1-9)")
+		fmt.Println("  • Each cell can hold at most one colored token")
+		fmt.Println("  • Row/Column/Block constraints ensure unique colors")
+		fmt.Println("  • Transitions fire only when color constraints are satisfied")
+	} else {
+		fmt.Println("  • Places represent cell states")
+		fmt.Println("  • Transitions represent valid moves")
+		fmt.Println("  • Arcs enforce Sudoku constraints")
+		fmt.Println("  • Token flow represents the solving process")
+	}
+
+	// Display constraint information for Colored Petri Nets
+	if isColored && model.Constraints != nil {
+		fmt.Println()
+		fmt.Println("Colored Petri Net Constraints:")
+		fmt.Printf("  Row: %s\n", model.Constraints.RowConstraint)
+		fmt.Printf("  Column: %s\n", model.Constraints.ColumnConstraint)
+		fmt.Printf("  Block: %s\n", model.Constraints.BlockConstraint)
+	}
 }
 
 // printGrid displays a Sudoku grid with appropriate formatting
