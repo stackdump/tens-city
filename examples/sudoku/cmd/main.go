@@ -7,6 +7,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // SudokuPetriNet represents the structure of our Sudoku Petri net model
@@ -79,7 +80,7 @@ func main() {
 
 	// Find the model file - try multiple possible locations
 	possiblePaths := []string{
-		modelFile,                                                  // Running from examples/sudoku
+		modelFile, // Running from examples/sudoku
 		filepath.Join("examples", "sudoku", modelFile),             // Running from repo root
 		filepath.Join("..", "..", "examples", "sudoku", modelFile), // Running from examples/sudoku/cmd
 	}
@@ -243,11 +244,7 @@ func printGrid(grid [][]int, size, blockSize int) {
 }
 
 func repeatStr(s string, count int) string {
-	result := ""
-	for i := 0; i < count; i++ {
-		result += s
-	}
-	return result
+	return strings.Repeat(s, count)
 }
 
 // verifySolution checks if a Sudoku solution is valid
