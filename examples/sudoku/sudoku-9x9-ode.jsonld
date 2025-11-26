@@ -10040,5292 +10040,5292 @@
     "D1_00": {
       "@type": "Transition",
       "label": "Place 1 at (0,0)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 600,
       "y": 160
     },
     "D2_00": {
       "@type": "Transition",
       "label": "Place 2 at (0,0)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 600,
       "y": 170
     },
     "D3_00": {
       "@type": "Transition",
       "label": "Place 3 at (0,0)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 600,
       "y": 180
     },
     "D4_00": {
       "@type": "Transition",
       "label": "Place 4 at (0,0)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 600,
       "y": 190
     },
     "D5_00": {
       "@type": "Transition",
       "label": "Place 5 at (0,0)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 600,
       "y": 200
     },
     "D6_00": {
       "@type": "Transition",
       "label": "Place 6 at (0,0)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 600,
       "y": 210
     },
     "D7_00": {
       "@type": "Transition",
       "label": "Place 7 at (0,0)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 600,
       "y": 220
     },
     "D8_00": {
       "@type": "Transition",
       "label": "Place 8 at (0,0)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 600,
       "y": 230
     },
     "D9_00": {
       "@type": "Transition",
       "label": "Place 9 at (0,0)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 600,
       "y": 240
     },
     "D1_01": {
       "@type": "Transition",
       "label": "Place 1 at (0,1)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 650,
       "y": 160
     },
     "D2_01": {
       "@type": "Transition",
       "label": "Place 2 at (0,1)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 650,
       "y": 170
     },
     "D3_01": {
       "@type": "Transition",
       "label": "Place 3 at (0,1)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 650,
       "y": 180
     },
     "D4_01": {
       "@type": "Transition",
       "label": "Place 4 at (0,1)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 650,
       "y": 190
     },
     "D5_01": {
       "@type": "Transition",
       "label": "Place 5 at (0,1)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 650,
       "y": 200
     },
     "D6_01": {
       "@type": "Transition",
       "label": "Place 6 at (0,1)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 650,
       "y": 210
     },
     "D7_01": {
       "@type": "Transition",
       "label": "Place 7 at (0,1)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 650,
       "y": 220
     },
     "D8_01": {
       "@type": "Transition",
       "label": "Place 8 at (0,1)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 650,
       "y": 230
     },
     "D9_01": {
       "@type": "Transition",
       "label": "Place 9 at (0,1)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 650,
       "y": 240
     },
     "D1_02": {
       "@type": "Transition",
       "label": "Place 1 at (0,2)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 700,
       "y": 160
     },
     "D2_02": {
       "@type": "Transition",
       "label": "Place 2 at (0,2)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 700,
       "y": 170
     },
     "D3_02": {
       "@type": "Transition",
       "label": "Place 3 at (0,2)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 700,
       "y": 180
     },
     "D4_02": {
       "@type": "Transition",
       "label": "Place 4 at (0,2)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 700,
       "y": 190
     },
     "D5_02": {
       "@type": "Transition",
       "label": "Place 5 at (0,2)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 700,
       "y": 200
     },
     "D6_02": {
       "@type": "Transition",
       "label": "Place 6 at (0,2)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 700,
       "y": 210
     },
     "D7_02": {
       "@type": "Transition",
       "label": "Place 7 at (0,2)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 700,
       "y": 220
     },
     "D8_02": {
       "@type": "Transition",
       "label": "Place 8 at (0,2)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 700,
       "y": 230
     },
     "D9_02": {
       "@type": "Transition",
       "label": "Place 9 at (0,2)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 700,
       "y": 240
     },
     "D1_03": {
       "@type": "Transition",
       "label": "Place 1 at (0,3)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 750,
       "y": 160
     },
     "D2_03": {
       "@type": "Transition",
       "label": "Place 2 at (0,3)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 750,
       "y": 170
     },
     "D3_03": {
       "@type": "Transition",
       "label": "Place 3 at (0,3)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 750,
       "y": 180
     },
     "D4_03": {
       "@type": "Transition",
       "label": "Place 4 at (0,3)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 750,
       "y": 190
     },
     "D5_03": {
       "@type": "Transition",
       "label": "Place 5 at (0,3)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 750,
       "y": 200
     },
     "D6_03": {
       "@type": "Transition",
       "label": "Place 6 at (0,3)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 750,
       "y": 210
     },
     "D7_03": {
       "@type": "Transition",
       "label": "Place 7 at (0,3)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 750,
       "y": 220
     },
     "D8_03": {
       "@type": "Transition",
       "label": "Place 8 at (0,3)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 750,
       "y": 230
     },
     "D9_03": {
       "@type": "Transition",
       "label": "Place 9 at (0,3)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 750,
       "y": 240
     },
     "D1_04": {
       "@type": "Transition",
       "label": "Place 1 at (0,4)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 800,
       "y": 160
     },
     "D2_04": {
       "@type": "Transition",
       "label": "Place 2 at (0,4)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 800,
       "y": 170
     },
     "D3_04": {
       "@type": "Transition",
       "label": "Place 3 at (0,4)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 800,
       "y": 180
     },
     "D4_04": {
       "@type": "Transition",
       "label": "Place 4 at (0,4)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 800,
       "y": 190
     },
     "D5_04": {
       "@type": "Transition",
       "label": "Place 5 at (0,4)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 800,
       "y": 200
     },
     "D6_04": {
       "@type": "Transition",
       "label": "Place 6 at (0,4)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 800,
       "y": 210
     },
     "D7_04": {
       "@type": "Transition",
       "label": "Place 7 at (0,4)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 800,
       "y": 220
     },
     "D8_04": {
       "@type": "Transition",
       "label": "Place 8 at (0,4)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 800,
       "y": 230
     },
     "D9_04": {
       "@type": "Transition",
       "label": "Place 9 at (0,4)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 800,
       "y": 240
     },
     "D1_05": {
       "@type": "Transition",
       "label": "Place 1 at (0,5)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 850,
       "y": 160
     },
     "D2_05": {
       "@type": "Transition",
       "label": "Place 2 at (0,5)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 850,
       "y": 170
     },
     "D3_05": {
       "@type": "Transition",
       "label": "Place 3 at (0,5)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 850,
       "y": 180
     },
     "D4_05": {
       "@type": "Transition",
       "label": "Place 4 at (0,5)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 850,
       "y": 190
     },
     "D5_05": {
       "@type": "Transition",
       "label": "Place 5 at (0,5)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 850,
       "y": 200
     },
     "D6_05": {
       "@type": "Transition",
       "label": "Place 6 at (0,5)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 850,
       "y": 210
     },
     "D7_05": {
       "@type": "Transition",
       "label": "Place 7 at (0,5)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 850,
       "y": 220
     },
     "D8_05": {
       "@type": "Transition",
       "label": "Place 8 at (0,5)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 850,
       "y": 230
     },
     "D9_05": {
       "@type": "Transition",
       "label": "Place 9 at (0,5)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 850,
       "y": 240
     },
     "D1_06": {
       "@type": "Transition",
       "label": "Place 1 at (0,6)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 900,
       "y": 160
     },
     "D2_06": {
       "@type": "Transition",
       "label": "Place 2 at (0,6)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 900,
       "y": 170
     },
     "D3_06": {
       "@type": "Transition",
       "label": "Place 3 at (0,6)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 900,
       "y": 180
     },
     "D4_06": {
       "@type": "Transition",
       "label": "Place 4 at (0,6)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 900,
       "y": 190
     },
     "D5_06": {
       "@type": "Transition",
       "label": "Place 5 at (0,6)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 900,
       "y": 200
     },
     "D6_06": {
       "@type": "Transition",
       "label": "Place 6 at (0,6)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 900,
       "y": 210
     },
     "D7_06": {
       "@type": "Transition",
       "label": "Place 7 at (0,6)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 900,
       "y": 220
     },
     "D8_06": {
       "@type": "Transition",
       "label": "Place 8 at (0,6)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 900,
       "y": 230
     },
     "D9_06": {
       "@type": "Transition",
       "label": "Place 9 at (0,6)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 900,
       "y": 240
     },
     "D1_07": {
       "@type": "Transition",
       "label": "Place 1 at (0,7)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 950,
       "y": 160
     },
     "D2_07": {
       "@type": "Transition",
       "label": "Place 2 at (0,7)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 950,
       "y": 170
     },
     "D3_07": {
       "@type": "Transition",
       "label": "Place 3 at (0,7)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 950,
       "y": 180
     },
     "D4_07": {
       "@type": "Transition",
       "label": "Place 4 at (0,7)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 950,
       "y": 190
     },
     "D5_07": {
       "@type": "Transition",
       "label": "Place 5 at (0,7)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 950,
       "y": 200
     },
     "D6_07": {
       "@type": "Transition",
       "label": "Place 6 at (0,7)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 950,
       "y": 210
     },
     "D7_07": {
       "@type": "Transition",
       "label": "Place 7 at (0,7)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 950,
       "y": 220
     },
     "D8_07": {
       "@type": "Transition",
       "label": "Place 8 at (0,7)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 950,
       "y": 230
     },
     "D9_07": {
       "@type": "Transition",
       "label": "Place 9 at (0,7)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 950,
       "y": 240
     },
     "D1_08": {
       "@type": "Transition",
       "label": "Place 1 at (0,8)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 1000,
       "y": 160
     },
     "D2_08": {
       "@type": "Transition",
       "label": "Place 2 at (0,8)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 1000,
       "y": 170
     },
     "D3_08": {
       "@type": "Transition",
       "label": "Place 3 at (0,8)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 1000,
       "y": 180
     },
     "D4_08": {
       "@type": "Transition",
       "label": "Place 4 at (0,8)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 1000,
       "y": 190
     },
     "D5_08": {
       "@type": "Transition",
       "label": "Place 5 at (0,8)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 1000,
       "y": 200
     },
     "D6_08": {
       "@type": "Transition",
       "label": "Place 6 at (0,8)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 1000,
       "y": 210
     },
     "D7_08": {
       "@type": "Transition",
       "label": "Place 7 at (0,8)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 1000,
       "y": 220
     },
     "D8_08": {
       "@type": "Transition",
       "label": "Place 8 at (0,8)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 1000,
       "y": 230
     },
     "D9_08": {
       "@type": "Transition",
       "label": "Place 9 at (0,8)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 1000,
       "y": 240
     },
     "D1_10": {
       "@type": "Transition",
       "label": "Place 1 at (1,0)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 600,
       "y": 210
     },
     "D2_10": {
       "@type": "Transition",
       "label": "Place 2 at (1,0)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 600,
       "y": 220
     },
     "D3_10": {
       "@type": "Transition",
       "label": "Place 3 at (1,0)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 600,
       "y": 230
     },
     "D4_10": {
       "@type": "Transition",
       "label": "Place 4 at (1,0)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 600,
       "y": 240
     },
     "D5_10": {
       "@type": "Transition",
       "label": "Place 5 at (1,0)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 600,
       "y": 250
     },
     "D6_10": {
       "@type": "Transition",
       "label": "Place 6 at (1,0)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 600,
       "y": 260
     },
     "D7_10": {
       "@type": "Transition",
       "label": "Place 7 at (1,0)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 600,
       "y": 270
     },
     "D8_10": {
       "@type": "Transition",
       "label": "Place 8 at (1,0)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 600,
       "y": 280
     },
     "D9_10": {
       "@type": "Transition",
       "label": "Place 9 at (1,0)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 600,
       "y": 290
     },
     "D1_11": {
       "@type": "Transition",
       "label": "Place 1 at (1,1)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 650,
       "y": 210
     },
     "D2_11": {
       "@type": "Transition",
       "label": "Place 2 at (1,1)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 650,
       "y": 220
     },
     "D3_11": {
       "@type": "Transition",
       "label": "Place 3 at (1,1)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 650,
       "y": 230
     },
     "D4_11": {
       "@type": "Transition",
       "label": "Place 4 at (1,1)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 650,
       "y": 240
     },
     "D5_11": {
       "@type": "Transition",
       "label": "Place 5 at (1,1)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 650,
       "y": 250
     },
     "D6_11": {
       "@type": "Transition",
       "label": "Place 6 at (1,1)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 650,
       "y": 260
     },
     "D7_11": {
       "@type": "Transition",
       "label": "Place 7 at (1,1)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 650,
       "y": 270
     },
     "D8_11": {
       "@type": "Transition",
       "label": "Place 8 at (1,1)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 650,
       "y": 280
     },
     "D9_11": {
       "@type": "Transition",
       "label": "Place 9 at (1,1)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 650,
       "y": 290
     },
     "D1_12": {
       "@type": "Transition",
       "label": "Place 1 at (1,2)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 700,
       "y": 210
     },
     "D2_12": {
       "@type": "Transition",
       "label": "Place 2 at (1,2)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 700,
       "y": 220
     },
     "D3_12": {
       "@type": "Transition",
       "label": "Place 3 at (1,2)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 700,
       "y": 230
     },
     "D4_12": {
       "@type": "Transition",
       "label": "Place 4 at (1,2)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 700,
       "y": 240
     },
     "D5_12": {
       "@type": "Transition",
       "label": "Place 5 at (1,2)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 700,
       "y": 250
     },
     "D6_12": {
       "@type": "Transition",
       "label": "Place 6 at (1,2)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 700,
       "y": 260
     },
     "D7_12": {
       "@type": "Transition",
       "label": "Place 7 at (1,2)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 700,
       "y": 270
     },
     "D8_12": {
       "@type": "Transition",
       "label": "Place 8 at (1,2)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 700,
       "y": 280
     },
     "D9_12": {
       "@type": "Transition",
       "label": "Place 9 at (1,2)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 700,
       "y": 290
     },
     "D1_13": {
       "@type": "Transition",
       "label": "Place 1 at (1,3)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 750,
       "y": 210
     },
     "D2_13": {
       "@type": "Transition",
       "label": "Place 2 at (1,3)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 750,
       "y": 220
     },
     "D3_13": {
       "@type": "Transition",
       "label": "Place 3 at (1,3)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 750,
       "y": 230
     },
     "D4_13": {
       "@type": "Transition",
       "label": "Place 4 at (1,3)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 750,
       "y": 240
     },
     "D5_13": {
       "@type": "Transition",
       "label": "Place 5 at (1,3)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 750,
       "y": 250
     },
     "D6_13": {
       "@type": "Transition",
       "label": "Place 6 at (1,3)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 750,
       "y": 260
     },
     "D7_13": {
       "@type": "Transition",
       "label": "Place 7 at (1,3)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 750,
       "y": 270
     },
     "D8_13": {
       "@type": "Transition",
       "label": "Place 8 at (1,3)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 750,
       "y": 280
     },
     "D9_13": {
       "@type": "Transition",
       "label": "Place 9 at (1,3)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 750,
       "y": 290
     },
     "D1_14": {
       "@type": "Transition",
       "label": "Place 1 at (1,4)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 800,
       "y": 210
     },
     "D2_14": {
       "@type": "Transition",
       "label": "Place 2 at (1,4)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 800,
       "y": 220
     },
     "D3_14": {
       "@type": "Transition",
       "label": "Place 3 at (1,4)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 800,
       "y": 230
     },
     "D4_14": {
       "@type": "Transition",
       "label": "Place 4 at (1,4)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 800,
       "y": 240
     },
     "D5_14": {
       "@type": "Transition",
       "label": "Place 5 at (1,4)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 800,
       "y": 250
     },
     "D6_14": {
       "@type": "Transition",
       "label": "Place 6 at (1,4)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 800,
       "y": 260
     },
     "D7_14": {
       "@type": "Transition",
       "label": "Place 7 at (1,4)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 800,
       "y": 270
     },
     "D8_14": {
       "@type": "Transition",
       "label": "Place 8 at (1,4)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 800,
       "y": 280
     },
     "D9_14": {
       "@type": "Transition",
       "label": "Place 9 at (1,4)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 800,
       "y": 290
     },
     "D1_15": {
       "@type": "Transition",
       "label": "Place 1 at (1,5)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 850,
       "y": 210
     },
     "D2_15": {
       "@type": "Transition",
       "label": "Place 2 at (1,5)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 850,
       "y": 220
     },
     "D3_15": {
       "@type": "Transition",
       "label": "Place 3 at (1,5)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 850,
       "y": 230
     },
     "D4_15": {
       "@type": "Transition",
       "label": "Place 4 at (1,5)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 850,
       "y": 240
     },
     "D5_15": {
       "@type": "Transition",
       "label": "Place 5 at (1,5)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 850,
       "y": 250
     },
     "D6_15": {
       "@type": "Transition",
       "label": "Place 6 at (1,5)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 850,
       "y": 260
     },
     "D7_15": {
       "@type": "Transition",
       "label": "Place 7 at (1,5)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 850,
       "y": 270
     },
     "D8_15": {
       "@type": "Transition",
       "label": "Place 8 at (1,5)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 850,
       "y": 280
     },
     "D9_15": {
       "@type": "Transition",
       "label": "Place 9 at (1,5)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 850,
       "y": 290
     },
     "D1_16": {
       "@type": "Transition",
       "label": "Place 1 at (1,6)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 900,
       "y": 210
     },
     "D2_16": {
       "@type": "Transition",
       "label": "Place 2 at (1,6)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 900,
       "y": 220
     },
     "D3_16": {
       "@type": "Transition",
       "label": "Place 3 at (1,6)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 900,
       "y": 230
     },
     "D4_16": {
       "@type": "Transition",
       "label": "Place 4 at (1,6)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 900,
       "y": 240
     },
     "D5_16": {
       "@type": "Transition",
       "label": "Place 5 at (1,6)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 900,
       "y": 250
     },
     "D6_16": {
       "@type": "Transition",
       "label": "Place 6 at (1,6)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 900,
       "y": 260
     },
     "D7_16": {
       "@type": "Transition",
       "label": "Place 7 at (1,6)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 900,
       "y": 270
     },
     "D8_16": {
       "@type": "Transition",
       "label": "Place 8 at (1,6)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 900,
       "y": 280
     },
     "D9_16": {
       "@type": "Transition",
       "label": "Place 9 at (1,6)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 900,
       "y": 290
     },
     "D1_17": {
       "@type": "Transition",
       "label": "Place 1 at (1,7)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 950,
       "y": 210
     },
     "D2_17": {
       "@type": "Transition",
       "label": "Place 2 at (1,7)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 950,
       "y": 220
     },
     "D3_17": {
       "@type": "Transition",
       "label": "Place 3 at (1,7)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 950,
       "y": 230
     },
     "D4_17": {
       "@type": "Transition",
       "label": "Place 4 at (1,7)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 950,
       "y": 240
     },
     "D5_17": {
       "@type": "Transition",
       "label": "Place 5 at (1,7)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 950,
       "y": 250
     },
     "D6_17": {
       "@type": "Transition",
       "label": "Place 6 at (1,7)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 950,
       "y": 260
     },
     "D7_17": {
       "@type": "Transition",
       "label": "Place 7 at (1,7)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 950,
       "y": 270
     },
     "D8_17": {
       "@type": "Transition",
       "label": "Place 8 at (1,7)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 950,
       "y": 280
     },
     "D9_17": {
       "@type": "Transition",
       "label": "Place 9 at (1,7)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 950,
       "y": 290
     },
     "D1_18": {
       "@type": "Transition",
       "label": "Place 1 at (1,8)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 1000,
       "y": 210
     },
     "D2_18": {
       "@type": "Transition",
       "label": "Place 2 at (1,8)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 1000,
       "y": 220
     },
     "D3_18": {
       "@type": "Transition",
       "label": "Place 3 at (1,8)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 1000,
       "y": 230
     },
     "D4_18": {
       "@type": "Transition",
       "label": "Place 4 at (1,8)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 1000,
       "y": 240
     },
     "D5_18": {
       "@type": "Transition",
       "label": "Place 5 at (1,8)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 1000,
       "y": 250
     },
     "D6_18": {
       "@type": "Transition",
       "label": "Place 6 at (1,8)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 1000,
       "y": 260
     },
     "D7_18": {
       "@type": "Transition",
       "label": "Place 7 at (1,8)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 1000,
       "y": 270
     },
     "D8_18": {
       "@type": "Transition",
       "label": "Place 8 at (1,8)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 1000,
       "y": 280
     },
     "D9_18": {
       "@type": "Transition",
       "label": "Place 9 at (1,8)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 1000,
       "y": 290
     },
     "D1_20": {
       "@type": "Transition",
       "label": "Place 1 at (2,0)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 600,
       "y": 260
     },
     "D2_20": {
       "@type": "Transition",
       "label": "Place 2 at (2,0)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 600,
       "y": 270
     },
     "D3_20": {
       "@type": "Transition",
       "label": "Place 3 at (2,0)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 600,
       "y": 280
     },
     "D4_20": {
       "@type": "Transition",
       "label": "Place 4 at (2,0)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 600,
       "y": 290
     },
     "D5_20": {
       "@type": "Transition",
       "label": "Place 5 at (2,0)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 600,
       "y": 300
     },
     "D6_20": {
       "@type": "Transition",
       "label": "Place 6 at (2,0)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 600,
       "y": 310
     },
     "D7_20": {
       "@type": "Transition",
       "label": "Place 7 at (2,0)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 600,
       "y": 320
     },
     "D8_20": {
       "@type": "Transition",
       "label": "Place 8 at (2,0)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 600,
       "y": 330
     },
     "D9_20": {
       "@type": "Transition",
       "label": "Place 9 at (2,0)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 600,
       "y": 340
     },
     "D1_21": {
       "@type": "Transition",
       "label": "Place 1 at (2,1)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 650,
       "y": 260
     },
     "D2_21": {
       "@type": "Transition",
       "label": "Place 2 at (2,1)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 650,
       "y": 270
     },
     "D3_21": {
       "@type": "Transition",
       "label": "Place 3 at (2,1)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 650,
       "y": 280
     },
     "D4_21": {
       "@type": "Transition",
       "label": "Place 4 at (2,1)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 650,
       "y": 290
     },
     "D5_21": {
       "@type": "Transition",
       "label": "Place 5 at (2,1)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 650,
       "y": 300
     },
     "D6_21": {
       "@type": "Transition",
       "label": "Place 6 at (2,1)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 650,
       "y": 310
     },
     "D7_21": {
       "@type": "Transition",
       "label": "Place 7 at (2,1)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 650,
       "y": 320
     },
     "D8_21": {
       "@type": "Transition",
       "label": "Place 8 at (2,1)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 650,
       "y": 330
     },
     "D9_21": {
       "@type": "Transition",
       "label": "Place 9 at (2,1)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 650,
       "y": 340
     },
     "D1_22": {
       "@type": "Transition",
       "label": "Place 1 at (2,2)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 700,
       "y": 260
     },
     "D2_22": {
       "@type": "Transition",
       "label": "Place 2 at (2,2)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 700,
       "y": 270
     },
     "D3_22": {
       "@type": "Transition",
       "label": "Place 3 at (2,2)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 700,
       "y": 280
     },
     "D4_22": {
       "@type": "Transition",
       "label": "Place 4 at (2,2)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 700,
       "y": 290
     },
     "D5_22": {
       "@type": "Transition",
       "label": "Place 5 at (2,2)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 700,
       "y": 300
     },
     "D6_22": {
       "@type": "Transition",
       "label": "Place 6 at (2,2)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 700,
       "y": 310
     },
     "D7_22": {
       "@type": "Transition",
       "label": "Place 7 at (2,2)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 700,
       "y": 320
     },
     "D8_22": {
       "@type": "Transition",
       "label": "Place 8 at (2,2)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 700,
       "y": 330
     },
     "D9_22": {
       "@type": "Transition",
       "label": "Place 9 at (2,2)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 700,
       "y": 340
     },
     "D1_23": {
       "@type": "Transition",
       "label": "Place 1 at (2,3)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 750,
       "y": 260
     },
     "D2_23": {
       "@type": "Transition",
       "label": "Place 2 at (2,3)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 750,
       "y": 270
     },
     "D3_23": {
       "@type": "Transition",
       "label": "Place 3 at (2,3)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 750,
       "y": 280
     },
     "D4_23": {
       "@type": "Transition",
       "label": "Place 4 at (2,3)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 750,
       "y": 290
     },
     "D5_23": {
       "@type": "Transition",
       "label": "Place 5 at (2,3)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 750,
       "y": 300
     },
     "D6_23": {
       "@type": "Transition",
       "label": "Place 6 at (2,3)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 750,
       "y": 310
     },
     "D7_23": {
       "@type": "Transition",
       "label": "Place 7 at (2,3)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 750,
       "y": 320
     },
     "D8_23": {
       "@type": "Transition",
       "label": "Place 8 at (2,3)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 750,
       "y": 330
     },
     "D9_23": {
       "@type": "Transition",
       "label": "Place 9 at (2,3)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 750,
       "y": 340
     },
     "D1_24": {
       "@type": "Transition",
       "label": "Place 1 at (2,4)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 800,
       "y": 260
     },
     "D2_24": {
       "@type": "Transition",
       "label": "Place 2 at (2,4)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 800,
       "y": 270
     },
     "D3_24": {
       "@type": "Transition",
       "label": "Place 3 at (2,4)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 800,
       "y": 280
     },
     "D4_24": {
       "@type": "Transition",
       "label": "Place 4 at (2,4)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 800,
       "y": 290
     },
     "D5_24": {
       "@type": "Transition",
       "label": "Place 5 at (2,4)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 800,
       "y": 300
     },
     "D6_24": {
       "@type": "Transition",
       "label": "Place 6 at (2,4)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 800,
       "y": 310
     },
     "D7_24": {
       "@type": "Transition",
       "label": "Place 7 at (2,4)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 800,
       "y": 320
     },
     "D8_24": {
       "@type": "Transition",
       "label": "Place 8 at (2,4)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 800,
       "y": 330
     },
     "D9_24": {
       "@type": "Transition",
       "label": "Place 9 at (2,4)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 800,
       "y": 340
     },
     "D1_25": {
       "@type": "Transition",
       "label": "Place 1 at (2,5)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 850,
       "y": 260
     },
     "D2_25": {
       "@type": "Transition",
       "label": "Place 2 at (2,5)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 850,
       "y": 270
     },
     "D3_25": {
       "@type": "Transition",
       "label": "Place 3 at (2,5)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 850,
       "y": 280
     },
     "D4_25": {
       "@type": "Transition",
       "label": "Place 4 at (2,5)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 850,
       "y": 290
     },
     "D5_25": {
       "@type": "Transition",
       "label": "Place 5 at (2,5)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 850,
       "y": 300
     },
     "D6_25": {
       "@type": "Transition",
       "label": "Place 6 at (2,5)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 850,
       "y": 310
     },
     "D7_25": {
       "@type": "Transition",
       "label": "Place 7 at (2,5)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 850,
       "y": 320
     },
     "D8_25": {
       "@type": "Transition",
       "label": "Place 8 at (2,5)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 850,
       "y": 330
     },
     "D9_25": {
       "@type": "Transition",
       "label": "Place 9 at (2,5)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 850,
       "y": 340
     },
     "D1_26": {
       "@type": "Transition",
       "label": "Place 1 at (2,6)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 900,
       "y": 260
     },
     "D2_26": {
       "@type": "Transition",
       "label": "Place 2 at (2,6)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 900,
       "y": 270
     },
     "D3_26": {
       "@type": "Transition",
       "label": "Place 3 at (2,6)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 900,
       "y": 280
     },
     "D4_26": {
       "@type": "Transition",
       "label": "Place 4 at (2,6)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 900,
       "y": 290
     },
     "D5_26": {
       "@type": "Transition",
       "label": "Place 5 at (2,6)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 900,
       "y": 300
     },
     "D6_26": {
       "@type": "Transition",
       "label": "Place 6 at (2,6)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 900,
       "y": 310
     },
     "D7_26": {
       "@type": "Transition",
       "label": "Place 7 at (2,6)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 900,
       "y": 320
     },
     "D8_26": {
       "@type": "Transition",
       "label": "Place 8 at (2,6)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 900,
       "y": 330
     },
     "D9_26": {
       "@type": "Transition",
       "label": "Place 9 at (2,6)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 900,
       "y": 340
     },
     "D1_27": {
       "@type": "Transition",
       "label": "Place 1 at (2,7)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 950,
       "y": 260
     },
     "D2_27": {
       "@type": "Transition",
       "label": "Place 2 at (2,7)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 950,
       "y": 270
     },
     "D3_27": {
       "@type": "Transition",
       "label": "Place 3 at (2,7)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 950,
       "y": 280
     },
     "D4_27": {
       "@type": "Transition",
       "label": "Place 4 at (2,7)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 950,
       "y": 290
     },
     "D5_27": {
       "@type": "Transition",
       "label": "Place 5 at (2,7)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 950,
       "y": 300
     },
     "D6_27": {
       "@type": "Transition",
       "label": "Place 6 at (2,7)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 950,
       "y": 310
     },
     "D7_27": {
       "@type": "Transition",
       "label": "Place 7 at (2,7)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 950,
       "y": 320
     },
     "D8_27": {
       "@type": "Transition",
       "label": "Place 8 at (2,7)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 950,
       "y": 330
     },
     "D9_27": {
       "@type": "Transition",
       "label": "Place 9 at (2,7)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 950,
       "y": 340
     },
     "D1_28": {
       "@type": "Transition",
       "label": "Place 1 at (2,8)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 1000,
       "y": 260
     },
     "D2_28": {
       "@type": "Transition",
       "label": "Place 2 at (2,8)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 1000,
       "y": 270
     },
     "D3_28": {
       "@type": "Transition",
       "label": "Place 3 at (2,8)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 1000,
       "y": 280
     },
     "D4_28": {
       "@type": "Transition",
       "label": "Place 4 at (2,8)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 1000,
       "y": 290
     },
     "D5_28": {
       "@type": "Transition",
       "label": "Place 5 at (2,8)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 1000,
       "y": 300
     },
     "D6_28": {
       "@type": "Transition",
       "label": "Place 6 at (2,8)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 1000,
       "y": 310
     },
     "D7_28": {
       "@type": "Transition",
       "label": "Place 7 at (2,8)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 1000,
       "y": 320
     },
     "D8_28": {
       "@type": "Transition",
       "label": "Place 8 at (2,8)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 1000,
       "y": 330
     },
     "D9_28": {
       "@type": "Transition",
       "label": "Place 9 at (2,8)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 1000,
       "y": 340
     },
     "D1_30": {
       "@type": "Transition",
       "label": "Place 1 at (3,0)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 600,
       "y": 310
     },
     "D2_30": {
       "@type": "Transition",
       "label": "Place 2 at (3,0)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 600,
       "y": 320
     },
     "D3_30": {
       "@type": "Transition",
       "label": "Place 3 at (3,0)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 600,
       "y": 330
     },
     "D4_30": {
       "@type": "Transition",
       "label": "Place 4 at (3,0)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 600,
       "y": 340
     },
     "D5_30": {
       "@type": "Transition",
       "label": "Place 5 at (3,0)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 600,
       "y": 350
     },
     "D6_30": {
       "@type": "Transition",
       "label": "Place 6 at (3,0)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 600,
       "y": 360
     },
     "D7_30": {
       "@type": "Transition",
       "label": "Place 7 at (3,0)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 600,
       "y": 370
     },
     "D8_30": {
       "@type": "Transition",
       "label": "Place 8 at (3,0)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 600,
       "y": 380
     },
     "D9_30": {
       "@type": "Transition",
       "label": "Place 9 at (3,0)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 600,
       "y": 390
     },
     "D1_31": {
       "@type": "Transition",
       "label": "Place 1 at (3,1)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 650,
       "y": 310
     },
     "D2_31": {
       "@type": "Transition",
       "label": "Place 2 at (3,1)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 650,
       "y": 320
     },
     "D3_31": {
       "@type": "Transition",
       "label": "Place 3 at (3,1)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 650,
       "y": 330
     },
     "D4_31": {
       "@type": "Transition",
       "label": "Place 4 at (3,1)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 650,
       "y": 340
     },
     "D5_31": {
       "@type": "Transition",
       "label": "Place 5 at (3,1)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 650,
       "y": 350
     },
     "D6_31": {
       "@type": "Transition",
       "label": "Place 6 at (3,1)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 650,
       "y": 360
     },
     "D7_31": {
       "@type": "Transition",
       "label": "Place 7 at (3,1)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 650,
       "y": 370
     },
     "D8_31": {
       "@type": "Transition",
       "label": "Place 8 at (3,1)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 650,
       "y": 380
     },
     "D9_31": {
       "@type": "Transition",
       "label": "Place 9 at (3,1)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 650,
       "y": 390
     },
     "D1_32": {
       "@type": "Transition",
       "label": "Place 1 at (3,2)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 700,
       "y": 310
     },
     "D2_32": {
       "@type": "Transition",
       "label": "Place 2 at (3,2)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 700,
       "y": 320
     },
     "D3_32": {
       "@type": "Transition",
       "label": "Place 3 at (3,2)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 700,
       "y": 330
     },
     "D4_32": {
       "@type": "Transition",
       "label": "Place 4 at (3,2)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 700,
       "y": 340
     },
     "D5_32": {
       "@type": "Transition",
       "label": "Place 5 at (3,2)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 700,
       "y": 350
     },
     "D6_32": {
       "@type": "Transition",
       "label": "Place 6 at (3,2)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 700,
       "y": 360
     },
     "D7_32": {
       "@type": "Transition",
       "label": "Place 7 at (3,2)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 700,
       "y": 370
     },
     "D8_32": {
       "@type": "Transition",
       "label": "Place 8 at (3,2)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 700,
       "y": 380
     },
     "D9_32": {
       "@type": "Transition",
       "label": "Place 9 at (3,2)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 700,
       "y": 390
     },
     "D1_33": {
       "@type": "Transition",
       "label": "Place 1 at (3,3)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 750,
       "y": 310
     },
     "D2_33": {
       "@type": "Transition",
       "label": "Place 2 at (3,3)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 750,
       "y": 320
     },
     "D3_33": {
       "@type": "Transition",
       "label": "Place 3 at (3,3)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 750,
       "y": 330
     },
     "D4_33": {
       "@type": "Transition",
       "label": "Place 4 at (3,3)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 750,
       "y": 340
     },
     "D5_33": {
       "@type": "Transition",
       "label": "Place 5 at (3,3)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 750,
       "y": 350
     },
     "D6_33": {
       "@type": "Transition",
       "label": "Place 6 at (3,3)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 750,
       "y": 360
     },
     "D7_33": {
       "@type": "Transition",
       "label": "Place 7 at (3,3)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 750,
       "y": 370
     },
     "D8_33": {
       "@type": "Transition",
       "label": "Place 8 at (3,3)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 750,
       "y": 380
     },
     "D9_33": {
       "@type": "Transition",
       "label": "Place 9 at (3,3)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 750,
       "y": 390
     },
     "D1_34": {
       "@type": "Transition",
       "label": "Place 1 at (3,4)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 800,
       "y": 310
     },
     "D2_34": {
       "@type": "Transition",
       "label": "Place 2 at (3,4)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 800,
       "y": 320
     },
     "D3_34": {
       "@type": "Transition",
       "label": "Place 3 at (3,4)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 800,
       "y": 330
     },
     "D4_34": {
       "@type": "Transition",
       "label": "Place 4 at (3,4)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 800,
       "y": 340
     },
     "D5_34": {
       "@type": "Transition",
       "label": "Place 5 at (3,4)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 800,
       "y": 350
     },
     "D6_34": {
       "@type": "Transition",
       "label": "Place 6 at (3,4)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 800,
       "y": 360
     },
     "D7_34": {
       "@type": "Transition",
       "label": "Place 7 at (3,4)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 800,
       "y": 370
     },
     "D8_34": {
       "@type": "Transition",
       "label": "Place 8 at (3,4)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 800,
       "y": 380
     },
     "D9_34": {
       "@type": "Transition",
       "label": "Place 9 at (3,4)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 800,
       "y": 390
     },
     "D1_35": {
       "@type": "Transition",
       "label": "Place 1 at (3,5)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 850,
       "y": 310
     },
     "D2_35": {
       "@type": "Transition",
       "label": "Place 2 at (3,5)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 850,
       "y": 320
     },
     "D3_35": {
       "@type": "Transition",
       "label": "Place 3 at (3,5)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 850,
       "y": 330
     },
     "D4_35": {
       "@type": "Transition",
       "label": "Place 4 at (3,5)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 850,
       "y": 340
     },
     "D5_35": {
       "@type": "Transition",
       "label": "Place 5 at (3,5)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 850,
       "y": 350
     },
     "D6_35": {
       "@type": "Transition",
       "label": "Place 6 at (3,5)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 850,
       "y": 360
     },
     "D7_35": {
       "@type": "Transition",
       "label": "Place 7 at (3,5)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 850,
       "y": 370
     },
     "D8_35": {
       "@type": "Transition",
       "label": "Place 8 at (3,5)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 850,
       "y": 380
     },
     "D9_35": {
       "@type": "Transition",
       "label": "Place 9 at (3,5)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 850,
       "y": 390
     },
     "D1_36": {
       "@type": "Transition",
       "label": "Place 1 at (3,6)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 900,
       "y": 310
     },
     "D2_36": {
       "@type": "Transition",
       "label": "Place 2 at (3,6)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 900,
       "y": 320
     },
     "D3_36": {
       "@type": "Transition",
       "label": "Place 3 at (3,6)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 900,
       "y": 330
     },
     "D4_36": {
       "@type": "Transition",
       "label": "Place 4 at (3,6)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 900,
       "y": 340
     },
     "D5_36": {
       "@type": "Transition",
       "label": "Place 5 at (3,6)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 900,
       "y": 350
     },
     "D6_36": {
       "@type": "Transition",
       "label": "Place 6 at (3,6)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 900,
       "y": 360
     },
     "D7_36": {
       "@type": "Transition",
       "label": "Place 7 at (3,6)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 900,
       "y": 370
     },
     "D8_36": {
       "@type": "Transition",
       "label": "Place 8 at (3,6)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 900,
       "y": 380
     },
     "D9_36": {
       "@type": "Transition",
       "label": "Place 9 at (3,6)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 900,
       "y": 390
     },
     "D1_37": {
       "@type": "Transition",
       "label": "Place 1 at (3,7)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 950,
       "y": 310
     },
     "D2_37": {
       "@type": "Transition",
       "label": "Place 2 at (3,7)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 950,
       "y": 320
     },
     "D3_37": {
       "@type": "Transition",
       "label": "Place 3 at (3,7)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 950,
       "y": 330
     },
     "D4_37": {
       "@type": "Transition",
       "label": "Place 4 at (3,7)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 950,
       "y": 340
     },
     "D5_37": {
       "@type": "Transition",
       "label": "Place 5 at (3,7)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 950,
       "y": 350
     },
     "D6_37": {
       "@type": "Transition",
       "label": "Place 6 at (3,7)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 950,
       "y": 360
     },
     "D7_37": {
       "@type": "Transition",
       "label": "Place 7 at (3,7)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 950,
       "y": 370
     },
     "D8_37": {
       "@type": "Transition",
       "label": "Place 8 at (3,7)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 950,
       "y": 380
     },
     "D9_37": {
       "@type": "Transition",
       "label": "Place 9 at (3,7)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 950,
       "y": 390
     },
     "D1_38": {
       "@type": "Transition",
       "label": "Place 1 at (3,8)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 1000,
       "y": 310
     },
     "D2_38": {
       "@type": "Transition",
       "label": "Place 2 at (3,8)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 1000,
       "y": 320
     },
     "D3_38": {
       "@type": "Transition",
       "label": "Place 3 at (3,8)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 1000,
       "y": 330
     },
     "D4_38": {
       "@type": "Transition",
       "label": "Place 4 at (3,8)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 1000,
       "y": 340
     },
     "D5_38": {
       "@type": "Transition",
       "label": "Place 5 at (3,8)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 1000,
       "y": 350
     },
     "D6_38": {
       "@type": "Transition",
       "label": "Place 6 at (3,8)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 1000,
       "y": 360
     },
     "D7_38": {
       "@type": "Transition",
       "label": "Place 7 at (3,8)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 1000,
       "y": 370
     },
     "D8_38": {
       "@type": "Transition",
       "label": "Place 8 at (3,8)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 1000,
       "y": 380
     },
     "D9_38": {
       "@type": "Transition",
       "label": "Place 9 at (3,8)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 1000,
       "y": 390
     },
     "D1_40": {
       "@type": "Transition",
       "label": "Place 1 at (4,0)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 600,
       "y": 360
     },
     "D2_40": {
       "@type": "Transition",
       "label": "Place 2 at (4,0)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 600,
       "y": 370
     },
     "D3_40": {
       "@type": "Transition",
       "label": "Place 3 at (4,0)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 600,
       "y": 380
     },
     "D4_40": {
       "@type": "Transition",
       "label": "Place 4 at (4,0)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 600,
       "y": 390
     },
     "D5_40": {
       "@type": "Transition",
       "label": "Place 5 at (4,0)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 600,
       "y": 400
     },
     "D6_40": {
       "@type": "Transition",
       "label": "Place 6 at (4,0)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 600,
       "y": 410
     },
     "D7_40": {
       "@type": "Transition",
       "label": "Place 7 at (4,0)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 600,
       "y": 420
     },
     "D8_40": {
       "@type": "Transition",
       "label": "Place 8 at (4,0)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 600,
       "y": 430
     },
     "D9_40": {
       "@type": "Transition",
       "label": "Place 9 at (4,0)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 600,
       "y": 440
     },
     "D1_41": {
       "@type": "Transition",
       "label": "Place 1 at (4,1)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 650,
       "y": 360
     },
     "D2_41": {
       "@type": "Transition",
       "label": "Place 2 at (4,1)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 650,
       "y": 370
     },
     "D3_41": {
       "@type": "Transition",
       "label": "Place 3 at (4,1)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 650,
       "y": 380
     },
     "D4_41": {
       "@type": "Transition",
       "label": "Place 4 at (4,1)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 650,
       "y": 390
     },
     "D5_41": {
       "@type": "Transition",
       "label": "Place 5 at (4,1)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 650,
       "y": 400
     },
     "D6_41": {
       "@type": "Transition",
       "label": "Place 6 at (4,1)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 650,
       "y": 410
     },
     "D7_41": {
       "@type": "Transition",
       "label": "Place 7 at (4,1)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 650,
       "y": 420
     },
     "D8_41": {
       "@type": "Transition",
       "label": "Place 8 at (4,1)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 650,
       "y": 430
     },
     "D9_41": {
       "@type": "Transition",
       "label": "Place 9 at (4,1)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 650,
       "y": 440
     },
     "D1_42": {
       "@type": "Transition",
       "label": "Place 1 at (4,2)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 700,
       "y": 360
     },
     "D2_42": {
       "@type": "Transition",
       "label": "Place 2 at (4,2)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 700,
       "y": 370
     },
     "D3_42": {
       "@type": "Transition",
       "label": "Place 3 at (4,2)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 700,
       "y": 380
     },
     "D4_42": {
       "@type": "Transition",
       "label": "Place 4 at (4,2)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 700,
       "y": 390
     },
     "D5_42": {
       "@type": "Transition",
       "label": "Place 5 at (4,2)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 700,
       "y": 400
     },
     "D6_42": {
       "@type": "Transition",
       "label": "Place 6 at (4,2)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 700,
       "y": 410
     },
     "D7_42": {
       "@type": "Transition",
       "label": "Place 7 at (4,2)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 700,
       "y": 420
     },
     "D8_42": {
       "@type": "Transition",
       "label": "Place 8 at (4,2)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 700,
       "y": 430
     },
     "D9_42": {
       "@type": "Transition",
       "label": "Place 9 at (4,2)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 700,
       "y": 440
     },
     "D1_43": {
       "@type": "Transition",
       "label": "Place 1 at (4,3)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 750,
       "y": 360
     },
     "D2_43": {
       "@type": "Transition",
       "label": "Place 2 at (4,3)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 750,
       "y": 370
     },
     "D3_43": {
       "@type": "Transition",
       "label": "Place 3 at (4,3)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 750,
       "y": 380
     },
     "D4_43": {
       "@type": "Transition",
       "label": "Place 4 at (4,3)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 750,
       "y": 390
     },
     "D5_43": {
       "@type": "Transition",
       "label": "Place 5 at (4,3)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 750,
       "y": 400
     },
     "D6_43": {
       "@type": "Transition",
       "label": "Place 6 at (4,3)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 750,
       "y": 410
     },
     "D7_43": {
       "@type": "Transition",
       "label": "Place 7 at (4,3)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 750,
       "y": 420
     },
     "D8_43": {
       "@type": "Transition",
       "label": "Place 8 at (4,3)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 750,
       "y": 430
     },
     "D9_43": {
       "@type": "Transition",
       "label": "Place 9 at (4,3)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 750,
       "y": 440
     },
     "D1_44": {
       "@type": "Transition",
       "label": "Place 1 at (4,4)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 800,
       "y": 360
     },
     "D2_44": {
       "@type": "Transition",
       "label": "Place 2 at (4,4)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 800,
       "y": 370
     },
     "D3_44": {
       "@type": "Transition",
       "label": "Place 3 at (4,4)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 800,
       "y": 380
     },
     "D4_44": {
       "@type": "Transition",
       "label": "Place 4 at (4,4)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 800,
       "y": 390
     },
     "D5_44": {
       "@type": "Transition",
       "label": "Place 5 at (4,4)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 800,
       "y": 400
     },
     "D6_44": {
       "@type": "Transition",
       "label": "Place 6 at (4,4)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 800,
       "y": 410
     },
     "D7_44": {
       "@type": "Transition",
       "label": "Place 7 at (4,4)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 800,
       "y": 420
     },
     "D8_44": {
       "@type": "Transition",
       "label": "Place 8 at (4,4)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 800,
       "y": 430
     },
     "D9_44": {
       "@type": "Transition",
       "label": "Place 9 at (4,4)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 800,
       "y": 440
     },
     "D1_45": {
       "@type": "Transition",
       "label": "Place 1 at (4,5)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 850,
       "y": 360
     },
     "D2_45": {
       "@type": "Transition",
       "label": "Place 2 at (4,5)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 850,
       "y": 370
     },
     "D3_45": {
       "@type": "Transition",
       "label": "Place 3 at (4,5)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 850,
       "y": 380
     },
     "D4_45": {
       "@type": "Transition",
       "label": "Place 4 at (4,5)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 850,
       "y": 390
     },
     "D5_45": {
       "@type": "Transition",
       "label": "Place 5 at (4,5)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 850,
       "y": 400
     },
     "D6_45": {
       "@type": "Transition",
       "label": "Place 6 at (4,5)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 850,
       "y": 410
     },
     "D7_45": {
       "@type": "Transition",
       "label": "Place 7 at (4,5)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 850,
       "y": 420
     },
     "D8_45": {
       "@type": "Transition",
       "label": "Place 8 at (4,5)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 850,
       "y": 430
     },
     "D9_45": {
       "@type": "Transition",
       "label": "Place 9 at (4,5)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 850,
       "y": 440
     },
     "D1_46": {
       "@type": "Transition",
       "label": "Place 1 at (4,6)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 900,
       "y": 360
     },
     "D2_46": {
       "@type": "Transition",
       "label": "Place 2 at (4,6)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 900,
       "y": 370
     },
     "D3_46": {
       "@type": "Transition",
       "label": "Place 3 at (4,6)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 900,
       "y": 380
     },
     "D4_46": {
       "@type": "Transition",
       "label": "Place 4 at (4,6)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 900,
       "y": 390
     },
     "D5_46": {
       "@type": "Transition",
       "label": "Place 5 at (4,6)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 900,
       "y": 400
     },
     "D6_46": {
       "@type": "Transition",
       "label": "Place 6 at (4,6)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 900,
       "y": 410
     },
     "D7_46": {
       "@type": "Transition",
       "label": "Place 7 at (4,6)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 900,
       "y": 420
     },
     "D8_46": {
       "@type": "Transition",
       "label": "Place 8 at (4,6)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 900,
       "y": 430
     },
     "D9_46": {
       "@type": "Transition",
       "label": "Place 9 at (4,6)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 900,
       "y": 440
     },
     "D1_47": {
       "@type": "Transition",
       "label": "Place 1 at (4,7)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 950,
       "y": 360
     },
     "D2_47": {
       "@type": "Transition",
       "label": "Place 2 at (4,7)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 950,
       "y": 370
     },
     "D3_47": {
       "@type": "Transition",
       "label": "Place 3 at (4,7)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 950,
       "y": 380
     },
     "D4_47": {
       "@type": "Transition",
       "label": "Place 4 at (4,7)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 950,
       "y": 390
     },
     "D5_47": {
       "@type": "Transition",
       "label": "Place 5 at (4,7)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 950,
       "y": 400
     },
     "D6_47": {
       "@type": "Transition",
       "label": "Place 6 at (4,7)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 950,
       "y": 410
     },
     "D7_47": {
       "@type": "Transition",
       "label": "Place 7 at (4,7)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 950,
       "y": 420
     },
     "D8_47": {
       "@type": "Transition",
       "label": "Place 8 at (4,7)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 950,
       "y": 430
     },
     "D9_47": {
       "@type": "Transition",
       "label": "Place 9 at (4,7)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 950,
       "y": 440
     },
     "D1_48": {
       "@type": "Transition",
       "label": "Place 1 at (4,8)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 1000,
       "y": 360
     },
     "D2_48": {
       "@type": "Transition",
       "label": "Place 2 at (4,8)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 1000,
       "y": 370
     },
     "D3_48": {
       "@type": "Transition",
       "label": "Place 3 at (4,8)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 1000,
       "y": 380
     },
     "D4_48": {
       "@type": "Transition",
       "label": "Place 4 at (4,8)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 1000,
       "y": 390
     },
     "D5_48": {
       "@type": "Transition",
       "label": "Place 5 at (4,8)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 1000,
       "y": 400
     },
     "D6_48": {
       "@type": "Transition",
       "label": "Place 6 at (4,8)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 1000,
       "y": 410
     },
     "D7_48": {
       "@type": "Transition",
       "label": "Place 7 at (4,8)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 1000,
       "y": 420
     },
     "D8_48": {
       "@type": "Transition",
       "label": "Place 8 at (4,8)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 1000,
       "y": 430
     },
     "D9_48": {
       "@type": "Transition",
       "label": "Place 9 at (4,8)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 1000,
       "y": 440
     },
     "D1_50": {
       "@type": "Transition",
       "label": "Place 1 at (5,0)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 600,
       "y": 410
     },
     "D2_50": {
       "@type": "Transition",
       "label": "Place 2 at (5,0)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 600,
       "y": 420
     },
     "D3_50": {
       "@type": "Transition",
       "label": "Place 3 at (5,0)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 600,
       "y": 430
     },
     "D4_50": {
       "@type": "Transition",
       "label": "Place 4 at (5,0)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 600,
       "y": 440
     },
     "D5_50": {
       "@type": "Transition",
       "label": "Place 5 at (5,0)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 600,
       "y": 450
     },
     "D6_50": {
       "@type": "Transition",
       "label": "Place 6 at (5,0)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 600,
       "y": 460
     },
     "D7_50": {
       "@type": "Transition",
       "label": "Place 7 at (5,0)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 600,
       "y": 470
     },
     "D8_50": {
       "@type": "Transition",
       "label": "Place 8 at (5,0)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 600,
       "y": 480
     },
     "D9_50": {
       "@type": "Transition",
       "label": "Place 9 at (5,0)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 600,
       "y": 490
     },
     "D1_51": {
       "@type": "Transition",
       "label": "Place 1 at (5,1)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 650,
       "y": 410
     },
     "D2_51": {
       "@type": "Transition",
       "label": "Place 2 at (5,1)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 650,
       "y": 420
     },
     "D3_51": {
       "@type": "Transition",
       "label": "Place 3 at (5,1)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 650,
       "y": 430
     },
     "D4_51": {
       "@type": "Transition",
       "label": "Place 4 at (5,1)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 650,
       "y": 440
     },
     "D5_51": {
       "@type": "Transition",
       "label": "Place 5 at (5,1)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 650,
       "y": 450
     },
     "D6_51": {
       "@type": "Transition",
       "label": "Place 6 at (5,1)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 650,
       "y": 460
     },
     "D7_51": {
       "@type": "Transition",
       "label": "Place 7 at (5,1)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 650,
       "y": 470
     },
     "D8_51": {
       "@type": "Transition",
       "label": "Place 8 at (5,1)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 650,
       "y": 480
     },
     "D9_51": {
       "@type": "Transition",
       "label": "Place 9 at (5,1)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 650,
       "y": 490
     },
     "D1_52": {
       "@type": "Transition",
       "label": "Place 1 at (5,2)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 700,
       "y": 410
     },
     "D2_52": {
       "@type": "Transition",
       "label": "Place 2 at (5,2)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 700,
       "y": 420
     },
     "D3_52": {
       "@type": "Transition",
       "label": "Place 3 at (5,2)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 700,
       "y": 430
     },
     "D4_52": {
       "@type": "Transition",
       "label": "Place 4 at (5,2)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 700,
       "y": 440
     },
     "D5_52": {
       "@type": "Transition",
       "label": "Place 5 at (5,2)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 700,
       "y": 450
     },
     "D6_52": {
       "@type": "Transition",
       "label": "Place 6 at (5,2)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 700,
       "y": 460
     },
     "D7_52": {
       "@type": "Transition",
       "label": "Place 7 at (5,2)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 700,
       "y": 470
     },
     "D8_52": {
       "@type": "Transition",
       "label": "Place 8 at (5,2)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 700,
       "y": 480
     },
     "D9_52": {
       "@type": "Transition",
       "label": "Place 9 at (5,2)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 700,
       "y": 490
     },
     "D1_53": {
       "@type": "Transition",
       "label": "Place 1 at (5,3)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 750,
       "y": 410
     },
     "D2_53": {
       "@type": "Transition",
       "label": "Place 2 at (5,3)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 750,
       "y": 420
     },
     "D3_53": {
       "@type": "Transition",
       "label": "Place 3 at (5,3)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 750,
       "y": 430
     },
     "D4_53": {
       "@type": "Transition",
       "label": "Place 4 at (5,3)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 750,
       "y": 440
     },
     "D5_53": {
       "@type": "Transition",
       "label": "Place 5 at (5,3)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 750,
       "y": 450
     },
     "D6_53": {
       "@type": "Transition",
       "label": "Place 6 at (5,3)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 750,
       "y": 460
     },
     "D7_53": {
       "@type": "Transition",
       "label": "Place 7 at (5,3)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 750,
       "y": 470
     },
     "D8_53": {
       "@type": "Transition",
       "label": "Place 8 at (5,3)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 750,
       "y": 480
     },
     "D9_53": {
       "@type": "Transition",
       "label": "Place 9 at (5,3)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 750,
       "y": 490
     },
     "D1_54": {
       "@type": "Transition",
       "label": "Place 1 at (5,4)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 800,
       "y": 410
     },
     "D2_54": {
       "@type": "Transition",
       "label": "Place 2 at (5,4)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 800,
       "y": 420
     },
     "D3_54": {
       "@type": "Transition",
       "label": "Place 3 at (5,4)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 800,
       "y": 430
     },
     "D4_54": {
       "@type": "Transition",
       "label": "Place 4 at (5,4)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 800,
       "y": 440
     },
     "D5_54": {
       "@type": "Transition",
       "label": "Place 5 at (5,4)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 800,
       "y": 450
     },
     "D6_54": {
       "@type": "Transition",
       "label": "Place 6 at (5,4)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 800,
       "y": 460
     },
     "D7_54": {
       "@type": "Transition",
       "label": "Place 7 at (5,4)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 800,
       "y": 470
     },
     "D8_54": {
       "@type": "Transition",
       "label": "Place 8 at (5,4)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 800,
       "y": 480
     },
     "D9_54": {
       "@type": "Transition",
       "label": "Place 9 at (5,4)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 800,
       "y": 490
     },
     "D1_55": {
       "@type": "Transition",
       "label": "Place 1 at (5,5)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 850,
       "y": 410
     },
     "D2_55": {
       "@type": "Transition",
       "label": "Place 2 at (5,5)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 850,
       "y": 420
     },
     "D3_55": {
       "@type": "Transition",
       "label": "Place 3 at (5,5)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 850,
       "y": 430
     },
     "D4_55": {
       "@type": "Transition",
       "label": "Place 4 at (5,5)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 850,
       "y": 440
     },
     "D5_55": {
       "@type": "Transition",
       "label": "Place 5 at (5,5)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 850,
       "y": 450
     },
     "D6_55": {
       "@type": "Transition",
       "label": "Place 6 at (5,5)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 850,
       "y": 460
     },
     "D7_55": {
       "@type": "Transition",
       "label": "Place 7 at (5,5)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 850,
       "y": 470
     },
     "D8_55": {
       "@type": "Transition",
       "label": "Place 8 at (5,5)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 850,
       "y": 480
     },
     "D9_55": {
       "@type": "Transition",
       "label": "Place 9 at (5,5)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 850,
       "y": 490
     },
     "D1_56": {
       "@type": "Transition",
       "label": "Place 1 at (5,6)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 900,
       "y": 410
     },
     "D2_56": {
       "@type": "Transition",
       "label": "Place 2 at (5,6)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 900,
       "y": 420
     },
     "D3_56": {
       "@type": "Transition",
       "label": "Place 3 at (5,6)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 900,
       "y": 430
     },
     "D4_56": {
       "@type": "Transition",
       "label": "Place 4 at (5,6)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 900,
       "y": 440
     },
     "D5_56": {
       "@type": "Transition",
       "label": "Place 5 at (5,6)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 900,
       "y": 450
     },
     "D6_56": {
       "@type": "Transition",
       "label": "Place 6 at (5,6)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 900,
       "y": 460
     },
     "D7_56": {
       "@type": "Transition",
       "label": "Place 7 at (5,6)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 900,
       "y": 470
     },
     "D8_56": {
       "@type": "Transition",
       "label": "Place 8 at (5,6)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 900,
       "y": 480
     },
     "D9_56": {
       "@type": "Transition",
       "label": "Place 9 at (5,6)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 900,
       "y": 490
     },
     "D1_57": {
       "@type": "Transition",
       "label": "Place 1 at (5,7)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 950,
       "y": 410
     },
     "D2_57": {
       "@type": "Transition",
       "label": "Place 2 at (5,7)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 950,
       "y": 420
     },
     "D3_57": {
       "@type": "Transition",
       "label": "Place 3 at (5,7)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 950,
       "y": 430
     },
     "D4_57": {
       "@type": "Transition",
       "label": "Place 4 at (5,7)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 950,
       "y": 440
     },
     "D5_57": {
       "@type": "Transition",
       "label": "Place 5 at (5,7)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 950,
       "y": 450
     },
     "D6_57": {
       "@type": "Transition",
       "label": "Place 6 at (5,7)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 950,
       "y": 460
     },
     "D7_57": {
       "@type": "Transition",
       "label": "Place 7 at (5,7)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 950,
       "y": 470
     },
     "D8_57": {
       "@type": "Transition",
       "label": "Place 8 at (5,7)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 950,
       "y": 480
     },
     "D9_57": {
       "@type": "Transition",
       "label": "Place 9 at (5,7)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 950,
       "y": 490
     },
     "D1_58": {
       "@type": "Transition",
       "label": "Place 1 at (5,8)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 1000,
       "y": 410
     },
     "D2_58": {
       "@type": "Transition",
       "label": "Place 2 at (5,8)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 1000,
       "y": 420
     },
     "D3_58": {
       "@type": "Transition",
       "label": "Place 3 at (5,8)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 1000,
       "y": 430
     },
     "D4_58": {
       "@type": "Transition",
       "label": "Place 4 at (5,8)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 1000,
       "y": 440
     },
     "D5_58": {
       "@type": "Transition",
       "label": "Place 5 at (5,8)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 1000,
       "y": 450
     },
     "D6_58": {
       "@type": "Transition",
       "label": "Place 6 at (5,8)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 1000,
       "y": 460
     },
     "D7_58": {
       "@type": "Transition",
       "label": "Place 7 at (5,8)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 1000,
       "y": 470
     },
     "D8_58": {
       "@type": "Transition",
       "label": "Place 8 at (5,8)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 1000,
       "y": 480
     },
     "D9_58": {
       "@type": "Transition",
       "label": "Place 9 at (5,8)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 1000,
       "y": 490
     },
     "D1_60": {
       "@type": "Transition",
       "label": "Place 1 at (6,0)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 600,
       "y": 460
     },
     "D2_60": {
       "@type": "Transition",
       "label": "Place 2 at (6,0)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 600,
       "y": 470
     },
     "D3_60": {
       "@type": "Transition",
       "label": "Place 3 at (6,0)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 600,
       "y": 480
     },
     "D4_60": {
       "@type": "Transition",
       "label": "Place 4 at (6,0)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 600,
       "y": 490
     },
     "D5_60": {
       "@type": "Transition",
       "label": "Place 5 at (6,0)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 600,
       "y": 500
     },
     "D6_60": {
       "@type": "Transition",
       "label": "Place 6 at (6,0)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 600,
       "y": 510
     },
     "D7_60": {
       "@type": "Transition",
       "label": "Place 7 at (6,0)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 600,
       "y": 520
     },
     "D8_60": {
       "@type": "Transition",
       "label": "Place 8 at (6,0)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 600,
       "y": 530
     },
     "D9_60": {
       "@type": "Transition",
       "label": "Place 9 at (6,0)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 600,
       "y": 540
     },
     "D1_61": {
       "@type": "Transition",
       "label": "Place 1 at (6,1)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 650,
       "y": 460
     },
     "D2_61": {
       "@type": "Transition",
       "label": "Place 2 at (6,1)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 650,
       "y": 470
     },
     "D3_61": {
       "@type": "Transition",
       "label": "Place 3 at (6,1)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 650,
       "y": 480
     },
     "D4_61": {
       "@type": "Transition",
       "label": "Place 4 at (6,1)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 650,
       "y": 490
     },
     "D5_61": {
       "@type": "Transition",
       "label": "Place 5 at (6,1)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 650,
       "y": 500
     },
     "D6_61": {
       "@type": "Transition",
       "label": "Place 6 at (6,1)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 650,
       "y": 510
     },
     "D7_61": {
       "@type": "Transition",
       "label": "Place 7 at (6,1)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 650,
       "y": 520
     },
     "D8_61": {
       "@type": "Transition",
       "label": "Place 8 at (6,1)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 650,
       "y": 530
     },
     "D9_61": {
       "@type": "Transition",
       "label": "Place 9 at (6,1)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 650,
       "y": 540
     },
     "D1_62": {
       "@type": "Transition",
       "label": "Place 1 at (6,2)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 700,
       "y": 460
     },
     "D2_62": {
       "@type": "Transition",
       "label": "Place 2 at (6,2)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 700,
       "y": 470
     },
     "D3_62": {
       "@type": "Transition",
       "label": "Place 3 at (6,2)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 700,
       "y": 480
     },
     "D4_62": {
       "@type": "Transition",
       "label": "Place 4 at (6,2)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 700,
       "y": 490
     },
     "D5_62": {
       "@type": "Transition",
       "label": "Place 5 at (6,2)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 700,
       "y": 500
     },
     "D6_62": {
       "@type": "Transition",
       "label": "Place 6 at (6,2)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 700,
       "y": 510
     },
     "D7_62": {
       "@type": "Transition",
       "label": "Place 7 at (6,2)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 700,
       "y": 520
     },
     "D8_62": {
       "@type": "Transition",
       "label": "Place 8 at (6,2)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 700,
       "y": 530
     },
     "D9_62": {
       "@type": "Transition",
       "label": "Place 9 at (6,2)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 700,
       "y": 540
     },
     "D1_63": {
       "@type": "Transition",
       "label": "Place 1 at (6,3)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 750,
       "y": 460
     },
     "D2_63": {
       "@type": "Transition",
       "label": "Place 2 at (6,3)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 750,
       "y": 470
     },
     "D3_63": {
       "@type": "Transition",
       "label": "Place 3 at (6,3)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 750,
       "y": 480
     },
     "D4_63": {
       "@type": "Transition",
       "label": "Place 4 at (6,3)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 750,
       "y": 490
     },
     "D5_63": {
       "@type": "Transition",
       "label": "Place 5 at (6,3)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 750,
       "y": 500
     },
     "D6_63": {
       "@type": "Transition",
       "label": "Place 6 at (6,3)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 750,
       "y": 510
     },
     "D7_63": {
       "@type": "Transition",
       "label": "Place 7 at (6,3)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 750,
       "y": 520
     },
     "D8_63": {
       "@type": "Transition",
       "label": "Place 8 at (6,3)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 750,
       "y": 530
     },
     "D9_63": {
       "@type": "Transition",
       "label": "Place 9 at (6,3)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 750,
       "y": 540
     },
     "D1_64": {
       "@type": "Transition",
       "label": "Place 1 at (6,4)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 800,
       "y": 460
     },
     "D2_64": {
       "@type": "Transition",
       "label": "Place 2 at (6,4)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 800,
       "y": 470
     },
     "D3_64": {
       "@type": "Transition",
       "label": "Place 3 at (6,4)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 800,
       "y": 480
     },
     "D4_64": {
       "@type": "Transition",
       "label": "Place 4 at (6,4)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 800,
       "y": 490
     },
     "D5_64": {
       "@type": "Transition",
       "label": "Place 5 at (6,4)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 800,
       "y": 500
     },
     "D6_64": {
       "@type": "Transition",
       "label": "Place 6 at (6,4)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 800,
       "y": 510
     },
     "D7_64": {
       "@type": "Transition",
       "label": "Place 7 at (6,4)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 800,
       "y": 520
     },
     "D8_64": {
       "@type": "Transition",
       "label": "Place 8 at (6,4)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 800,
       "y": 530
     },
     "D9_64": {
       "@type": "Transition",
       "label": "Place 9 at (6,4)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 800,
       "y": 540
     },
     "D1_65": {
       "@type": "Transition",
       "label": "Place 1 at (6,5)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 850,
       "y": 460
     },
     "D2_65": {
       "@type": "Transition",
       "label": "Place 2 at (6,5)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 850,
       "y": 470
     },
     "D3_65": {
       "@type": "Transition",
       "label": "Place 3 at (6,5)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 850,
       "y": 480
     },
     "D4_65": {
       "@type": "Transition",
       "label": "Place 4 at (6,5)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 850,
       "y": 490
     },
     "D5_65": {
       "@type": "Transition",
       "label": "Place 5 at (6,5)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 850,
       "y": 500
     },
     "D6_65": {
       "@type": "Transition",
       "label": "Place 6 at (6,5)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 850,
       "y": 510
     },
     "D7_65": {
       "@type": "Transition",
       "label": "Place 7 at (6,5)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 850,
       "y": 520
     },
     "D8_65": {
       "@type": "Transition",
       "label": "Place 8 at (6,5)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 850,
       "y": 530
     },
     "D9_65": {
       "@type": "Transition",
       "label": "Place 9 at (6,5)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 850,
       "y": 540
     },
     "D1_66": {
       "@type": "Transition",
       "label": "Place 1 at (6,6)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 900,
       "y": 460
     },
     "D2_66": {
       "@type": "Transition",
       "label": "Place 2 at (6,6)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 900,
       "y": 470
     },
     "D3_66": {
       "@type": "Transition",
       "label": "Place 3 at (6,6)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 900,
       "y": 480
     },
     "D4_66": {
       "@type": "Transition",
       "label": "Place 4 at (6,6)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 900,
       "y": 490
     },
     "D5_66": {
       "@type": "Transition",
       "label": "Place 5 at (6,6)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 900,
       "y": 500
     },
     "D6_66": {
       "@type": "Transition",
       "label": "Place 6 at (6,6)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 900,
       "y": 510
     },
     "D7_66": {
       "@type": "Transition",
       "label": "Place 7 at (6,6)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 900,
       "y": 520
     },
     "D8_66": {
       "@type": "Transition",
       "label": "Place 8 at (6,6)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 900,
       "y": 530
     },
     "D9_66": {
       "@type": "Transition",
       "label": "Place 9 at (6,6)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 900,
       "y": 540
     },
     "D1_67": {
       "@type": "Transition",
       "label": "Place 1 at (6,7)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 950,
       "y": 460
     },
     "D2_67": {
       "@type": "Transition",
       "label": "Place 2 at (6,7)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 950,
       "y": 470
     },
     "D3_67": {
       "@type": "Transition",
       "label": "Place 3 at (6,7)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 950,
       "y": 480
     },
     "D4_67": {
       "@type": "Transition",
       "label": "Place 4 at (6,7)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 950,
       "y": 490
     },
     "D5_67": {
       "@type": "Transition",
       "label": "Place 5 at (6,7)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 950,
       "y": 500
     },
     "D6_67": {
       "@type": "Transition",
       "label": "Place 6 at (6,7)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 950,
       "y": 510
     },
     "D7_67": {
       "@type": "Transition",
       "label": "Place 7 at (6,7)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 950,
       "y": 520
     },
     "D8_67": {
       "@type": "Transition",
       "label": "Place 8 at (6,7)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 950,
       "y": 530
     },
     "D9_67": {
       "@type": "Transition",
       "label": "Place 9 at (6,7)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 950,
       "y": 540
     },
     "D1_68": {
       "@type": "Transition",
       "label": "Place 1 at (6,8)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 1000,
       "y": 460
     },
     "D2_68": {
       "@type": "Transition",
       "label": "Place 2 at (6,8)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 1000,
       "y": 470
     },
     "D3_68": {
       "@type": "Transition",
       "label": "Place 3 at (6,8)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 1000,
       "y": 480
     },
     "D4_68": {
       "@type": "Transition",
       "label": "Place 4 at (6,8)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 1000,
       "y": 490
     },
     "D5_68": {
       "@type": "Transition",
       "label": "Place 5 at (6,8)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 1000,
       "y": 500
     },
     "D6_68": {
       "@type": "Transition",
       "label": "Place 6 at (6,8)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 1000,
       "y": 510
     },
     "D7_68": {
       "@type": "Transition",
       "label": "Place 7 at (6,8)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 1000,
       "y": 520
     },
     "D8_68": {
       "@type": "Transition",
       "label": "Place 8 at (6,8)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 1000,
       "y": 530
     },
     "D9_68": {
       "@type": "Transition",
       "label": "Place 9 at (6,8)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 1000,
       "y": 540
     },
     "D1_70": {
       "@type": "Transition",
       "label": "Place 1 at (7,0)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 600,
       "y": 510
     },
     "D2_70": {
       "@type": "Transition",
       "label": "Place 2 at (7,0)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 600,
       "y": 520
     },
     "D3_70": {
       "@type": "Transition",
       "label": "Place 3 at (7,0)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 600,
       "y": 530
     },
     "D4_70": {
       "@type": "Transition",
       "label": "Place 4 at (7,0)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 600,
       "y": 540
     },
     "D5_70": {
       "@type": "Transition",
       "label": "Place 5 at (7,0)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 600,
       "y": 550
     },
     "D6_70": {
       "@type": "Transition",
       "label": "Place 6 at (7,0)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 600,
       "y": 560
     },
     "D7_70": {
       "@type": "Transition",
       "label": "Place 7 at (7,0)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 600,
       "y": 570
     },
     "D8_70": {
       "@type": "Transition",
       "label": "Place 8 at (7,0)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 600,
       "y": 580
     },
     "D9_70": {
       "@type": "Transition",
       "label": "Place 9 at (7,0)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 600,
       "y": 590
     },
     "D1_71": {
       "@type": "Transition",
       "label": "Place 1 at (7,1)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 650,
       "y": 510
     },
     "D2_71": {
       "@type": "Transition",
       "label": "Place 2 at (7,1)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 650,
       "y": 520
     },
     "D3_71": {
       "@type": "Transition",
       "label": "Place 3 at (7,1)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 650,
       "y": 530
     },
     "D4_71": {
       "@type": "Transition",
       "label": "Place 4 at (7,1)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 650,
       "y": 540
     },
     "D5_71": {
       "@type": "Transition",
       "label": "Place 5 at (7,1)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 650,
       "y": 550
     },
     "D6_71": {
       "@type": "Transition",
       "label": "Place 6 at (7,1)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 650,
       "y": 560
     },
     "D7_71": {
       "@type": "Transition",
       "label": "Place 7 at (7,1)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 650,
       "y": 570
     },
     "D8_71": {
       "@type": "Transition",
       "label": "Place 8 at (7,1)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 650,
       "y": 580
     },
     "D9_71": {
       "@type": "Transition",
       "label": "Place 9 at (7,1)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 650,
       "y": 590
     },
     "D1_72": {
       "@type": "Transition",
       "label": "Place 1 at (7,2)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 700,
       "y": 510
     },
     "D2_72": {
       "@type": "Transition",
       "label": "Place 2 at (7,2)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 700,
       "y": 520
     },
     "D3_72": {
       "@type": "Transition",
       "label": "Place 3 at (7,2)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 700,
       "y": 530
     },
     "D4_72": {
       "@type": "Transition",
       "label": "Place 4 at (7,2)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 700,
       "y": 540
     },
     "D5_72": {
       "@type": "Transition",
       "label": "Place 5 at (7,2)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 700,
       "y": 550
     },
     "D6_72": {
       "@type": "Transition",
       "label": "Place 6 at (7,2)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 700,
       "y": 560
     },
     "D7_72": {
       "@type": "Transition",
       "label": "Place 7 at (7,2)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 700,
       "y": 570
     },
     "D8_72": {
       "@type": "Transition",
       "label": "Place 8 at (7,2)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 700,
       "y": 580
     },
     "D9_72": {
       "@type": "Transition",
       "label": "Place 9 at (7,2)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 700,
       "y": 590
     },
     "D1_73": {
       "@type": "Transition",
       "label": "Place 1 at (7,3)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 750,
       "y": 510
     },
     "D2_73": {
       "@type": "Transition",
       "label": "Place 2 at (7,3)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 750,
       "y": 520
     },
     "D3_73": {
       "@type": "Transition",
       "label": "Place 3 at (7,3)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 750,
       "y": 530
     },
     "D4_73": {
       "@type": "Transition",
       "label": "Place 4 at (7,3)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 750,
       "y": 540
     },
     "D5_73": {
       "@type": "Transition",
       "label": "Place 5 at (7,3)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 750,
       "y": 550
     },
     "D6_73": {
       "@type": "Transition",
       "label": "Place 6 at (7,3)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 750,
       "y": 560
     },
     "D7_73": {
       "@type": "Transition",
       "label": "Place 7 at (7,3)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 750,
       "y": 570
     },
     "D8_73": {
       "@type": "Transition",
       "label": "Place 8 at (7,3)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 750,
       "y": 580
     },
     "D9_73": {
       "@type": "Transition",
       "label": "Place 9 at (7,3)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 750,
       "y": 590
     },
     "D1_74": {
       "@type": "Transition",
       "label": "Place 1 at (7,4)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 800,
       "y": 510
     },
     "D2_74": {
       "@type": "Transition",
       "label": "Place 2 at (7,4)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 800,
       "y": 520
     },
     "D3_74": {
       "@type": "Transition",
       "label": "Place 3 at (7,4)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 800,
       "y": 530
     },
     "D4_74": {
       "@type": "Transition",
       "label": "Place 4 at (7,4)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 800,
       "y": 540
     },
     "D5_74": {
       "@type": "Transition",
       "label": "Place 5 at (7,4)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 800,
       "y": 550
     },
     "D6_74": {
       "@type": "Transition",
       "label": "Place 6 at (7,4)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 800,
       "y": 560
     },
     "D7_74": {
       "@type": "Transition",
       "label": "Place 7 at (7,4)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 800,
       "y": 570
     },
     "D8_74": {
       "@type": "Transition",
       "label": "Place 8 at (7,4)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 800,
       "y": 580
     },
     "D9_74": {
       "@type": "Transition",
       "label": "Place 9 at (7,4)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 800,
       "y": 590
     },
     "D1_75": {
       "@type": "Transition",
       "label": "Place 1 at (7,5)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 850,
       "y": 510
     },
     "D2_75": {
       "@type": "Transition",
       "label": "Place 2 at (7,5)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 850,
       "y": 520
     },
     "D3_75": {
       "@type": "Transition",
       "label": "Place 3 at (7,5)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 850,
       "y": 530
     },
     "D4_75": {
       "@type": "Transition",
       "label": "Place 4 at (7,5)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 850,
       "y": 540
     },
     "D5_75": {
       "@type": "Transition",
       "label": "Place 5 at (7,5)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 850,
       "y": 550
     },
     "D6_75": {
       "@type": "Transition",
       "label": "Place 6 at (7,5)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 850,
       "y": 560
     },
     "D7_75": {
       "@type": "Transition",
       "label": "Place 7 at (7,5)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 850,
       "y": 570
     },
     "D8_75": {
       "@type": "Transition",
       "label": "Place 8 at (7,5)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 850,
       "y": 580
     },
     "D9_75": {
       "@type": "Transition",
       "label": "Place 9 at (7,5)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 850,
       "y": 590
     },
     "D1_76": {
       "@type": "Transition",
       "label": "Place 1 at (7,6)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 900,
       "y": 510
     },
     "D2_76": {
       "@type": "Transition",
       "label": "Place 2 at (7,6)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 900,
       "y": 520
     },
     "D3_76": {
       "@type": "Transition",
       "label": "Place 3 at (7,6)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 900,
       "y": 530
     },
     "D4_76": {
       "@type": "Transition",
       "label": "Place 4 at (7,6)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 900,
       "y": 540
     },
     "D5_76": {
       "@type": "Transition",
       "label": "Place 5 at (7,6)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 900,
       "y": 550
     },
     "D6_76": {
       "@type": "Transition",
       "label": "Place 6 at (7,6)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 900,
       "y": 560
     },
     "D7_76": {
       "@type": "Transition",
       "label": "Place 7 at (7,6)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 900,
       "y": 570
     },
     "D8_76": {
       "@type": "Transition",
       "label": "Place 8 at (7,6)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 900,
       "y": 580
     },
     "D9_76": {
       "@type": "Transition",
       "label": "Place 9 at (7,6)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 900,
       "y": 590
     },
     "D1_77": {
       "@type": "Transition",
       "label": "Place 1 at (7,7)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 950,
       "y": 510
     },
     "D2_77": {
       "@type": "Transition",
       "label": "Place 2 at (7,7)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 950,
       "y": 520
     },
     "D3_77": {
       "@type": "Transition",
       "label": "Place 3 at (7,7)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 950,
       "y": 530
     },
     "D4_77": {
       "@type": "Transition",
       "label": "Place 4 at (7,7)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 950,
       "y": 540
     },
     "D5_77": {
       "@type": "Transition",
       "label": "Place 5 at (7,7)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 950,
       "y": 550
     },
     "D6_77": {
       "@type": "Transition",
       "label": "Place 6 at (7,7)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 950,
       "y": 560
     },
     "D7_77": {
       "@type": "Transition",
       "label": "Place 7 at (7,7)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 950,
       "y": 570
     },
     "D8_77": {
       "@type": "Transition",
       "label": "Place 8 at (7,7)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 950,
       "y": 580
     },
     "D9_77": {
       "@type": "Transition",
       "label": "Place 9 at (7,7)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 950,
       "y": 590
     },
     "D1_78": {
       "@type": "Transition",
       "label": "Place 1 at (7,8)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 1000,
       "y": 510
     },
     "D2_78": {
       "@type": "Transition",
       "label": "Place 2 at (7,8)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 1000,
       "y": 520
     },
     "D3_78": {
       "@type": "Transition",
       "label": "Place 3 at (7,8)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 1000,
       "y": 530
     },
     "D4_78": {
       "@type": "Transition",
       "label": "Place 4 at (7,8)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 1000,
       "y": 540
     },
     "D5_78": {
       "@type": "Transition",
       "label": "Place 5 at (7,8)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 1000,
       "y": 550
     },
     "D6_78": {
       "@type": "Transition",
       "label": "Place 6 at (7,8)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 1000,
       "y": 560
     },
     "D7_78": {
       "@type": "Transition",
       "label": "Place 7 at (7,8)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 1000,
       "y": 570
     },
     "D8_78": {
       "@type": "Transition",
       "label": "Place 8 at (7,8)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 1000,
       "y": 580
     },
     "D9_78": {
       "@type": "Transition",
       "label": "Place 9 at (7,8)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 1000,
       "y": 590
     },
     "D1_80": {
       "@type": "Transition",
       "label": "Place 1 at (8,0)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 600,
       "y": 560
     },
     "D2_80": {
       "@type": "Transition",
       "label": "Place 2 at (8,0)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 600,
       "y": 570
     },
     "D3_80": {
       "@type": "Transition",
       "label": "Place 3 at (8,0)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 600,
       "y": 580
     },
     "D4_80": {
       "@type": "Transition",
       "label": "Place 4 at (8,0)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 600,
       "y": 590
     },
     "D5_80": {
       "@type": "Transition",
       "label": "Place 5 at (8,0)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 600,
       "y": 600
     },
     "D6_80": {
       "@type": "Transition",
       "label": "Place 6 at (8,0)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 600,
       "y": 610
     },
     "D7_80": {
       "@type": "Transition",
       "label": "Place 7 at (8,0)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 600,
       "y": 620
     },
     "D8_80": {
       "@type": "Transition",
       "label": "Place 8 at (8,0)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 600,
       "y": 630
     },
     "D9_80": {
       "@type": "Transition",
       "label": "Place 9 at (8,0)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 600,
       "y": 640
     },
     "D1_81": {
       "@type": "Transition",
       "label": "Place 1 at (8,1)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 650,
       "y": 560
     },
     "D2_81": {
       "@type": "Transition",
       "label": "Place 2 at (8,1)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 650,
       "y": 570
     },
     "D3_81": {
       "@type": "Transition",
       "label": "Place 3 at (8,1)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 650,
       "y": 580
     },
     "D4_81": {
       "@type": "Transition",
       "label": "Place 4 at (8,1)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 650,
       "y": 590
     },
     "D5_81": {
       "@type": "Transition",
       "label": "Place 5 at (8,1)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 650,
       "y": 600
     },
     "D6_81": {
       "@type": "Transition",
       "label": "Place 6 at (8,1)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 650,
       "y": 610
     },
     "D7_81": {
       "@type": "Transition",
       "label": "Place 7 at (8,1)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 650,
       "y": 620
     },
     "D8_81": {
       "@type": "Transition",
       "label": "Place 8 at (8,1)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 650,
       "y": 630
     },
     "D9_81": {
       "@type": "Transition",
       "label": "Place 9 at (8,1)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 650,
       "y": 640
     },
     "D1_82": {
       "@type": "Transition",
       "label": "Place 1 at (8,2)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 700,
       "y": 560
     },
     "D2_82": {
       "@type": "Transition",
       "label": "Place 2 at (8,2)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 700,
       "y": 570
     },
     "D3_82": {
       "@type": "Transition",
       "label": "Place 3 at (8,2)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 700,
       "y": 580
     },
     "D4_82": {
       "@type": "Transition",
       "label": "Place 4 at (8,2)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 700,
       "y": 590
     },
     "D5_82": {
       "@type": "Transition",
       "label": "Place 5 at (8,2)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 700,
       "y": 600
     },
     "D6_82": {
       "@type": "Transition",
       "label": "Place 6 at (8,2)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 700,
       "y": 610
     },
     "D7_82": {
       "@type": "Transition",
       "label": "Place 7 at (8,2)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 700,
       "y": 620
     },
     "D8_82": {
       "@type": "Transition",
       "label": "Place 8 at (8,2)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 700,
       "y": 630
     },
     "D9_82": {
       "@type": "Transition",
       "label": "Place 9 at (8,2)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 700,
       "y": 640
     },
     "D1_83": {
       "@type": "Transition",
       "label": "Place 1 at (8,3)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 750,
       "y": 560
     },
     "D2_83": {
       "@type": "Transition",
       "label": "Place 2 at (8,3)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 750,
       "y": 570
     },
     "D3_83": {
       "@type": "Transition",
       "label": "Place 3 at (8,3)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 750,
       "y": 580
     },
     "D4_83": {
       "@type": "Transition",
       "label": "Place 4 at (8,3)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 750,
       "y": 590
     },
     "D5_83": {
       "@type": "Transition",
       "label": "Place 5 at (8,3)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 750,
       "y": 600
     },
     "D6_83": {
       "@type": "Transition",
       "label": "Place 6 at (8,3)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 750,
       "y": 610
     },
     "D7_83": {
       "@type": "Transition",
       "label": "Place 7 at (8,3)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 750,
       "y": 620
     },
     "D8_83": {
       "@type": "Transition",
       "label": "Place 8 at (8,3)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 750,
       "y": 630
     },
     "D9_83": {
       "@type": "Transition",
       "label": "Place 9 at (8,3)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 750,
       "y": 640
     },
     "D1_84": {
       "@type": "Transition",
       "label": "Place 1 at (8,4)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 800,
       "y": 560
     },
     "D2_84": {
       "@type": "Transition",
       "label": "Place 2 at (8,4)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 800,
       "y": 570
     },
     "D3_84": {
       "@type": "Transition",
       "label": "Place 3 at (8,4)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 800,
       "y": 580
     },
     "D4_84": {
       "@type": "Transition",
       "label": "Place 4 at (8,4)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 800,
       "y": 590
     },
     "D5_84": {
       "@type": "Transition",
       "label": "Place 5 at (8,4)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 800,
       "y": 600
     },
     "D6_84": {
       "@type": "Transition",
       "label": "Place 6 at (8,4)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 800,
       "y": 610
     },
     "D7_84": {
       "@type": "Transition",
       "label": "Place 7 at (8,4)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 800,
       "y": 620
     },
     "D8_84": {
       "@type": "Transition",
       "label": "Place 8 at (8,4)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 800,
       "y": 630
     },
     "D9_84": {
       "@type": "Transition",
       "label": "Place 9 at (8,4)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 800,
       "y": 640
     },
     "D1_85": {
       "@type": "Transition",
       "label": "Place 1 at (8,5)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 850,
       "y": 560
     },
     "D2_85": {
       "@type": "Transition",
       "label": "Place 2 at (8,5)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 850,
       "y": 570
     },
     "D3_85": {
       "@type": "Transition",
       "label": "Place 3 at (8,5)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 850,
       "y": 580
     },
     "D4_85": {
       "@type": "Transition",
       "label": "Place 4 at (8,5)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 850,
       "y": 590
     },
     "D5_85": {
       "@type": "Transition",
       "label": "Place 5 at (8,5)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 850,
       "y": 600
     },
     "D6_85": {
       "@type": "Transition",
       "label": "Place 6 at (8,5)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 850,
       "y": 610
     },
     "D7_85": {
       "@type": "Transition",
       "label": "Place 7 at (8,5)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 850,
       "y": 620
     },
     "D8_85": {
       "@type": "Transition",
       "label": "Place 8 at (8,5)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 850,
       "y": 630
     },
     "D9_85": {
       "@type": "Transition",
       "label": "Place 9 at (8,5)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 850,
       "y": 640
     },
     "D1_86": {
       "@type": "Transition",
       "label": "Place 1 at (8,6)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 900,
       "y": 560
     },
     "D2_86": {
       "@type": "Transition",
       "label": "Place 2 at (8,6)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 900,
       "y": 570
     },
     "D3_86": {
       "@type": "Transition",
       "label": "Place 3 at (8,6)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 900,
       "y": 580
     },
     "D4_86": {
       "@type": "Transition",
       "label": "Place 4 at (8,6)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 900,
       "y": 590
     },
     "D5_86": {
       "@type": "Transition",
       "label": "Place 5 at (8,6)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 900,
       "y": 600
     },
     "D6_86": {
       "@type": "Transition",
       "label": "Place 6 at (8,6)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 900,
       "y": 610
     },
     "D7_86": {
       "@type": "Transition",
       "label": "Place 7 at (8,6)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 900,
       "y": 620
     },
     "D8_86": {
       "@type": "Transition",
       "label": "Place 8 at (8,6)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 900,
       "y": 630
     },
     "D9_86": {
       "@type": "Transition",
       "label": "Place 9 at (8,6)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 900,
       "y": 640
     },
     "D1_87": {
       "@type": "Transition",
       "label": "Place 1 at (8,7)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 950,
       "y": 560
     },
     "D2_87": {
       "@type": "Transition",
       "label": "Place 2 at (8,7)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 950,
       "y": 570
     },
     "D3_87": {
       "@type": "Transition",
       "label": "Place 3 at (8,7)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 950,
       "y": 580
     },
     "D4_87": {
       "@type": "Transition",
       "label": "Place 4 at (8,7)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 950,
       "y": 590
     },
     "D5_87": {
       "@type": "Transition",
       "label": "Place 5 at (8,7)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 950,
       "y": 600
     },
     "D6_87": {
       "@type": "Transition",
       "label": "Place 6 at (8,7)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 950,
       "y": 610
     },
     "D7_87": {
       "@type": "Transition",
       "label": "Place 7 at (8,7)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 950,
       "y": 620
     },
     "D8_87": {
       "@type": "Transition",
       "label": "Place 8 at (8,7)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 950,
       "y": 630
     },
     "D9_87": {
       "@type": "Transition",
       "label": "Place 9 at (8,7)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 950,
       "y": 640
     },
     "D1_88": {
       "@type": "Transition",
       "label": "Place 1 at (8,8)",
-      "role": "digit_placement",
+      "role": "d1",
       "x": 1000,
       "y": 560
     },
     "D2_88": {
       "@type": "Transition",
       "label": "Place 2 at (8,8)",
-      "role": "digit_placement",
+      "role": "d2",
       "x": 1000,
       "y": 570
     },
     "D3_88": {
       "@type": "Transition",
       "label": "Place 3 at (8,8)",
-      "role": "digit_placement",
+      "role": "d3",
       "x": 1000,
       "y": 580
     },
     "D4_88": {
       "@type": "Transition",
       "label": "Place 4 at (8,8)",
-      "role": "digit_placement",
+      "role": "d4",
       "x": 1000,
       "y": 590
     },
     "D5_88": {
       "@type": "Transition",
       "label": "Place 5 at (8,8)",
-      "role": "digit_placement",
+      "role": "d5",
       "x": 1000,
       "y": 600
     },
     "D6_88": {
       "@type": "Transition",
       "label": "Place 6 at (8,8)",
-      "role": "digit_placement",
+      "role": "d6",
       "x": 1000,
       "y": 610
     },
     "D7_88": {
       "@type": "Transition",
       "label": "Place 7 at (8,8)",
-      "role": "digit_placement",
+      "role": "d7",
       "x": 1000,
       "y": 620
     },
     "D8_88": {
       "@type": "Transition",
       "label": "Place 8 at (8,8)",
-      "role": "digit_placement",
+      "role": "d8",
       "x": 1000,
       "y": 630
     },
     "D9_88": {
       "@type": "Transition",
       "label": "Place 9 at (8,8)",
-      "role": "digit_placement",
+      "role": "d9",
       "x": 1000,
       "y": 640
     },
     "Row0_Complete": {
       "@type": "Transition",
       "label": "Row 0 Complete",
-      "role": "row_constraint",
+      "role": "constraint",
       "x": 1600,
       "y": 100
     },
     "Row1_Complete": {
       "@type": "Transition",
       "label": "Row 1 Complete",
-      "role": "row_constraint",
+      "role": "constraint",
       "x": 1600,
       "y": 200
     },
     "Row2_Complete": {
       "@type": "Transition",
       "label": "Row 2 Complete",
-      "role": "row_constraint",
+      "role": "constraint",
       "x": 1600,
       "y": 300
     },
     "Row3_Complete": {
       "@type": "Transition",
       "label": "Row 3 Complete",
-      "role": "row_constraint",
+      "role": "constraint",
       "x": 1600,
       "y": 400
     },
     "Row4_Complete": {
       "@type": "Transition",
       "label": "Row 4 Complete",
-      "role": "row_constraint",
+      "role": "constraint",
       "x": 1600,
       "y": 500
     },
     "Row5_Complete": {
       "@type": "Transition",
       "label": "Row 5 Complete",
-      "role": "row_constraint",
+      "role": "constraint",
       "x": 1600,
       "y": 600
     },
     "Row6_Complete": {
       "@type": "Transition",
       "label": "Row 6 Complete",
-      "role": "row_constraint",
+      "role": "constraint",
       "x": 1600,
       "y": 700
     },
     "Row7_Complete": {
       "@type": "Transition",
       "label": "Row 7 Complete",
-      "role": "row_constraint",
+      "role": "constraint",
       "x": 1600,
       "y": 800
     },
     "Row8_Complete": {
       "@type": "Transition",
       "label": "Row 8 Complete",
-      "role": "row_constraint",
+      "role": "constraint",
       "x": 1600,
       "y": 900
     },
     "Col0_Complete": {
       "@type": "Transition",
       "label": "Col 0 Complete",
-      "role": "col_constraint",
+      "role": "constraint",
       "x": 1700,
       "y": 100
     },
     "Col1_Complete": {
       "@type": "Transition",
       "label": "Col 1 Complete",
-      "role": "col_constraint",
+      "role": "constraint",
       "x": 1700,
       "y": 200
     },
     "Col2_Complete": {
       "@type": "Transition",
       "label": "Col 2 Complete",
-      "role": "col_constraint",
+      "role": "constraint",
       "x": 1700,
       "y": 300
     },
     "Col3_Complete": {
       "@type": "Transition",
       "label": "Col 3 Complete",
-      "role": "col_constraint",
+      "role": "constraint",
       "x": 1700,
       "y": 400
     },
     "Col4_Complete": {
       "@type": "Transition",
       "label": "Col 4 Complete",
-      "role": "col_constraint",
+      "role": "constraint",
       "x": 1700,
       "y": 500
     },
     "Col5_Complete": {
       "@type": "Transition",
       "label": "Col 5 Complete",
-      "role": "col_constraint",
+      "role": "constraint",
       "x": 1700,
       "y": 600
     },
     "Col6_Complete": {
       "@type": "Transition",
       "label": "Col 6 Complete",
-      "role": "col_constraint",
+      "role": "constraint",
       "x": 1700,
       "y": 700
     },
     "Col7_Complete": {
       "@type": "Transition",
       "label": "Col 7 Complete",
-      "role": "col_constraint",
+      "role": "constraint",
       "x": 1700,
       "y": 800
     },
     "Col8_Complete": {
       "@type": "Transition",
       "label": "Col 8 Complete",
-      "role": "col_constraint",
+      "role": "constraint",
       "x": 1700,
       "y": 900
     },
     "Block00_Complete": {
       "@type": "Transition",
       "label": "Block (0,0) Complete",
-      "role": "block_constraint",
+      "role": "constraint",
       "x": 1800,
       "y": 100
     },
     "Block01_Complete": {
       "@type": "Transition",
       "label": "Block (0,1) Complete",
-      "role": "block_constraint",
+      "role": "constraint",
       "x": 1800,
       "y": 200
     },
     "Block02_Complete": {
       "@type": "Transition",
       "label": "Block (0,2) Complete",
-      "role": "block_constraint",
+      "role": "constraint",
       "x": 1800,
       "y": 300
     },
     "Block10_Complete": {
       "@type": "Transition",
       "label": "Block (1,0) Complete",
-      "role": "block_constraint",
+      "role": "constraint",
       "x": 1800,
       "y": 400
     },
     "Block11_Complete": {
       "@type": "Transition",
       "label": "Block (1,1) Complete",
-      "role": "block_constraint",
+      "role": "constraint",
       "x": 1800,
       "y": 500
     },
     "Block12_Complete": {
       "@type": "Transition",
       "label": "Block (1,2) Complete",
-      "role": "block_constraint",
+      "role": "constraint",
       "x": 1800,
       "y": 600
     },
     "Block20_Complete": {
       "@type": "Transition",
       "label": "Block (2,0) Complete",
-      "role": "block_constraint",
+      "role": "constraint",
       "x": 1800,
       "y": 700
     },
     "Block21_Complete": {
       "@type": "Transition",
       "label": "Block (2,1) Complete",
-      "role": "block_constraint",
+      "role": "constraint",
       "x": 1800,
       "y": 800
     },
     "Block22_Complete": {
       "@type": "Transition",
       "label": "Block (2,2) Complete",
-      "role": "block_constraint",
+      "role": "constraint",
       "x": 1800,
       "y": 900
     }
