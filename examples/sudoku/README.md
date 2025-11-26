@@ -109,8 +109,9 @@ The ODE model follows the same pattern as the tic-tac-toe example in go-pflow:
 Just like tic-tac-toe uses ODE simulation to predict win likelihood by measuring token flow to `win_x` and `win_o`, Sudoku can use ODE simulation to:
 
 - **Measure solution progress**: Token count in `solved` place indicates how many constraints are satisfied
-  - 4x4 Sudoku: 0-12 tokens (4 rows + 4 columns + 4 blocks)
-  - 9x9 Sudoku: 0-27 tokens (9 rows + 9 columns + 9 blocks)
+  - 4x4 Sudoku: 0-12 tokens maximum (4 rows + 4 columns + 4 blocks when all satisfied)
+  - 9x9 Sudoku: 0-27 tokens maximum (9 rows + 9 columns + 9 blocks when all satisfied)
+  - Each constraint collector fires once when its group (row/col/block) is complete
 - **Predict solution feasibility**: ODE simulation shows if current state leads to full solution
 - **Evaluate moves**: Compare different digit placements by their effect on `solved` token accumulation
 
