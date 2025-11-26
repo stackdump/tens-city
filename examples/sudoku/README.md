@@ -52,6 +52,13 @@ Cell Places (P##)  ──>  Digit Transitions (D#_##)  ──>  History Places (
                      (Row/Column/Block Complete)
 ```
 
+#### 9x9 ODE Sudoku (`sudoku-9x9-ode.jsonld`)
+- **Standard 9×9 Sudoku with full ODE compatibility**
+- 81 cell places, 729 history places (81 cells × 9 digits)
+- 27 constraint collector transitions (9 rows + 9 columns + 9 blocks)
+- `solved` place accumulates up to 27 tokens (one per satisfied constraint)
+- See [ODE_ANALYSIS.md](./ODE_ANALYSIS.md) for detailed progress tracking examples
+
 ## Running the Analyzer
 
 ```bash
@@ -69,7 +76,18 @@ go run examples/sudoku/cmd/main.go -size 9x9 -colored
 
 # Run 4x4 ODE-compatible model (tic-tac-toe style)
 go run examples/sudoku/cmd/main.go -size 4x4 -ode
+
+# Run 9x9 ODE-compatible model (full constraint tracking)
+go run examples/sudoku/cmd/main.go -size 9x9 -ode
 ```
+
+## ODE Progress Tracking
+
+The ODE-compatible models track solution progress through constraint satisfaction. See [ODE_ANALYSIS.md](./ODE_ANALYSIS.md) for:
+- Detailed examples showing how the `solved` place tracks progress (0-27 tokens)
+- Constraint collector firing patterns
+- How to use ODE simulation to predict solutions
+- Comparison with tic-tac-toe win detection
 
 ## ODE-Compatible Model (tic-tac-toe style)
 
@@ -91,8 +109,16 @@ The ODE model follows the same pattern as the tic-tac-toe example in go-pflow:
 Just like tic-tac-toe uses ODE simulation to predict win likelihood by measuring token flow to `win_x` and `win_o`, Sudoku can use ODE simulation to:
 
 - **Measure solution progress**: Token count in `solved` place indicates how many constraints are satisfied
+  - 4x4 Sudoku: 0-12 tokens (4 rows + 4 columns + 4 blocks)
+  - 9x9 Sudoku: 0-27 tokens (9 rows + 9 columns + 9 blocks)
 - **Predict solution feasibility**: ODE simulation shows if current state leads to full solution
 - **Evaluate moves**: Compare different digit placements by their effect on `solved` token accumulation
+
+For detailed examples and analysis, see **[ODE_ANALYSIS.md](./ODE_ANALYSIS.md)** which includes:
+- Step-by-step examples showing `solved` place progression from 0 → 27 tokens
+- Constraint collector firing patterns for rows, columns, and blocks
+- How to interpret token counts as progress metrics
+- Sample code for go-pflow ODE simulation
 
 ### Usage with go-pflow
 

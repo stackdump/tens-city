@@ -126,7 +126,9 @@ func main() {
 			modelFile = "sudoku-4x4-simple.jsonld"
 		}
 	case "9x9", "9":
-		if *colored {
+		if *ode {
+			modelFile = "sudoku-9x9-ode.jsonld"
+		} else if *colored {
 			modelFile = "sudoku-9x9-colored.jsonld"
 		} else {
 			modelFile = "sudoku-9x9.jsonld"
@@ -189,7 +191,7 @@ func main() {
 	fmt.Printf("  Description: %s\n", model.Puzzle.Description)
 	fmt.Printf("  Size: %dx%d\n", puzzleSize, puzzleSize)
 	fmt.Printf("  Block Size: %dx%d\n", blockSize, blockSize)
-	
+
 	// Display model type
 	if isODE {
 		fmt.Println("  Model Type: ODE-Compatible Petri Net (like tic-tac-toe)")
@@ -257,7 +259,7 @@ func main() {
 		if !isCell {
 			continue
 		}
-		
+
 		if len(place.InitialMarking) > 0 {
 			// Colored Petri Net marking
 			clues++
@@ -388,7 +390,7 @@ func isDigitRole(role string) bool {
 // - Solved place accumulates tokens from all constraint collectors
 func analyzeODEModel(model SudokuPetriNet) ODEAnalysis {
 	analysis := ODEAnalysis{}
-	
+
 	for name, place := range model.Places {
 		// Cell places are named P## (like P00, P01, etc.)
 		if isCellPlace(name, place.Label) {
@@ -403,7 +405,7 @@ func analyzeODEModel(model SudokuPetriNet) ODEAnalysis {
 			analysis.SolvedPlace = place.Label
 		}
 	}
-	
+
 	for _, trans := range model.Transitions {
 		// Constraint collectors have role "constraint"
 		if trans.Role == "constraint" {
@@ -414,11 +416,11 @@ func analyzeODEModel(model SudokuPetriNet) ODEAnalysis {
 			analysis.DigitTransitions++
 		}
 	}
-	
+
 	if analysis.SolvedPlace == "" {
 		analysis.SolvedPlace = "solved"
 	}
-	
+
 	return analysis
 }
 
