@@ -62,6 +62,98 @@ func NewDocServer(contentDir, fallbackURL string, indexLimit int) *DocServer {
 	}
 }
 
+// HandleFavicon serves favicon from content directory
+// Looks for favicon.ico, favicon.png, or favicon.svg in content parent directory
+func (ds *DocServer) HandleFavicon(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Content dir is typically "content/posts", so parent is "content"
+	contentParent := filepath.Dir(ds.contentDir)
+
+	// Try different favicon formats in order of preference
+	faviconFiles := []struct {
+		name        string
+		contentType string
+	}{
+		{"favicon.ico", "image/x-icon"},
+		{"favicon.png", "image/png"},
+		{"favicon.svg", "image/svg+xml"},
+	}
+
+	for _, f := range faviconFiles {
+		faviconPath := filepath.Join(contentParent, f.name)
+		data, err := os.ReadFile(faviconPath)
+		if err == nil {
+			w.Header().Set("Content-Type", f.contentType)
+			w.Header().Set("Cache-Control", "public, max-age=86400")
+			w.Write(data)
+			return
+		}
+	}
+
+	http.NotFound(w, r)
+}
+
+// GetFaviconPath returns the path to favicon if one exists, empty string otherwise
+func (ds *DocServer) GetFaviconPath() string {
+	contentParent := filepath.Dir(ds.contentDir)
+	faviconFiles := []string{"favicon.ico", "favicon.png", "favicon.svg"}
+
+	for _, f := range faviconFiles {
+		faviconPath := filepath.Join(contentParent, f)
+		if _, err := os.Stat(faviconPath); err == nil {
+			return "/" + f
+		}
+	}
+	return ""
+}
+
+// HandleContentAsset serves static assets (images) from the content directory
+func (ds *DocServer) HandleContentAsset(w http.ResponseWriter, r *http.Request, filename string) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Content dir is typically "content/posts", so parent is "content"
+	contentParent := filepath.Dir(ds.contentDir)
+	assetPath := filepath.Join(contentParent, filename)
+
+	// Security: ensure we're not escaping the content directory
+	absContent, _ := filepath.Abs(contentParent)
+	absAsset, _ := filepath.Abs(assetPath)
+	if !strings.HasPrefix(absAsset, absContent) {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
+
+	data, err := os.ReadFile(assetPath)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Set content type based on extension
+	ext := strings.ToLower(filepath.Ext(filename))
+	contentTypes := map[string]string{
+		".jpg":  "image/jpeg",
+		".jpeg": "image/jpeg",
+		".png":  "image/png",
+		".gif":  "image/gif",
+		".svg":  "image/svg+xml",
+		".webp": "image/webp",
+	}
+
+	if ct, ok := contentTypes[ext]; ok {
+		w.Header().Set("Content-Type", ct)
+	}
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	w.Write(data)
+}
+
 // loadDocument loads and caches a document
 func (ds *DocServer) loadDocument(slug string) (*CachedDoc, error) {
 	ds.cache.mu.RLock()
@@ -300,12 +392,19 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 
 	// Render HTML list
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	faviconLink := ""
+	if faviconPath := ds.GetFaviconPath(); faviconPath != "" {
+		faviconLink = fmt.Sprintf(`<link rel="icon" href="%s">`, faviconPath)
+	}
+
 	fmt.Fprintf(w, `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Blog Posts - Tens City</title>
+    %s
     <link rel="alternate" type="application/rss+xml" title="All Posts - Tens City" href="%s/posts.rss">
     <script type="application/ld+json">
 %s
@@ -325,7 +424,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 <body>
     <h1>Blog Posts</h1>
     <ul class="doc-list">
-`, baseURL, string(cached.Data))
+`, faviconLink, baseURL, string(cached.Data))
 
 	for _, doc := range publicDocs {
 		escapedSlug := html.EscapeString(doc.Frontmatter.Slug)
@@ -418,12 +517,20 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 	userName := extractGitHubUsername(authorURL)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Check for favicon
+	faviconLink := ""
+	if faviconPath := ds.GetFaviconPath(); faviconPath != "" {
+		faviconLink = fmt.Sprintf(`<link rel="icon" href="%s">`, faviconPath)
+	}
+
 	fmt.Fprintf(w, `<!DOCTYPE html>
 <html lang="%s">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>%s</title>`, escapedLang, escapedTitle)
+    <title>%s</title>
+    %s`, escapedLang, escapedTitle, faviconLink)
 
 	// Add RSS autodiscovery link if we have a username
 	if userName != "" {
@@ -445,6 +552,10 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
         pre code { background: none; padding: 0; }
         a { color: #0066cc; }
         img { max-width: 100%%; height: auto; display: block; margin: 1rem 0; }
+        table { border-collapse: collapse; width: 100%%; margin: 1rem 0; }
+        th, td { border: 1px solid #ddd; padding: 0.5rem 0.75rem; text-align: left; }
+        th { background: #f4f4f4; font-weight: 600; }
+        tr:nth-child(even) { background: #f9f9f9; }
         .post-header { margin-bottom: 2rem; }
         .post-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
         .tag { background: #e6f3ff; color: #0066cc; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.9375rem; font-weight: 500; text-decoration: none; display: inline-block; transition: all 0.2s; }
