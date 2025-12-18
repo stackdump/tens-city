@@ -20,12 +20,29 @@ import (
 	"github.com/stackdump/tens-city/internal/sitemap"
 )
 
+// GoogleAnalyticsTag returns the Google Analytics tracking code for the given ID.
+// Returns empty string if id is empty.
+func GoogleAnalyticsTag(id string) string {
+	if id == "" {
+		return ""
+	}
+	return fmt.Sprintf(`<!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=%s"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '%s');
+    </script>`, id, id)
+}
+
 // DocServer handles markdown document requests
 type DocServer struct {
-	contentDir  string
-	fallbackURL string // Fallback base URL when headers are not available
-	indexLimit  int    // Maximum number of items to show in index (0 = no limit)
-	cache       *DocumentCache
+	contentDir        string
+	fallbackURL       string // Fallback base URL when headers are not available
+	indexLimit        int    // Maximum number of items to show in index (0 = no limit)
+	googleAnalyticsID string // Google Analytics measurement ID (empty = disabled)
+	cache             *DocumentCache
 }
 
 // DocumentCache caches rendered documents
@@ -51,11 +68,12 @@ type CachedIndex struct {
 }
 
 // NewDocServer creates a new document server
-func NewDocServer(contentDir, fallbackURL string, indexLimit int) *DocServer {
+func NewDocServer(contentDir, fallbackURL string, indexLimit int, googleAnalyticsID string) *DocServer {
 	return &DocServer{
-		contentDir:  contentDir,
-		fallbackURL: fallbackURL,
-		indexLimit:  indexLimit,
+		contentDir:        contentDir,
+		fallbackURL:       fallbackURL,
+		indexLimit:        indexLimit,
+		googleAnalyticsID: googleAnalyticsID,
 		cache: &DocumentCache{
 			docs: make(map[string]*CachedDoc),
 		},
@@ -406,6 +424,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
     <title>Blog Posts - Tens City</title>
     %s
     <link rel="alternate" type="application/rss+xml" title="All Posts - Tens City" href="%s/posts.rss">
+    %s
     <script type="application/ld+json">
 %s
     </script>
@@ -424,7 +443,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 <body>
     <h1>Blog Posts</h1>
     <ul class="doc-list">
-`, faviconLink, baseURL, string(cached.Data))
+`, faviconLink, baseURL, GoogleAnalyticsTag(ds.googleAnalyticsID), string(cached.Data))
 
 	for _, doc := range publicDocs {
 		escapedSlug := html.EscapeString(doc.Frontmatter.Slug)
@@ -530,7 +549,8 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>%s</title>
-    %s`, escapedLang, escapedTitle, faviconLink)
+    %s
+    %s`, escapedLang, escapedTitle, faviconLink, GoogleAnalyticsTag(ds.googleAnalyticsID))
 
 	// Add RSS autodiscovery link if we have a username
 	if userName != "" {
@@ -886,6 +906,7 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>RSS Feeds - Tens City</title>
+    %s
     <style>
         body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
         h1 { color: #333; margin-bottom: 1rem; }
@@ -919,7 +940,7 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
     </ul>
     <h2 class="section-title">Author Feeds</h2>
     <ul class="feed-list">
-`, allPostsFeedURL, allPostsFeedURL)
+`, GoogleAnalyticsTag(ds.googleAnalyticsID), allPostsFeedURL, allPostsFeedURL)
 
 	// Sort authors alphabetically by username for consistent ordering
 	var userNames []string
@@ -1177,6 +1198,7 @@ func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Tags - Tens City</title>
+    %s
     <script type="application/ld+json">
     %s
     </script>
@@ -1315,7 +1337,7 @@ func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
         <a href="/" class="back-link">← Back to Home</a>
         
         <div class="tag-cloud">
-`, jsonldBytes)
+`, GoogleAnalyticsTag(ds.googleAnalyticsID), jsonldBytes)
 
 	if len(tags) == 0 {
 		fmt.Fprintf(w, `            <div class="empty-state">No tags found</div>
@@ -1418,6 +1440,7 @@ func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag s
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Tag: %s - Tens City</title>
+    %s
     <script type="application/ld+json">
     %s
     </script>
@@ -1572,7 +1595,7 @@ func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag s
         <a href="/tags" class="back-link">← All Tags</a>
         
         <ul class="post-list">
-`, escapedTag, jsonldBytes, escapedTag, len(filteredDocs), pluralize(len(filteredDocs)), escapedTag)
+`, escapedTag, GoogleAnalyticsTag(ds.googleAnalyticsID), jsonldBytes, escapedTag, len(filteredDocs), pluralize(len(filteredDocs)), escapedTag)
 
 	if len(filteredDocs) == 0 {
 		fmt.Fprintf(w, `            <div class="empty-state">No posts found with this tag</div>
@@ -1712,6 +1735,7 @@ func (ds *DocServer) HandleSearch(w http.ResponseWriter, r *http.Request) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Search - Tens City</title>
+    %s
     <style>
         * {
             margin: 0;
@@ -1988,5 +2012,5 @@ func (ds *DocServer) HandleSearch(w http.ResponseWriter, r *http.Request) {
         }
     </script>
 </body>
-</html>`, string(searchDataJSON))
+</html>`, GoogleAnalyticsTag(ds.googleAnalyticsID), string(searchDataJSON))
 }

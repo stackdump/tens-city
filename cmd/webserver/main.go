@@ -56,18 +56,20 @@ func (fs *FSStorage) ReadMarkdownContent(cid string) ([]byte, error) {
 }
 
 type Server struct {
-	storage     Storage
-	publicFS    fs.FS
-	docServer   *docserver.DocServer
-	fallbackURL string // Fallback Base URL when headers are not available
+	storage           Storage
+	publicFS          fs.FS
+	docServer         *docserver.DocServer
+	fallbackURL       string // Fallback Base URL when headers are not available
+	googleAnalyticsID string // Google Analytics measurement ID (empty = disabled)
 }
 
-func NewServer(storage Storage, publicFS fs.FS, docServer *docserver.DocServer, fallbackURL string) *Server {
+func NewServer(storage Storage, publicFS fs.FS, docServer *docserver.DocServer, fallbackURL string, googleAnalyticsID string) *Server {
 	return &Server{
-		storage:     storage,
-		publicFS:    publicFS,
-		docServer:   docServer,
-		fallbackURL: fallbackURL,
+		storage:           storage,
+		publicFS:          publicFS,
+		docServer:         docServer,
+		fallbackURL:       fallbackURL,
+		googleAnalyticsID: googleAnalyticsID,
 	}
 }
 
@@ -274,6 +276,12 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 `, escapedTitle, baseURL)
 		htmlContent = strings.Replace(htmlContent, "</head>", rssLink+"</head>", 1)
 
+		// Add Google Analytics tag if configured
+		if s.googleAnalyticsID != "" {
+			gaTag := docserver.GoogleAnalyticsTag(s.googleAnalyticsID) + "\n"
+			htmlContent = strings.Replace(htmlContent, "</head>", gaTag+"</head>", 1)
+		}
+
 		// Get the collection index JSON-LD
 		indexData, err := s.docServer.GetIndexJSONLD()
 		if err == nil && len(indexData) > 0 {
@@ -458,6 +466,9 @@ func main() {
 		}
 	}
 
+	// Check for GOOGLE_ANALYTICS_ID environment variable
+	googleAnalyticsID := os.Getenv("GOOGLE_ANALYTICS_ID")
+
 	// Create logger based on format
 	var appLogger logger.Logger
 	if *jsonlLog {
@@ -472,6 +483,9 @@ func main() {
 	appLogger.LogInfo(fmt.Sprintf("Fallback Base URL: %s", *baseURL))
 	appLogger.LogInfo(fmt.Sprintf("Index limit: %d", *indexLimit))
 	appLogger.LogInfo(fmt.Sprintf("Header logging: %v", *logHeaders))
+	if googleAnalyticsID != "" {
+		appLogger.LogInfo(fmt.Sprintf("Google Analytics ID: %s", googleAnalyticsID))
+	}
 	storage := NewFSStorage(*storeDir)
 
 	// Get the embedded public filesystem
@@ -481,9 +495,9 @@ func main() {
 	}
 
 	// Create document server with fallback URL
-	docServer := docserver.NewDocServer(*contentDir, *baseURL, *indexLimit)
+	docServer := docserver.NewDocServer(*contentDir, *baseURL, *indexLimit, googleAnalyticsID)
 
-	server := NewServer(storage, publicSubFS, docServer, *baseURL)
+	server := NewServer(storage, publicSubFS, docServer, *baseURL, googleAnalyticsID)
 
 	// Wrap server with logging middleware
 	handler := logger.LoggingMiddleware(appLogger, *logHeaders)(server)
