@@ -7,12 +7,13 @@ Tens City https://tens.city is a simple, elegant blog platform built on markdown
 ### Features
 
 - **Markdown with frontmatter** - Write posts as `.md` files with YAML metadata
+- **ActivityPub federation** - Follow your blog from Mastodon, Misskey, and other fediverse platforms
 - **Beautiful, responsive design** - Modern card-based layout
 - **Schema.org JSON-LD** - Automatic structured data generation for SEO
 - **Server-side rendering** - Fast HTML generation from markdown
 - **RSS feeds** - Automatic feed generation per author and site-wide
 - **Static file serving** - Simple, secure blog hosting
-- **No authentication required** - Pure static blog viewer
+- **No database** - All state stored as JSON files
 
 ### Quick Start
 
@@ -288,6 +289,34 @@ make dev
 - **Multiple RSS URLs** - RSS feed available at `/posts.rss`, `/feed.xml`, and `/rss.xml`
 - **XML Sitemap** - Automatically generated sitemap with all pages, posts, and tags
 - **Client-Side Search** - Fast search functionality for finding posts by title, description, or tags
+
+## ActivityPub Federation
+
+tens-city can federate with Mastodon and other ActivityPub platforms. Your blog becomes a fediverse actor that people can follow.
+
+### Enable Federation
+
+Set environment variables and start the server:
+
+```bash
+export ACTIVITYPUB_DOMAIN=blog.example.com
+export ACTIVITYPUB_USERNAME=blogger
+export ACTIVITYPUB_PUBLISH_TOKEN=$(openssl rand -base64 32)
+
+./webserver -addr :8080 -content content/posts
+```
+
+Users can then follow `@blogger@blog.example.com` from any Mastodon instance.
+
+### Push Posts to Followers
+
+```bash
+curl -X POST "https://blog.example.com/publish?token=$ACTIVITYPUB_PUBLISH_TOKEN"
+```
+
+New posts are delivered to all followers. Already-published posts are tracked and skipped.
+
+See [ACTIVITYPUB.md](ACTIVITYPUB.md) for full configuration options.
 
 ## License
 
