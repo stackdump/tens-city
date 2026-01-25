@@ -27,7 +27,7 @@ func TestHandleGetObject(t *testing.T) {
 	}
 
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, nil, nil, "http://localhost:8080")
+	server := NewServer(storage, nil, nil, "http://localhost:8080", "", nil, "")
 
 	// Test successful retrieval
 	req := httptest.NewRequest("GET", "/o/"+cid, nil)
@@ -69,7 +69,7 @@ func TestHandleGetLatest(t *testing.T) {
 	}
 
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, nil, nil, "http://localhost:8080")
+	server := NewServer(storage, nil, nil, "http://localhost:8080", "", nil, "")
 
 	req := httptest.NewRequest("GET", "/u/"+user+"/g/"+slug+"/latest", nil)
 	w := httptest.NewRecorder()
@@ -104,7 +104,7 @@ func TestHandleGetHistory(t *testing.T) {
 	}
 
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, nil, nil, "http://localhost:8080")
+	server := NewServer(storage, nil, nil, "http://localhost:8080", "", nil, "")
 
 	req := httptest.NewRequest("GET", "/u/"+user+"/g/"+slug+"/_history", nil)
 	w := httptest.NewRecorder()
@@ -135,7 +135,7 @@ func TestStaticFileServing(t *testing.T) {
 		t.Fatalf("Failed to get public filesystem: %v", err)
 	}
 
-	server := NewServer(storage, publicFS, nil, "http://localhost:8080")
+	server := NewServer(storage, publicFS, nil, "http://localhost:8080", "", nil, "")
 
 	// Test serving index.html at root
 	req := httptest.NewRequest("GET", "/", nil)
@@ -190,8 +190,8 @@ This is a test post.
 	}
 
 	// Create docserver with the test content
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0)
-	server := NewServer(storage, publicFS, docServer, "http://localhost:8080")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0, "")
+	server := NewServer(storage, publicFS, docServer, "http://localhost:8080", "", nil, contentDir)
 
 	// Test serving index.html at root with JSON-LD
 	req := httptest.NewRequest("GET", "/", nil)
@@ -292,8 +292,8 @@ This is Bob's post.
 	}
 
 	// Create docserver with the test content
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0)
-	server := NewServer(storage, publicFS, docServer, "http://localhost:8080")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0, "")
+	server := NewServer(storage, publicFS, docServer, "http://localhost:8080", "", nil, contentDir)
 
 	// Test serving /rss page
 	req := httptest.NewRequest("GET", "/rss", nil)
@@ -382,8 +382,8 @@ This is a test post.
 	}
 
 	// Create docserver with the test content
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0)
-	server := NewServer(storage, publicFS, docServer, "http://localhost:8080")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0, "")
+	server := NewServer(storage, publicFS, docServer, "http://localhost:8080", "", nil, contentDir)
 
 	// Test with HTTPS proxy headers
 	t.Run("With X-Forwarded-Proto HTTPS", func(t *testing.T) {
@@ -611,8 +611,8 @@ This is Bob's post.
 	}
 
 	// Create docserver with the test content
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0)
-	server := NewServer(storage, publicFS, docServer, "http://localhost:8080")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0, "")
+	server := NewServer(storage, publicFS, docServer, "http://localhost:8080", "", nil, contentDir)
 
 	// Test serving /posts.rss site-wide feed
 	req := httptest.NewRequest("GET", "/posts.rss", nil)
@@ -671,7 +671,7 @@ This is Bob's post.
 }
 
 func TestRobotsTxt(t *testing.T) {
-	server := NewServer(nil, nil, nil, "http://localhost:8080")
+	server := NewServer(nil, nil, nil, "http://localhost:8080", "", nil, "")
 
 	req := httptest.NewRequest("GET", "/robots.txt", nil)
 	w := httptest.NewRecorder()
@@ -700,7 +700,7 @@ func TestRobotsTxt(t *testing.T) {
 }
 
 func TestWellKnownSecurityTxt(t *testing.T) {
-	server := NewServer(nil, nil, nil, "http://localhost:8080")
+	server := NewServer(nil, nil, nil, "http://localhost:8080", "", nil, "")
 
 	req := httptest.NewRequest("GET", "/.well-known/security.txt", nil)
 	w := httptest.NewRecorder()
@@ -729,7 +729,7 @@ func TestWellKnownSecurityTxt(t *testing.T) {
 }
 
 func TestWellKnownNotFound(t *testing.T) {
-	server := NewServer(nil, nil, nil, "http://localhost:8080")
+	server := NewServer(nil, nil, nil, "http://localhost:8080", "", nil, "")
 
 	req := httptest.NewRequest("GET", "/.well-known/nonexistent.txt", nil)
 	w := httptest.NewRecorder()
@@ -774,8 +774,8 @@ Test content.`
 		t.Fatalf("Failed to get public FS: %v", err)
 	}
 
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20)
-	server := NewServer(nil, publicFS, docServer, "http://localhost:8080")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20, "")
+	server := NewServer(nil, publicFS, docServer, "http://localhost:8080", "", nil, contentDir)
 
 	// Test /feed.xml
 	t.Run("/feed.xml", func(t *testing.T) {
@@ -885,8 +885,8 @@ Test content.`
 		t.Fatalf("Failed to get public FS: %v", err)
 	}
 
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20)
-	server := NewServer(nil, publicFS, docServer, "http://localhost:8080")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20, "")
+	server := NewServer(nil, publicFS, docServer, "http://localhost:8080", "", nil, contentDir)
 
 	req := httptest.NewRequest("GET", "/", nil)
 	w := httptest.NewRecorder()
@@ -1026,8 +1026,8 @@ This post is a draft.
 	if err != nil {
 		t.Fatalf("Failed to get public filesystem: %v", err)
 	}
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20)
-	server := NewServer(storage, publicFS, docServer, "http://localhost:8080")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20, "")
+	server := NewServer(storage, publicFS, docServer, "http://localhost:8080", "", nil, contentDir)
 
 	// Test 1: Draft post should be accessible when accessed directly by URL
 	t.Run("draft post accessible by direct URL", func(t *testing.T) {
@@ -1190,8 +1190,8 @@ More test content.
 		t.Fatalf("Failed to write test post: %v", err)
 	}
 
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20)
-	server := NewServer(storage, publicFS, docServer, "http://localhost:8080")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20, "")
+	server := NewServer(storage, publicFS, docServer, "http://localhost:8080", "", nil, contentDir)
 
 	req := httptest.NewRequest("GET", "/sitemap.xml", nil)
 	req.Host = "localhost:8080"
@@ -1262,7 +1262,7 @@ More test content.
 func TestRobotsTxtWithSitemap(t *testing.T) {
 	tmpDir := t.TempDir()
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, nil, nil, "http://localhost:8080")
+	server := NewServer(storage, nil, nil, "http://localhost:8080", "", nil, "")
 
 	req := httptest.NewRequest("GET", "/robots.txt", nil)
 	req.Host = "localhost:8080"
@@ -1299,7 +1299,7 @@ func TestRobotsTxtWithSitemap(t *testing.T) {
 func TestRobotsTxtWithProxyHeaders(t *testing.T) {
 	tmpDir := t.TempDir()
 	storage := NewFSStorage(tmpDir)
-	server := NewServer(storage, nil, nil, "http://localhost:8080")
+	server := NewServer(storage, nil, nil, "http://localhost:8080", "", nil, "")
 
 	req := httptest.NewRequest("GET", "/robots.txt", nil)
 	req.Host = "example.com"
@@ -1382,8 +1382,8 @@ This is a published article.
 	}
 
 	// Create docserver with the test content
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0)
-	server := NewServer(storage, publicFS, docServer, "http://localhost:8080")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0, "")
+	server := NewServer(storage, publicFS, docServer, "http://localhost:8080", "", nil, contentDir)
 
 	// Test 1: Draft article should be accessible via direct URL
 	t.Run("Draft accessible by direct URL", func(t *testing.T) {

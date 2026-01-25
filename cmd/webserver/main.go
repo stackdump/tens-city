@@ -15,9 +15,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/stackdump/tens-city/internal/activitypub"
 	"github.com/stackdump/tens-city/internal/docserver"
 	"github.com/stackdump/tens-city/internal/httputil"
 	"github.com/stackdump/tens-city/internal/logger"
+	"github.com/stackdump/tens-city/internal/markdown"
 	"github.com/stackdump/tens-city/internal/static"
 	"github.com/stackdump/tens-city/internal/store"
 )
@@ -59,17 +61,21 @@ type Server struct {
 	storage           Storage
 	publicFS          fs.FS
 	docServer         *docserver.DocServer
-	fallbackURL       string // Fallback Base URL when headers are not available
-	googleAnalyticsID string // Google Analytics measurement ID (empty = disabled)
+	fallbackURL       string                 // Fallback Base URL when headers are not available
+	googleAnalyticsID string                 // Google Analytics measurement ID (empty = disabled)
+	actor             *activitypub.Actor     // ActivityPub actor (nil if federation disabled)
+	contentDir        string                 // Content directory for blog posts
 }
 
-func NewServer(storage Storage, publicFS fs.FS, docServer *docserver.DocServer, fallbackURL string, googleAnalyticsID string) *Server {
+func NewServer(storage Storage, publicFS fs.FS, docServer *docserver.DocServer, fallbackURL string, googleAnalyticsID string, actor *activitypub.Actor, contentDir string) *Server {
 	return &Server{
 		storage:           storage,
 		publicFS:          publicFS,
 		docServer:         docServer,
 		fallbackURL:       fallbackURL,
 		googleAnalyticsID: googleAnalyticsID,
+		actor:             actor,
+		contentDir:        contentDir,
 	}
 }
 
@@ -187,8 +193,8 @@ func (s *Server) handleWellKnown(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimPrefix(r.URL.Path, "/.well-known/")
 
 	// Handle common .well-known endpoints with defaults
-	switch path {
-	case "security.txt":
+	switch {
+	case path == "security.txt":
 		// Calculate expiration date (1 year from now)
 		expirationDate := time.Now().AddDate(1, 0, 0).UTC().Format("2006-01-02T15:04:05.000Z")
 
@@ -205,6 +211,17 @@ Preferred-Languages: en
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Write([]byte(securityTxt))
 		return
+
+	case path == "webfinger" && s.actor != nil:
+		// ActivityPub WebFinger discovery
+		s.actor.HandleWebFinger(w, r)
+		return
+
+	case path == "nodeinfo" && s.actor != nil:
+		// ActivityPub NodeInfo discovery
+		s.actor.HandleNodeInfoWellKnown(w, r)
+		return
+
 	default:
 		http.NotFound(w, r)
 		return
@@ -301,6 +318,116 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(htmlContent))
 }
 
+// handleActivityPub handles ActivityPub requests to /users/{username}/*
+func (s *Server) handleActivityPub(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/users/")
+	parts := strings.SplitN(path, "/", 2)
+	if len(parts) == 0 {
+		http.NotFound(w, r)
+		return
+	}
+
+	username := parts[0]
+	endpoint := ""
+	if len(parts) > 1 {
+		endpoint = parts[1]
+	}
+
+	switch endpoint {
+	case "":
+		// Actor profile
+		s.actor.HandleActor(w, r, username)
+	case "inbox":
+		// Inbox
+		s.actor.HandleInbox(w, r, username)
+	case "outbox":
+		// Outbox - get blog posts
+		posts := s.getBlogPostsForOutbox()
+		s.actor.HandleOutbox(w, r, username, posts)
+	case "followers":
+		// Followers collection
+		s.actor.HandleFollowers(w, r, username)
+	case "following":
+		// Following collection
+		s.actor.HandleFollowing(w, r, username)
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+// handleActivityPubLegacy handles legacy write.as/writefreely ActivityPub paths
+// /api/collections/{username}/inbox -> /users/{username}/inbox
+func (s *Server) handleActivityPubLegacy(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/api/collections/")
+	parts := strings.SplitN(path, "/", 2)
+	if len(parts) == 0 {
+		http.NotFound(w, r)
+		return
+	}
+
+	username := parts[0]
+	endpoint := ""
+	if len(parts) > 1 {
+		endpoint = parts[1]
+	}
+
+	switch endpoint {
+	case "":
+		// Actor profile - redirect to canonical
+		s.actor.HandleActorLegacy(w, r, username)
+	case "inbox":
+		// Inbox - handle directly (don't redirect POSTs)
+		s.actor.HandleInboxLegacy(w, r, username)
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+// getBlogPostsForOutbox loads blog posts and converts them to ActivityPub format
+func (s *Server) getBlogPostsForOutbox() []activitypub.BlogPost {
+	if s.contentDir == "" {
+		return nil
+	}
+
+	docs, err := markdown.ListDocuments(s.contentDir)
+	if err != nil {
+		return nil
+	}
+
+	// Sort by date (newest first)
+	markdown.SortDocumentsByDate(docs)
+
+	var posts []activitypub.BlogPost
+	baseURL := s.fallbackURL
+
+	for _, doc := range docs {
+		if doc.Frontmatter.Draft {
+			continue
+		}
+
+		published, _ := time.Parse(time.RFC3339, doc.Frontmatter.DatePublished)
+		var updated time.Time
+		if doc.Frontmatter.DateModified != "" {
+			updated, _ = time.Parse(time.RFC3339, doc.Frontmatter.DateModified)
+		}
+
+		postURL := fmt.Sprintf("%s/posts/%s", baseURL, doc.Frontmatter.Slug)
+
+		posts = append(posts, activitypub.BlogPost{
+			ID:          postURL,
+			Slug:        doc.Frontmatter.Slug,
+			Title:       doc.Frontmatter.Title,
+			Description: doc.Frontmatter.Description,
+			Content:     doc.HTML,
+			Published:   published,
+			Updated:     updated,
+			Tags:        doc.Frontmatter.Tags,
+		})
+	}
+
+	return posts
+}
+
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// robots.txt
 	if r.URL.Path == "/robots.txt" {
@@ -339,6 +466,34 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// .well-known directory
 	if strings.HasPrefix(r.URL.Path, "/.well-known/") {
 		s.handleWellKnown(w, r)
+		return
+	}
+
+	// NodeInfo 2.0 endpoint
+	if r.URL.Path == "/nodeinfo/2.0" && s.actor != nil {
+		postCount := 0
+		if s.docServer != nil {
+			if docs, err := markdown.ListDocuments(s.contentDir); err == nil {
+				for _, doc := range docs {
+					if !doc.Frontmatter.Draft {
+						postCount++
+					}
+				}
+			}
+		}
+		s.actor.HandleNodeInfo(w, r, postCount)
+		return
+	}
+
+	// ActivityPub actor routes
+	if strings.HasPrefix(r.URL.Path, "/users/") && s.actor != nil {
+		s.handleActivityPub(w, r)
+		return
+	}
+
+	// Legacy write.as/writefreely ActivityPub routes
+	if strings.HasPrefix(r.URL.Path, "/api/collections/") && s.actor != nil {
+		s.handleActivityPubLegacy(w, r)
 		return
 	}
 
@@ -497,7 +652,57 @@ func main() {
 	// Create document server with fallback URL
 	docServer := docserver.NewDocServer(*contentDir, *baseURL, *indexLimit, googleAnalyticsID)
 
-	server := NewServer(storage, publicSubFS, docServer, *baseURL, googleAnalyticsID)
+	// Initialize ActivityPub actor if configured via environment variables
+	// Required: ACTIVITYPUB_DOMAIN, ACTIVITYPUB_USERNAME
+	// Optional: ACTIVITYPUB_DISPLAY_NAME, ACTIVITYPUB_SUMMARY
+	var actor *activitypub.Actor
+	apDomain := os.Getenv("ACTIVITYPUB_DOMAIN")
+	apUsername := os.Getenv("ACTIVITYPUB_USERNAME")
+
+	if apDomain != "" && apUsername != "" {
+		// Get optional config
+		apDisplayName := os.Getenv("ACTIVITYPUB_DISPLAY_NAME")
+		if apDisplayName == "" {
+			apDisplayName = apUsername
+		}
+		apSummary := os.Getenv("ACTIVITYPUB_SUMMARY")
+		apProfileURL := os.Getenv("ACTIVITYPUB_PROFILE_URL")
+		if apProfileURL == "" {
+			apProfileURL = "https://" + apDomain + "/"
+		}
+		apIconURL := os.Getenv("ACTIVITYPUB_ICON_URL")
+		if apIconURL == "" {
+			apIconURL = "https://" + apDomain + "/favicon.svg"
+		}
+
+		// Key storage path - default to data directory
+		keyPath := os.Getenv("ACTIVITYPUB_KEY_PATH")
+		if keyPath == "" {
+			keyPath = filepath.Join(*storeDir, "activitypub.key")
+		}
+
+		config := &activitypub.Config{
+			Username:        apUsername,
+			Domain:          apDomain,
+			DisplayName:     apDisplayName,
+			Summary:         apSummary,
+			ProfileURL:      apProfileURL,
+			IconURL:         apIconURL,
+			KeyPath:         keyPath,
+			SoftwareName:    "tens-city",
+			SoftwareVersion: "1.0.0",
+		}
+
+		actor, err = activitypub.NewActor(config)
+		if err != nil {
+			log.Printf("Warning: Failed to initialize ActivityPub actor: %v", err)
+			log.Printf("ActivityPub federation will be disabled")
+		} else {
+			appLogger.LogInfo(fmt.Sprintf("ActivityPub enabled: @%s@%s", apUsername, apDomain))
+		}
+	}
+
+	server := NewServer(storage, publicSubFS, docServer, *baseURL, googleAnalyticsID, actor, *contentDir)
 
 	// Wrap server with logging middleware
 	handler := logger.LoggingMiddleware(appLogger, *logHeaders)(server)
