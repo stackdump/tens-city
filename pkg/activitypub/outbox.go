@@ -103,7 +103,6 @@ func (a *Actor) HandleOutbox(w http.ResponseWriter, r *http.Request, username st
 
 // HandleFollowers serves the actor's followers collection.
 // GET /users/{username}/followers
-// For Phase 1, returns an empty collection (no persistence yet)
 func (a *Actor) HandleFollowers(w http.ResponseWriter, r *http.Request, username string) {
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -115,14 +114,21 @@ func (a *Actor) HandleFollowers(w http.ResponseWriter, r *http.Request, username
 		return
 	}
 
-	// Phase 1: Return empty collection
-	// Phase 2 will add persistence
+	// Load followers from storage
+	followers := a.loadFollowers()
+
+	// Convert to interface slice for JSON
+	items := make([]interface{}, len(followers))
+	for i, f := range followers {
+		items[i] = f
+	}
+
 	response := OrderedCollection{
 		Context:      "https://www.w3.org/ns/activitystreams",
 		ID:           a.FollowersURL(),
 		Type:         "OrderedCollection",
-		TotalItems:   0,
-		OrderedItems: []interface{}{},
+		TotalItems:   len(followers),
+		OrderedItems: items,
 	}
 
 	w.Header().Set("Content-Type", "application/activity+json; charset=utf-8")
