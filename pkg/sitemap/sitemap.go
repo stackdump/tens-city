@@ -6,7 +6,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/stackdump/tens-city/internal/markdown"
+	"github.com/stackdump/tens-city/pkg/markdown"
 )
 
 // URLSet represents a sitemap URL set (sitemap protocol)

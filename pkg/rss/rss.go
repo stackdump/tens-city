@@ -7,7 +7,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/stackdump/tens-city/internal/markdown"
+	"github.com/stackdump/tens-city/pkg/markdown"
 )
 
 // RSS represents an RSS 2.0 feed

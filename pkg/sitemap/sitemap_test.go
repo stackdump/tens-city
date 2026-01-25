@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stackdump/tens-city/internal/markdown"
+	"github.com/stackdump/tens-city/pkg/markdown"
 )
 
 func TestGenerateSitemap(t *testing.T) {

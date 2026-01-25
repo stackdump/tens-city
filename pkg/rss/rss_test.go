@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stackdump/tens-city/internal/markdown"
+	"github.com/stackdump/tens-city/pkg/markdown"
 )
 
 func TestGenerateUserFeed_BasicFeed(t *testing.T) {

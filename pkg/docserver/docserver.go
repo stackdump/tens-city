@@ -14,10 +14,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/stackdump/tens-city/internal/httputil"
-	"github.com/stackdump/tens-city/internal/markdown"
-	"github.com/stackdump/tens-city/internal/rss"
-	"github.com/stackdump/tens-city/internal/sitemap"
+	"github.com/stackdump/tens-city/pkg/httputil"
+	"github.com/stackdump/tens-city/pkg/markdown"
+	"github.com/stackdump/tens-city/pkg/rss"
+	"github.com/stackdump/tens-city/pkg/sitemap"
 )
 
 // GoogleAnalyticsTag returns the Google Analytics tracking code for the given ID.

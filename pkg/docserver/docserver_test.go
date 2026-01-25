@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stackdump/tens-city/internal/rss"
+	"github.com/stackdump/tens-city/pkg/rss"
 )
 
 func TestHandleUserRSS_BasicFeed(t *testing.T) {
