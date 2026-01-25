@@ -413,6 +413,13 @@ func (s *Server) GetBlogPosts() []activitypub.BlogPost {
 
 		postURL := fmt.Sprintf("%s/posts/%s", baseURL, doc.Frontmatter.Slug)
 
+		// Resolve image URL (convert relative to absolute)
+		imageURL := doc.Frontmatter.Image
+		if imageURL != "" && !strings.HasPrefix(imageURL, "http") {
+			imageURL = strings.TrimPrefix(imageURL, "/")
+			imageURL = fmt.Sprintf("%s/%s", baseURL, imageURL)
+		}
+
 		posts = append(posts, activitypub.BlogPost{
 			ID:          postURL,
 			Slug:        doc.Frontmatter.Slug,
@@ -422,6 +429,7 @@ func (s *Server) GetBlogPosts() []activitypub.BlogPost {
 			Published:   published,
 			Updated:     updated,
 			Tags:        doc.Frontmatter.Tags,
+			Image:       imageURL,
 		})
 	}
 

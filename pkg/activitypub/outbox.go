@@ -31,18 +31,27 @@ type Activity struct {
 
 // Article represents an ActivityPub Article object (for blog posts)
 type Article struct {
-	ID           string   `json:"id"`
-	Type         string   `json:"type"`
-	AttributedTo string   `json:"attributedTo"`
-	Name         string   `json:"name"`
-	Content      string   `json:"content"`
-	Summary      string   `json:"summary,omitempty"`
-	Published    string   `json:"published"`
-	Updated      string   `json:"updated,omitempty"`
-	URL          string   `json:"url"`
-	To           []string `json:"to,omitempty"`
-	Cc           []string `json:"cc,omitempty"`
-	Tag          []Tag    `json:"tag,omitempty"`
+	ID           string        `json:"id"`
+	Type         string        `json:"type"`
+	AttributedTo string        `json:"attributedTo"`
+	Name         string        `json:"name"`
+	Content      string        `json:"content"`
+	Summary      string        `json:"summary,omitempty"`
+	Published    string        `json:"published"`
+	Updated      string        `json:"updated,omitempty"`
+	URL          string        `json:"url"`
+	To           []string      `json:"to,omitempty"`
+	Cc           []string      `json:"cc,omitempty"`
+	Tag          []Tag         `json:"tag,omitempty"`
+	Image        *ArticleImage `json:"image,omitempty"`
+}
+
+// ArticleImage represents an image attachment for an Article
+type ArticleImage struct {
+	Type      string `json:"type"`
+	MediaType string `json:"mediaType,omitempty"`
+	URL       string `json:"url"`
+	Name      string `json:"name,omitempty"`
 }
 
 // Tag represents a hashtag or mention
@@ -54,15 +63,16 @@ type Tag struct {
 
 // BlogPost represents a blog post for conversion to ActivityPub
 type BlogPost struct {
-	ID            string    // Unique identifier (URL)
-	Slug          string    // URL slug
-	Title         string    // Post title
-	Description   string    // Short description/summary
-	Content       string    // HTML content
-	Published     time.Time // Publication date
-	Updated       time.Time // Last modified date (optional)
-	Tags          []string  // Post tags
-	AuthorName    string    // Author display name
+	ID          string    // Unique identifier (URL)
+	Slug        string    // URL slug
+	Title       string    // Post title
+	Description string    // Short description/summary
+	Content     string    // HTML content
+	Published   time.Time // Publication date
+	Updated     time.Time // Last modified date (optional)
+	Tags        []string  // Post tags
+	AuthorName  string    // Author display name
+	Image       string    // Featured image URL (optional)
 }
 
 // HandleOutbox serves the actor's outbox (published activities).
@@ -202,6 +212,25 @@ func (a *Actor) postToActivity(post BlogPost) Activity {
 
 	if !post.Updated.IsZero() && post.Updated.After(post.Published) {
 		article.Updated = post.Updated.Format(time.RFC3339)
+	}
+
+	// Add featured image if available
+	if post.Image != "" {
+		mediaType := "image/jpeg" // default
+		if strings.HasSuffix(post.Image, ".png") {
+			mediaType = "image/png"
+		} else if strings.HasSuffix(post.Image, ".svg") {
+			mediaType = "image/svg+xml"
+		} else if strings.HasSuffix(post.Image, ".gif") {
+			mediaType = "image/gif"
+		} else if strings.HasSuffix(post.Image, ".webp") {
+			mediaType = "image/webp"
+		}
+		article.Image = &ArticleImage{
+			Type:      "Image",
+			MediaType: mediaType,
+			URL:       post.Image,
+		}
 	}
 
 	// Build Create activity
