@@ -342,7 +342,7 @@ func (s *Server) handleActivityPub(w http.ResponseWriter, r *http.Request) {
 		s.actor.HandleInbox(w, r, username)
 	case "outbox":
 		// Outbox - get blog posts
-		posts := s.getBlogPostsForOutbox()
+		posts := s.GetBlogPosts()
 		s.actor.HandleOutbox(w, r, username, posts)
 	case "followers":
 		// Followers collection
@@ -383,8 +383,8 @@ func (s *Server) handleActivityPubLegacy(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-// getBlogPostsForOutbox loads blog posts and converts them to ActivityPub format
-func (s *Server) getBlogPostsForOutbox() []activitypub.BlogPost {
+// GetBlogPosts loads blog posts and converts them to ActivityPub format
+func (s *Server) GetBlogPosts() []activitypub.BlogPost {
 	if s.contentDir == "" {
 		return nil
 	}
@@ -426,6 +426,82 @@ func (s *Server) getBlogPostsForOutbox() []activitypub.BlogPost {
 	}
 
 	return posts
+}
+
+// handlePublish handles the publish endpoint to push new posts to followers
+// POST /publish?token=<secret>
+func (s *Server) handlePublish(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Check for publish token
+	publishToken := os.Getenv("ACTIVITYPUB_PUBLISH_TOKEN")
+	if publishToken == "" {
+		http.Error(w, "Publishing not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	token := r.URL.Query().Get("token")
+	if token != publishToken {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if s.actor == nil {
+		http.Error(w, "ActivityPub not enabled", http.StatusServiceUnavailable)
+		return
+	}
+
+	// Get all blog posts
+	posts := s.GetBlogPosts()
+	if len(posts) == 0 {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message":   "No posts to publish",
+			"published": 0,
+		})
+		return
+	}
+
+	// Check for specific post slug
+	slug := r.URL.Query().Get("slug")
+	if slug != "" {
+		// Publish specific post
+		for _, post := range posts {
+			if post.Slug == slug {
+				results, err := s.actor.PublishPost(post)
+				if err != nil {
+					http.Error(w, fmt.Sprintf("Failed to publish: %v", err), http.StatusInternalServerError)
+					return
+				}
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(map[string]interface{}{
+					"message": fmt.Sprintf("Published: %s", post.Title),
+					"post":    post.Slug,
+					"results": results,
+				})
+				return
+			}
+		}
+		http.Error(w, "Post not found", http.StatusNotFound)
+		return
+	}
+
+	// Publish all new posts
+	count, err := s.actor.PublishNewPosts(posts)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to publish: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message":   "Publish complete",
+		"published": count,
+		"total":     len(posts),
+	})
 }
 
 // ServeHTTP implements http.Handler
@@ -483,6 +559,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		s.actor.HandleNodeInfo(w, r, postCount)
+		return
+	}
+
+	// ActivityPub publish endpoint
+	if r.URL.Path == "/publish" && s.actor != nil {
+		s.handlePublish(w, r)
 		return
 	}
 
