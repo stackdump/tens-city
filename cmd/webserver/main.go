@@ -63,13 +63,11 @@ func main() {
 		log.Fatalf("Failed to access embedded public files: %v", err)
 	}
 
-	// Create document server with fallback URL
-	docServer := docserver.NewDocServer(*contentDir, *baseURL, *indexLimit, googleAnalyticsID)
-
 	// Initialize ActivityPub actor if configured via environment variables
 	// Required: ACTIVITYPUB_DOMAIN, ACTIVITYPUB_USERNAME
 	// Optional: ACTIVITYPUB_DISPLAY_NAME, ACTIVITYPUB_SUMMARY
 	var actor *activitypub.Actor
+	var fediHandle string
 	apDomain := os.Getenv("ACTIVITYPUB_DOMAIN")
 	apUsername := os.Getenv("ACTIVITYPUB_USERNAME")
 
@@ -113,8 +111,12 @@ func main() {
 			log.Printf("ActivityPub federation will be disabled")
 		} else {
 			appLogger.LogInfo(fmt.Sprintf("ActivityPub enabled: @%s@%s", apUsername, apDomain))
+			fediHandle = fmt.Sprintf("@%s@%s", apUsername, apDomain)
 		}
 	}
+
+	// Create document server with fallback URL and optional fediverse handle
+	docServer := docserver.NewDocServer(*contentDir, *baseURL, *indexLimit, googleAnalyticsID, fediHandle)
 
 	server := webserver.NewServer(storage, publicSubFS, docServer, *baseURL, googleAnalyticsID, actor, *contentDir)
 

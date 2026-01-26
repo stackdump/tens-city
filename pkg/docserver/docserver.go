@@ -42,6 +42,7 @@ type DocServer struct {
 	fallbackURL       string // Fallback base URL when headers are not available
 	indexLimit        int    // Maximum number of items to show in index (0 = no limit)
 	googleAnalyticsID string // Google Analytics measurement ID (empty = disabled)
+	fediHandle        string // Fediverse handle (e.g., "@user@domain.com") for follow button
 	cache             *DocumentCache
 }
 
@@ -68,12 +69,14 @@ type CachedIndex struct {
 }
 
 // NewDocServer creates a new document server
-func NewDocServer(contentDir, fallbackURL string, indexLimit int, googleAnalyticsID string) *DocServer {
+// fediHandle is optional - if provided, adds a "Follow on Mastodon" button (e.g., "@user@domain.com")
+func NewDocServer(contentDir, fallbackURL string, indexLimit int, googleAnalyticsID, fediHandle string) *DocServer {
 	return &DocServer{
 		contentDir:        contentDir,
 		fallbackURL:       fallbackURL,
 		indexLimit:        indexLimit,
 		googleAnalyticsID: googleAnalyticsID,
+		fediHandle:        fediHandle,
 		cache: &DocumentCache{
 			docs: make(map[string]*CachedDoc),
 		},
@@ -587,6 +590,13 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
         .footer-dates { margin-top: 0.5rem; }
         .footer-edit { display: none; }
         .footer-edit.visible { display: inline; }
+        .fedi-follow { cursor: pointer; }
+        .fedi-modal { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%%; height: 100%%; background: rgba(0,0,0,0.5); }
+        .fedi-modal-content { background: #fff; margin: 15%% auto; padding: 1.5rem; border-radius: 8px; max-width: 400px; text-align: center; }
+        .fedi-modal input { width: 100%%; padding: 0.5rem; margin: 1rem 0; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+        .fedi-modal button { background: #6364ff; color: white; border: none; padding: 0.5rem 1.5rem; border-radius: 4px; cursor: pointer; font-size: 1rem; }
+        .fedi-modal button:hover { background: #5254d4; }
+        .fedi-modal .close { float: right; cursor: pointer; font-size: 1.5rem; color: #999; }
         .cid-link { color: #0066cc; text-decoration: none; font-family: monospace; }
         .cid-link:hover { text-decoration: underline; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%%; height: 100%%; background-color: rgba(0,0,0,0.4); }
@@ -635,10 +645,20 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 	// Add edit link (will be shown/hidden by JavaScript based on authorship)
 	escapedAuthorURL := html.EscapeString(authorURL)
 	fmt.Fprintf(w, `
-            <a href="#" class="footer-edit" id="editLink" data-author-url="%s">✏️ Edit</a>
+            <a href="#" class="footer-edit" id="editLink" data-author-url="%s">✏️ Edit</a>`, escapedAuthorURL)
+
+	// Add Fediverse follow button if configured
+	if ds.fediHandle != "" {
+		escapedHandle := html.EscapeString(ds.fediHandle)
+		fmt.Fprintf(w, `
+            <span>•</span>
+            <a href="#" class="fedi-follow" id="fediFollow" data-handle="%s">🐘 Follow</a>`, escapedHandle)
+	}
+
+	fmt.Fprintf(w, `
         </div>
         <div class="footer-dates">
-            Published: %s`, escapedAuthorURL, escapedDatePublished)
+            Published: %s`, escapedDatePublished)
 
 	if doc.Frontmatter.DateModified != "" {
 		fmt.Fprintf(w, ` | Modified: %s`, escapedDateModified)
@@ -684,6 +704,74 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
     </script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({startOnLoad: true});</script>
+
+    <!-- Fediverse Follow Modal -->
+    <div id="fediModal" class="fedi-modal">
+        <div class="fedi-modal-content">
+            <span class="close" id="fediClose">&times;</span>
+            <h3>Follow on Mastodon</h3>
+            <p id="fediHandleDisplay"></p>
+            <input type="text" id="fediInstance" placeholder="Your instance (e.g., mastodon.social)">
+            <button id="fediGoBtn">Follow</button>
+        </div>
+    </div>
+    <script>
+        (function() {
+            const followBtn = document.getElementById('fediFollow');
+            if (!followBtn) return;
+
+            const modal = document.getElementById('fediModal');
+            const closeBtn = document.getElementById('fediClose');
+            const goBtn = document.getElementById('fediGoBtn');
+            const instanceInput = document.getElementById('fediInstance');
+            const handleDisplay = document.getElementById('fediHandleDisplay');
+            const handle = followBtn.getAttribute('data-handle');
+
+            handleDisplay.textContent = handle;
+
+            // Load saved instance
+            const saved = localStorage.getItem('fediInstance');
+            if (saved) instanceInput.value = saved;
+
+            followBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                modal.style.display = 'block';
+                instanceInput.focus();
+            });
+
+            closeBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) modal.style.display = 'none';
+            });
+
+            function doFollow() {
+                let instance = instanceInput.value.trim();
+                if (!instance) return;
+
+                // Remove @ prefix and https:// if present
+                instance = instance.replace(/^@/, '').replace(/^https?:\/\//, '').split('/')[0];
+
+                localStorage.setItem('fediInstance', instance);
+
+                // Parse handle to get the actor URI
+                const parts = handle.replace(/^@/, '').split('@');
+                const user = parts[0];
+                const domain = parts[1];
+                const actorUri = 'https://' + domain + '/users/' + user;
+
+                window.open('https://' + instance + '/authorize_interaction?uri=' + encodeURIComponent(actorUri), '_blank');
+                modal.style.display = 'none';
+            }
+
+            goBtn.addEventListener('click', doFollow);
+            instanceInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') doFollow();
+            });
+        })();
+    </script>
 </body>
 </html>`)
 }

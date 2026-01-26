@@ -1,7 +1,7 @@
 # Makefile for tens-city project
 
 # Variables
-GO := go
+GO := GOWORK=off go
 GOFLAGS := -v
 BINARIES := webserver
 BIN_DIR := bin

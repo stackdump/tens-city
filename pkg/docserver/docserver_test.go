@@ -74,7 +74,7 @@ Content of Bob's post.
 	}
 
 	// Create docserver
-	ds := NewDocServer(tmpDir, "https://tens.city", 0, "")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0, "", "")
 
 	// Create test request
 	req := httptest.NewRequest(http.MethodGet, "/u/alice/posts.rss", nil)
@@ -153,7 +153,7 @@ Content
 		t.Fatal(err)
 	}
 
-	ds := NewDocServer(tmpDir, "https://tens.city", 0, "")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0, "", "")
 
 	// Request Bob's feed
 	req := httptest.NewRequest(http.MethodGet, "/u/bob/posts.rss", nil)
@@ -214,7 +214,7 @@ Content
 		t.Fatal(err)
 	}
 
-	ds := NewDocServer(tmpDir, "https://tens.city", 0, "")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0, "", "")
 
 	req := httptest.NewRequest(http.MethodGet, "/u/alice/posts.rss", nil)
 	rec := httptest.NewRecorder()
@@ -255,7 +255,7 @@ Content
 		t.Fatal(err)
 	}
 
-	ds := NewDocServer(tmpDir, "https://tens.city", 0, "")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0, "", "")
 
 	// Request feed for a user with no posts
 	req := httptest.NewRequest(http.MethodGet, "/u/bob/posts.rss", nil)
@@ -279,7 +279,7 @@ Content
 
 func TestHandleUserRSS_OnlyGetMethod(t *testing.T) {
 	tmpDir := t.TempDir()
-	ds := NewDocServer(tmpDir, "https://tens.city", 0, "")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0, "", "")
 
 	// Test GET is allowed
 	req := httptest.NewRequest(http.MethodGet, "/u/alice/posts.rss", nil)
@@ -343,7 +343,7 @@ Content
 		t.Fatal(err)
 	}
 
-	ds := NewDocServer(tmpDir, "https://tens.city", 0, "")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0, "", "")
 
 	// Request Alice's feed
 	req := httptest.NewRequest(http.MethodGet, "/u/alice/posts.rss", nil)
@@ -381,7 +381,7 @@ Content
 		t.Fatal(err)
 	}
 
-	ds := NewDocServer(tmpDir, "https://tens.city", 0, "")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0, "", "")
 
 	req := httptest.NewRequest(http.MethodGet, "/u/alice/posts.rss", nil)
 	req.Header.Set("X-Forwarded-Proto", "https")
@@ -587,7 +587,7 @@ Content of Alice's second post.
 	}
 
 	// Create docserver
-	ds := NewDocServer(tmpDir, "https://tens.city", 0, "")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0, "", "")
 
 	// Create test request
 	req := httptest.NewRequest(http.MethodGet, "/posts.rss", nil)
@@ -680,7 +680,7 @@ Content
 		t.Fatal(err)
 	}
 
-	ds := NewDocServer(tmpDir, "https://tens.city", 0, "")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0, "", "")
 
 	req := httptest.NewRequest(http.MethodGet, "/posts.rss", nil)
 	rec := httptest.NewRecorder()
@@ -704,7 +704,7 @@ Content
 func TestHandleSiteRSS_EmptyFeed(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	ds := NewDocServer(tmpDir, "https://tens.city", 0, "")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0, "", "")
 
 	// Request site feed with no posts
 	req := httptest.NewRequest(http.MethodGet, "/posts.rss", nil)
@@ -728,7 +728,7 @@ func TestHandleSiteRSS_EmptyFeed(t *testing.T) {
 
 func TestHandleSiteRSS_OnlyGetMethod(t *testing.T) {
 	tmpDir := t.TempDir()
-	ds := NewDocServer(tmpDir, "https://tens.city", 0, "")
+	ds := NewDocServer(tmpDir, "https://tens.city", 0, "", "")
 
 	// Test GET is allowed
 	req := httptest.NewRequest(http.MethodGet, "/posts.rss", nil)
@@ -820,7 +820,7 @@ Draft content.
 	os.WriteFile(filepath.Join(tmpDir, "post2.md"), []byte(doc2), 0644)
 	os.WriteFile(filepath.Join(tmpDir, "post3.md"), []byte(doc3), 0644)
 
-	ds := NewDocServer(tmpDir, "http://localhost:8080", 0, "")
+	ds := NewDocServer(tmpDir, "http://localhost:8080", 0, "", "")
 
 	tags, err := ds.collectTags()
 	if err != nil {
@@ -876,7 +876,7 @@ Content.
 
 	os.WriteFile(filepath.Join(tmpDir, "post1.md"), []byte(doc1), 0644)
 
-	ds := NewDocServer(tmpDir, "http://localhost:8080", 0, "")
+	ds := NewDocServer(tmpDir, "http://localhost:8080", 0, "", "")
 
 	// Test GET request
 	req := httptest.NewRequest(http.MethodGet, "/tags", nil)
@@ -977,7 +977,7 @@ Golang tutorial content.
 	os.WriteFile(filepath.Join(tmpDir, "post2.md"), []byte(doc2), 0644)
 	os.WriteFile(filepath.Join(tmpDir, "post3.md"), []byte(doc3), 0644)
 
-	ds := NewDocServer(tmpDir, "http://localhost:8080", 0, "")
+	ds := NewDocServer(tmpDir, "http://localhost:8080", 0, "", "")
 
 	// Test filtering by "golang" tag
 	req := httptest.NewRequest(http.MethodGet, "/tags/golang", nil)
@@ -1045,7 +1045,7 @@ Content.
 
 	os.WriteFile(filepath.Join(tmpDir, "post1.md"), []byte(doc1), 0644)
 
-	ds := NewDocServer(tmpDir, "http://localhost:8080", 0, "")
+	ds := NewDocServer(tmpDir, "http://localhost:8080", 0, "", "")
 
 	// Test filtering by a tag that doesn't exist in any post
 	req := httptest.NewRequest(http.MethodGet, "/tags/nonexistent", nil)
@@ -1098,7 +1098,7 @@ Content.
 
 	os.WriteFile(filepath.Join(tmpDir, "post1.md"), []byte(doc1), 0644)
 
-	ds := NewDocServer(tmpDir, "http://localhost:8080", 0, "")
+	ds := NewDocServer(tmpDir, "http://localhost:8080", 0, "", "")
 
 	// Test filtering by a tag with special characters
 	req := httptest.NewRequest(http.MethodGet, "/tags/schema.org", nil)
@@ -1181,7 +1181,7 @@ More content.
 	os.WriteFile(filepath.Join(tmpDir, "post1.md"), []byte(doc1), 0644)
 	os.WriteFile(filepath.Join(tmpDir, "post2.md"), []byte(doc2), 0644)
 
-	ds := NewDocServer(tmpDir, "http://localhost:8080", 0, "")
+	ds := NewDocServer(tmpDir, "http://localhost:8080", 0, "", "")
 
 	// Test GET request
 	req := httptest.NewRequest(http.MethodGet, "/tags", nil)
@@ -1304,7 +1304,7 @@ Python content.
 	os.WriteFile(filepath.Join(tmpDir, "post2.md"), []byte(doc2), 0644)
 	os.WriteFile(filepath.Join(tmpDir, "post3.md"), []byte(doc3), 0644)
 
-	ds := NewDocServer(tmpDir, "http://localhost:8080", 0, "")
+	ds := NewDocServer(tmpDir, "http://localhost:8080", 0, "", "")
 
 	// Test filtering by golang tag
 	req := httptest.NewRequest(http.MethodGet, "/tags/golang", nil)
@@ -1393,7 +1393,7 @@ func TestLoadIndexDocument_AutoCreation(t *testing.T) {
 	}
 
 	// Create a DocServer
-	ds := NewDocServer(postsDir, "http://localhost:8080", 20, "")
+	ds := NewDocServer(postsDir, "http://localhost:8080", 20, "", "")
 
 	// index.md should not exist yet
 	indexPath := filepath.Join(tmpDir, "index.md")
@@ -1458,7 +1458,7 @@ func TestLoadIndexDocument_ReadOnlyFilesystem(t *testing.T) {
 	defer os.Chmod(tmpDir, 0755) // Restore permissions for cleanup
 
 	// Create a DocServer
-	ds := NewDocServer(postsDir, "http://localhost:8080", 20, "")
+	ds := NewDocServer(postsDir, "http://localhost:8080", 20, "", "")
 
 	// Load the index document (should not fail, just return nil)
 	doc, err := ds.loadIndexDocument()
@@ -1500,7 +1500,7 @@ This is a test post.
 	}
 
 	// Create docserver
-	ds := NewDocServer(tmpDir, "https://test.example.com", 0, "")
+	ds := NewDocServer(tmpDir, "https://test.example.com", 0, "", "")
 
 	// Create test request
 	req := httptest.NewRequest(http.MethodGet, "/posts/test-post", nil)

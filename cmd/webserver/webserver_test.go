@@ -191,7 +191,7 @@ This is a test post.
 	}
 
 	// Create docserver with the test content
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0, "")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0, "", "")
 	server := webserver.NewServer(storage, publicFS, docServer, "http://localhost:8080", "", nil, contentDir)
 
 	// Test serving index.html at root with JSON-LD
@@ -293,7 +293,7 @@ This is Bob's post.
 	}
 
 	// Create docserver with the test content
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0, "")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0, "", "")
 	server := webserver.NewServer(storage, publicFS, docServer, "http://localhost:8080", "", nil, contentDir)
 
 	// Test serving /rss page
@@ -383,7 +383,7 @@ This is a test post.
 	}
 
 	// Create docserver with the test content
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0, "")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0, "", "")
 	server := webserver.NewServer(storage, publicFS, docServer, "http://localhost:8080", "", nil, contentDir)
 
 	// Test with HTTPS proxy headers
@@ -612,7 +612,7 @@ This is Bob's post.
 	}
 
 	// Create docserver with the test content
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0, "")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0, "", "")
 	server := webserver.NewServer(storage, publicFS, docServer, "http://localhost:8080", "", nil, contentDir)
 
 	// Test serving /posts.rss site-wide feed
@@ -775,7 +775,7 @@ Test content.`
 		t.Fatalf("Failed to get public FS: %v", err)
 	}
 
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20, "")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20, "", "")
 	server := webserver.NewServer(nil, publicFS, docServer, "http://localhost:8080", "", nil, contentDir)
 
 	// Test /feed.xml
@@ -886,7 +886,7 @@ Test content.`
 		t.Fatalf("Failed to get public FS: %v", err)
 	}
 
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20, "")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20, "", "")
 	server := webserver.NewServer(nil, publicFS, docServer, "http://localhost:8080", "", nil, contentDir)
 
 	req := httptest.NewRequest("GET", "/", nil)
@@ -1027,7 +1027,7 @@ This post is a draft.
 	if err != nil {
 		t.Fatalf("Failed to get public filesystem: %v", err)
 	}
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20, "")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20, "", "")
 	server := webserver.NewServer(storage, publicFS, docServer, "http://localhost:8080", "", nil, contentDir)
 
 	// Test 1: Draft post should be accessible when accessed directly by URL
@@ -1191,7 +1191,7 @@ More test content.
 		t.Fatalf("Failed to write test post: %v", err)
 	}
 
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20, "")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 20, "", "")
 	server := webserver.NewServer(storage, publicFS, docServer, "http://localhost:8080", "", nil, contentDir)
 
 	req := httptest.NewRequest("GET", "/sitemap.xml", nil)
@@ -1383,7 +1383,7 @@ This is a published article.
 	}
 
 	// Create docserver with the test content
-	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0, "")
+	docServer := docserver.NewDocServer(contentDir, "http://localhost:8080", 0, "", "")
 	server := webserver.NewServer(storage, publicFS, docServer, "http://localhost:8080", "", nil, contentDir)
 
 	// Test 1: Draft article should be accessible via direct URL
