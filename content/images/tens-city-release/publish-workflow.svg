@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="160" viewBox="0 0 500 133">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+  </defs>
+  <rect width="100%" height="100%" rx="12" fill="#f8f9fa" stroke="#999" stroke-width="1"/>
+  <text x="250" y="20" font-family="Arial" font-size="12" font-weight="bold" fill="#333" text-anchor="middle">Publish Workflow</text>
+  <g transform="translate(20, 40)">
+    <circle cx="30" cy="30" r="25" fill="#e8f4fd" stroke="#3498db" stroke-width="2"/>
+    <text x="30" y="26" font-family="Arial" font-size="16" text-anchor="middle">1</text>
+    <text x="30" y="40" font-family="Arial" font-size="7" fill="#3498db" text-anchor="middle">Write</text>
+    <text x="30" y="75" font-family="monospace" font-size="7" fill="#666" text-anchor="middle">vim post.md</text>
+  </g>
+  <line x1="80" y1="70" x2="110" y2="70" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <g transform="translate(115, 40)">
+    <circle cx="30" cy="30" r="25" fill="#fce4ec" stroke="#e74c3c" stroke-width="2"/>
+    <text x="30" y="26" font-family="Arial" font-size="16" text-anchor="middle">2</text>
+    <text x="30" y="40" font-family="Arial" font-size="7" fill="#e74c3c" text-anchor="middle">Publish</text>
+    <text x="30" y="75" font-family="monospace" font-size="7" fill="#666" text-anchor="middle">./publish.sh</text>
+  </g>
+  <line x1="175" y1="70" x2="205" y2="70" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <g transform="translate(210, 40)">
+    <circle cx="30" cy="30" r="25" fill="#fff8e1" stroke="#f39c12" stroke-width="2"/>
+    <text x="30" y="26" font-family="Arial" font-size="16" text-anchor="middle">3</text>
+    <text x="30" y="40" font-family="Arial" font-size="7" fill="#f39c12" text-anchor="middle">Git</text>
+    <text x="30" y="75" font-family="monospace" font-size="7" fill="#666" text-anchor="middle">commit+push</text>
+  </g>
+  <line x1="270" y1="70" x2="300" y2="70" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <g transform="translate(305, 40)">
+    <circle cx="30" cy="30" r="25" fill="#e8f8e8" stroke="#27ae60" stroke-width="2"/>
+    <text x="30" y="26" font-family="Arial" font-size="16" text-anchor="middle">4</text>
+    <text x="30" y="40" font-family="Arial" font-size="7" fill="#27ae60" text-anchor="middle">Deploy</text>
+    <text x="30" y="75" font-family="monospace" font-size="7" fill="#666" text-anchor="middle">ssh+restart</text>
+  </g>
+  <line x1="365" y1="70" x2="395" y2="70" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <g transform="translate(400, 40)">
+    <circle cx="30" cy="30" r="25" fill="#f3e5f5" stroke="#9b59b6" stroke-width="2"/>
+    <text x="30" y="26" font-family="Arial" font-size="16" text-anchor="middle">5</text>
+    <text x="30" y="40" font-family="Arial" font-size="7" fill="#9b59b6" text-anchor="middle">Federate</text>
+    <text x="30" y="75" font-family="monospace" font-size="7" fill="#666" text-anchor="middle">POST /publish</text>
+  </g>
+  <text x="250" y="125" font-family="Arial" font-size="8" fill="#999" text-anchor="middle">One command: ./publish.sh "Add new post"</text>
+</svg>

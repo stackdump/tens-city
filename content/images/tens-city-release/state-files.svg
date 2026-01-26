@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" viewBox="0 0 500 167">
+  <rect width="100%" height="100%" rx="12" fill="#f8f9fa" stroke="#999" stroke-width="1"/>
+  <text x="250" y="20" font-family="Arial" font-size="12" font-weight="bold" fill="#333" text-anchor="middle">State Without a Database</text>
+  <g transform="translate(20, 40)">
+    <rect x="0" y="0" width="140" height="110" rx="6" fill="#e8f4fd" stroke="#3498db" stroke-width="2"/>
+    <text x="70" y="18" font-family="monospace" font-size="9" font-weight="bold" fill="#3498db" text-anchor="middle">content/</text>
+    <rect x="10" y="28" width="120" height="18" rx="2" fill="white" stroke="#3498db" stroke-width="1"/>
+    <text x="70" y="40" font-family="monospace" font-size="7" fill="#666" text-anchor="middle">index.md</text>
+    <rect x="10" y="50" width="120" height="18" rx="2" fill="white" stroke="#3498db" stroke-width="1"/>
+    <text x="70" y="62" font-family="monospace" font-size="7" fill="#666" text-anchor="middle">posts/*.md</text>
+    <rect x="10" y="72" width="120" height="18" rx="2" fill="white" stroke="#3498db" stroke-width="1"/>
+    <text x="70" y="84" font-family="monospace" font-size="7" fill="#666" text-anchor="middle">images/*</text>
+    <text x="70" y="102" font-family="Arial" font-size="7" fill="#999" text-anchor="middle">Your content</text>
+  </g>
+  <g transform="translate(180, 40)">
+    <rect x="0" y="0" width="140" height="110" rx="6" fill="#fff8e1" stroke="#f39c12" stroke-width="2"/>
+    <text x="70" y="18" font-family="monospace" font-size="9" font-weight="bold" fill="#f39c12" text-anchor="middle">data/</text>
+    <rect x="10" y="28" width="120" height="18" rx="2" fill="white" stroke="#f39c12" stroke-width="1"/>
+    <text x="70" y="40" font-family="monospace" font-size="7" fill="#666" text-anchor="middle">activitypub.key</text>
+    <rect x="10" y="50" width="120" height="18" rx="2" fill="white" stroke="#f39c12" stroke-width="1"/>
+    <text x="70" y="62" font-family="monospace" font-size="7" fill="#666" text-anchor="middle">followers.json</text>
+    <rect x="10" y="72" width="120" height="18" rx="2" fill="white" stroke="#f39c12" stroke-width="1"/>
+    <text x="70" y="84" font-family="monospace" font-size="7" fill="#666" text-anchor="middle">published.json</text>
+    <text x="70" y="102" font-family="Arial" font-size="7" fill="#999" text-anchor="middle">ActivityPub state</text>
+  </g>
+  <g transform="translate(340, 40)">
+    <rect x="0" y="0" width="140" height="110" rx="6" fill="#fce4ec" stroke="#e74c3c" stroke-width="2" stroke-dasharray="4,2"/>
+    <text x="70" y="18" font-family="Arial" font-size="9" font-weight="bold" fill="#e74c3c" text-anchor="middle">Not needed</text>
+    <text x="70" y="40" font-family="Arial" font-size="8" fill="#999" text-anchor="middle" text-decoration="line-through">PostgreSQL</text>
+    <text x="70" y="55" font-family="Arial" font-size="8" fill="#999" text-anchor="middle" text-decoration="line-through">Redis</text>
+    <text x="70" y="70" font-family="Arial" font-size="8" fill="#999" text-anchor="middle" text-decoration="line-through">Sidekiq</text>
+    <text x="70" y="85" font-family="Arial" font-size="8" fill="#999" text-anchor="middle" text-decoration="line-through">Elasticsearch</text>
+    <text x="70" y="102" font-family="Arial" font-size="7" fill="#999" text-anchor="middle">Just files</text>
+  </g>
+</svg>
