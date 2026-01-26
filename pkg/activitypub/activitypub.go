@@ -167,3 +167,8 @@ func (a *Actor) FollowingURL() string {
 func (a *Actor) Config() *Config {
 	return a.config
 }
+
+// GetFediHandle returns the actor's fediverse handle (e.g., @user@domain)
+func (a *Actor) GetFediHandle() string {
+	return "@" + a.config.Username + "@" + a.config.Domain
+}

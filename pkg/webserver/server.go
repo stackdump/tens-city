@@ -299,6 +299,149 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 			htmlContent = strings.Replace(htmlContent, "</head>", gaTag+"</head>", 1)
 		}
 
+		// Add follow button if ActivityPub is enabled
+		if s.actor != nil {
+			fediHandle := s.actor.GetFediHandle()
+			if fediHandle != "" {
+				// Add CSS for follow button
+				followCSS := `
+        .section-header-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .fedi-follow-btn {
+            background: linear-gradient(135deg, #6364ff 0%, #563acc 100%);
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .fedi-follow-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 100, 255, 0.4);
+        }
+        .fedi-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .fedi-modal {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        .fedi-modal h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.1rem;
+        }
+        .fedi-modal p {
+            color: #666;
+            font-size: 0.9rem;
+            margin: 0 0 1rem 0;
+        }
+        .fedi-modal input {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        .fedi-modal-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+        .fedi-modal-buttons button {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .fedi-modal-cancel {
+            background: #f0f0f0;
+            border: none;
+            color: #666;
+        }
+        .fedi-modal-go {
+            background: linear-gradient(135deg, #6364ff 0%, #563acc 100%);
+            border: none;
+            color: white;
+        }
+    </style>`
+				htmlContent = strings.Replace(htmlContent, "</style>", followCSS, 1)
+
+				// Replace section-header with version including follow button
+				oldHeader := `<div class="section-header">
+            <h2>Recent Posts</h2>`
+				newHeader := fmt.Sprintf(`<div class="section-header">
+            <div class="section-header-title">
+                <h2>Recent Posts</h2>
+                <button class="fedi-follow-btn" onclick="openFollowModal()">🐘 Follow</button>
+            </div>`)
+				htmlContent = strings.Replace(htmlContent, oldHeader, newHeader, 1)
+
+				// Add modal HTML before closing body tag
+				modalHTML := fmt.Sprintf(`
+    <div id="fedi-modal-overlay" class="fedi-modal-overlay" onclick="closeFollowModal(event)">
+        <div class="fedi-modal" onclick="event.stopPropagation()">
+            <h3>🐘 Follow on Mastodon</h3>
+            <p>Enter your Mastodon instance to follow <strong>%s</strong></p>
+            <input type="text" id="fedi-instance" placeholder="mastodon.social" />
+            <div class="fedi-modal-buttons">
+                <button class="fedi-modal-cancel" onclick="closeFollowModal()">Cancel</button>
+                <button class="fedi-modal-go" onclick="goToFollow()">Follow</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const fediHandle = '%s';
+        function openFollowModal() {
+            const saved = localStorage.getItem('fedi-instance');
+            if (saved) document.getElementById('fedi-instance').value = saved;
+            document.getElementById('fedi-modal-overlay').style.display = 'flex';
+        }
+        function closeFollowModal(e) {
+            if (!e || e.target.id === 'fedi-modal-overlay') {
+                document.getElementById('fedi-modal-overlay').style.display = 'none';
+            }
+        }
+        function goToFollow() {
+            const instance = document.getElementById('fedi-instance').value.trim();
+            if (!instance) return;
+            localStorage.setItem('fedi-instance', instance);
+            const url = 'https://' + instance.replace(/^https?:\/\//, '') + '/authorize_interaction?uri=' + encodeURIComponent(fediHandle);
+            window.open(url, '_blank');
+            closeFollowModal();
+        }
+        document.getElementById('fedi-instance').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') goToFollow();
+        });
+    </script>
+</body>`, html.EscapeString(fediHandle), html.EscapeString(fediHandle))
+				htmlContent = strings.Replace(htmlContent, "</body>", modalHTML, 1)
+			}
+		}
+
 		// Get the collection index JSON-LD
 		indexData, err := s.docServer.GetIndexJSONLD()
 		if err == nil && len(indexData) > 0 {
