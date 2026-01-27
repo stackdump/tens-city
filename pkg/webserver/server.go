@@ -704,8 +704,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// NodeInfo 2.0 endpoint
-	if r.URL.Path == "/nodeinfo/2.0" && s.actor != nil {
+	// NodeInfo 2.0 endpoint (also support /api/nodeinfo for WriteFreely compatibility)
+	if (r.URL.Path == "/nodeinfo/2.0" || r.URL.Path == "/api/nodeinfo") && s.actor != nil {
 		postCount := 0
 		if s.docServer != nil {
 			if docs, err := markdown.ListDocuments(s.contentDir); err == nil {
