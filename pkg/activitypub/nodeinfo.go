@@ -18,12 +18,32 @@ type NodeInfoLink struct {
 
 // NodeInfo represents the NodeInfo 2.0 schema response
 type NodeInfo struct {
-	Version           string            `json:"version"`
-	Software          NodeInfoSoftware  `json:"software"`
-	Protocols         []string          `json:"protocols"`
-	Usage             NodeInfoUsage     `json:"usage"`
-	OpenRegistrations bool              `json:"openRegistrations"`
-	Metadata          map[string]string `json:"metadata,omitempty"`
+	Version           string           `json:"version"`
+	Software          NodeInfoSoftware `json:"software"`
+	Protocols         []string         `json:"protocols"`
+	Services          NodeInfoServices `json:"services"`
+	Usage             NodeInfoUsage    `json:"usage"`
+	OpenRegistrations bool             `json:"openRegistrations"`
+	Metadata          NodeInfoMetadata `json:"metadata"`
+}
+
+// NodeInfoServices describes inbound/outbound service integrations
+type NodeInfoServices struct {
+	Inbound  []string `json:"inbound"`
+	Outbound []string `json:"outbound"`
+}
+
+// NodeInfoMetadata describes the node
+type NodeInfoMetadata struct {
+	NodeName        string               `json:"nodeName"`
+	NodeDescription string               `json:"nodeDescription"`
+	Software        NodeInfoMetaSoftware `json:"software"`
+}
+
+// NodeInfoMetaSoftware has links about the software project
+type NodeInfoMetaSoftware struct {
+	HomePage string `json:"homepage"`
+	GitHub   string `json:"github"`
 }
 
 // NodeInfoSoftware describes the server software
@@ -93,6 +113,10 @@ func (a *Actor) HandleNodeInfo(w http.ResponseWriter, r *http.Request, localPost
 			Version: softwareVersion,
 		},
 		Protocols: []string{"activitypub"},
+		Services: NodeInfoServices{
+			Inbound:  []string{},
+			Outbound: []string{"rss2.0"},
+		},
 		Usage: NodeInfoUsage{
 			Users: NodeInfoUsers{
 				Total:          1,
@@ -102,6 +126,14 @@ func (a *Actor) HandleNodeInfo(w http.ResponseWriter, r *http.Request, localPost
 			LocalPosts: localPosts,
 		},
 		OpenRegistrations: false,
+		Metadata: NodeInfoMetadata{
+			NodeName:        "Stackdump Blog",
+			NodeDescription: "Technical blog about Petri nets, category theory, and systems design.",
+			Software: NodeInfoMetaSoftware{
+				HomePage: "https://github.com/stackdump/tens-city",
+				GitHub:   "https://github.com/stackdump/tens-city",
+			},
+		},
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
