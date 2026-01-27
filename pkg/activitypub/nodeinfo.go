@@ -127,11 +127,11 @@ func (a *Actor) HandleNodeInfo(w http.ResponseWriter, r *http.Request, localPost
 		},
 		OpenRegistrations: false,
 		Metadata: NodeInfoMetadata{
-			NodeName:        "Stackdump Blog",
-			NodeDescription: "Technical blog about Petri nets, category theory, and systems design.",
+			NodeName:        a.config.NodeName,
+			NodeDescription: a.config.NodeDescription,
 			Software: NodeInfoMetaSoftware{
-				HomePage: "https://github.com/stackdump/tens-city",
-				GitHub:   "https://github.com/stackdump/tens-city",
+				HomePage: a.config.NodeHomePage,
+				GitHub:   a.config.NodeGitHub,
 			},
 		},
 	}

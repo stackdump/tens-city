@@ -30,6 +30,12 @@ type Config struct {
 	// Software info (for NodeInfo)
 	SoftwareName    string
 	SoftwareVersion string
+
+	// NodeInfo metadata
+	NodeName        string // e.g., "Stackdump Blog"
+	NodeDescription string // e.g., "Technical blog about..."
+	NodeHomePage    string // e.g., "https://github.com/stackdump/tens-city"
+	NodeGitHub      string // e.g., "https://github.com/stackdump/tens-city"
 }
 
 // Actor represents an ActivityPub actor

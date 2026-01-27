@@ -103,6 +103,10 @@ func main() {
 			KeyPath:         keyPath,
 			SoftwareName:    "tens-city",
 			SoftwareVersion: "1.0.0",
+			NodeName:        os.Getenv("NODEINFO_NAME"),
+			NodeDescription: os.Getenv("NODEINFO_DESCRIPTION"),
+			NodeHomePage:    os.Getenv("NODEINFO_HOMEPAGE"),
+			NodeGitHub:      os.Getenv("NODEINFO_GITHUB"),
 		}
 
 		actor, err = activitypub.NewActor(config)
