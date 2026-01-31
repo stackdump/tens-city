@@ -662,6 +662,37 @@ func (s *Server) handlePublish(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// handleMastodonAPI handles Mastodon-compatible API endpoints
+// These are requested by some Fediverse clients but we only implement stubs
+func (s *Server) handleMastodonAPI(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/api/v1/")
+
+	// /api/v1/streaming/* - Real-time streaming (not supported)
+	if strings.HasPrefix(path, "streaming/") {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotImplemented)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Streaming API not implemented",
+		})
+		return
+	}
+
+	// /api/v1/profile/{username}/stats - Profile stats
+	if strings.HasPrefix(path, "profile/") && strings.HasSuffix(path, "/stats") {
+		w.Header().Set("Content-Type", "application/json")
+		// Return minimal stats
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"followers_count": 0,
+			"following_count": 0,
+			"statuses_count":  0,
+		})
+		return
+	}
+
+	// Unknown /api/v1/ endpoint
+	http.NotFound(w, r)
+}
+
 // ServeHTTP implements http.Handler
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// robots.txt
@@ -735,6 +766,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Legacy write.as/writefreely ActivityPub routes
 	if strings.HasPrefix(r.URL.Path, "/api/collections/") && s.actor != nil {
 		s.handleActivityPubLegacy(w, r)
+		return
+	}
+
+	// Mastodon-compatible API endpoints
+	if strings.HasPrefix(r.URL.Path, "/api/v1/") {
+		s.handleMastodonAPI(w, r)
 		return
 	}
 
