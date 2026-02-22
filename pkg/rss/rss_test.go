@@ -32,7 +32,7 @@ func TestGenerateUserFeed_BasicFeed(t *testing.T) {
 		},
 	}
 
-	feedData, err := GenerateUserFeed(docs, "testuser", "https://tens.city")
+	feedData, err := GenerateUserFeed(docs, "testuser", "https://tens.city", "Tens City")
 	if err != nil {
 		t.Fatalf("GenerateUserFeed failed: %v", err)
 	}
@@ -109,7 +109,7 @@ func TestGenerateUserFeed_FiltersDrafts(t *testing.T) {
 		},
 	}
 
-	feedData, err := GenerateUserFeed(docs, "testuser", "https://tens.city")
+	feedData, err := GenerateUserFeed(docs, "testuser", "https://tens.city", "Tens City")
 	if err != nil {
 		t.Fatalf("GenerateUserFeed failed: %v", err)
 	}
@@ -157,7 +157,7 @@ func TestGenerateUserFeed_SortsByDateNewestFirst(t *testing.T) {
 		},
 	}
 
-	feedData, err := GenerateUserFeed(docs, "testuser", "https://tens.city")
+	feedData, err := GenerateUserFeed(docs, "testuser", "https://tens.city", "Tens City")
 	if err != nil {
 		t.Fatalf("GenerateUserFeed failed: %v", err)
 	}
@@ -191,7 +191,7 @@ func TestGenerateUserFeed_LimitsTo20Items(t *testing.T) {
 		}
 	}
 
-	feedData, err := GenerateUserFeed(docs, "testuser", "https://tens.city")
+	feedData, err := GenerateUserFeed(docs, "testuser", "https://tens.city", "Tens City")
 	if err != nil {
 		t.Fatalf("GenerateUserFeed failed: %v", err)
 	}
@@ -235,7 +235,7 @@ func TestGenerateUserFeed_HandlesInvalidDates(t *testing.T) {
 		},
 	}
 
-	feedData, err := GenerateUserFeed(docs, "testuser", "https://tens.city")
+	feedData, err := GenerateUserFeed(docs, "testuser", "https://tens.city", "Tens City")
 	if err != nil {
 		t.Fatalf("GenerateUserFeed failed: %v", err)
 	}
@@ -274,7 +274,7 @@ func TestGenerateUserFeed_HTMLEscaping(t *testing.T) {
 		},
 	}
 
-	feedData, err := GenerateUserFeed(docs, "test&user", "https://tens.city")
+	feedData, err := GenerateUserFeed(docs, "test&user", "https://tens.city", "Tens City")
 	if err != nil {
 		t.Fatalf("GenerateUserFeed failed: %v", err)
 	}
@@ -321,7 +321,7 @@ func TestGenerateUserFeed_ItemFields(t *testing.T) {
 		},
 	}
 
-	feedData, err := GenerateUserFeed(docs, "testuser", "https://tens.city")
+	feedData, err := GenerateUserFeed(docs, "testuser", "https://tens.city", "Tens City")
 	if err != nil {
 		t.Fatalf("GenerateUserFeed failed: %v", err)
 	}
@@ -376,7 +376,7 @@ func TestGenerateUserFeed_LastBuildDate(t *testing.T) {
 		},
 	}
 
-	feedData, err := GenerateUserFeed(docs, "testuser", "https://tens.city")
+	feedData, err := GenerateUserFeed(docs, "testuser", "https://tens.city", "Tens City")
 	if err != nil {
 		t.Fatalf("GenerateUserFeed failed: %v", err)
 	}
@@ -406,7 +406,7 @@ func TestGenerateUserFeed_LastBuildDate(t *testing.T) {
 func TestGenerateUserFeed_EmptyDocuments(t *testing.T) {
 	docs := []*markdown.Document{}
 
-	feedData, err := GenerateUserFeed(docs, "testuser", "https://tens.city")
+	feedData, err := GenerateUserFeed(docs, "testuser", "https://tens.city", "Tens City")
 	if err != nil {
 		t.Fatalf("GenerateUserFeed failed: %v", err)
 	}
@@ -444,7 +444,7 @@ func TestGenerateUserFeed_XMLFormat(t *testing.T) {
 		},
 	}
 
-	feedData, err := GenerateUserFeed(docs, "testuser", "https://tens.city")
+	feedData, err := GenerateUserFeed(docs, "testuser", "https://tens.city", "Tens City")
 	if err != nil {
 		t.Fatalf("GenerateUserFeed failed: %v", err)
 	}
@@ -496,7 +496,7 @@ func TestGenerateSiteFeed_BasicFeed(t *testing.T) {
 		},
 	}
 
-	feedData, err := GenerateSiteFeed(docs, "https://tens.city")
+	feedData, err := GenerateSiteFeed(docs, "https://tens.city", "Tens City")
 	if err != nil {
 		t.Fatalf("GenerateSiteFeed failed: %v", err)
 	}
@@ -573,7 +573,7 @@ func TestGenerateSiteFeed_FiltersDrafts(t *testing.T) {
 		},
 	}
 
-	feedData, err := GenerateSiteFeed(docs, "https://tens.city")
+	feedData, err := GenerateSiteFeed(docs, "https://tens.city", "Tens City")
 	if err != nil {
 		t.Fatalf("GenerateSiteFeed failed: %v", err)
 	}
@@ -608,7 +608,7 @@ func TestGenerateSiteFeed_LimitsTo20Items(t *testing.T) {
 		}
 	}
 
-	feedData, err := GenerateSiteFeed(docs, "https://tens.city")
+	feedData, err := GenerateSiteFeed(docs, "https://tens.city", "Tens City")
 	if err != nil {
 		t.Fatalf("GenerateSiteFeed failed: %v", err)
 	}
@@ -627,7 +627,7 @@ func TestGenerateSiteFeed_LimitsTo20Items(t *testing.T) {
 func TestGenerateSiteFeed_EmptyDocuments(t *testing.T) {
 	docs := []*markdown.Document{}
 
-	feedData, err := GenerateSiteFeed(docs, "https://tens.city")
+	feedData, err := GenerateSiteFeed(docs, "https://tens.city", "Tens City")
 	if err != nil {
 		t.Fatalf("GenerateSiteFeed failed: %v", err)
 	}

@@ -527,7 +527,15 @@ func TestExtractAuthorURL(t *testing.T) {
 
 func TestHandleSiteRSS_BasicFeed(t *testing.T) {
 	// Create a temporary directory with test content
-	tmpDir := t.TempDir()
+	baseDir := t.TempDir()
+	tmpDir := filepath.Join(baseDir, "posts")
+	if err := os.MkdirAll(tmpDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	// Create index.md so getSiteName() returns "Tens City"
+	if err := os.WriteFile(filepath.Join(baseDir, "index.md"), []byte("---\ntitle: Tens City\n---\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	// Create test markdown files from different authors
 	doc1 := `---

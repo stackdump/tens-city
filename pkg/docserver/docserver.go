@@ -314,6 +314,15 @@ A minimal blog platform built on simplicity and content ownership.
 	return cached, nil
 }
 
+// getSiteName returns the site name from index.md frontmatter, falling back to "Tens City"
+func (ds *DocServer) getSiteName() string {
+	cached, err := ds.loadIndexDocument()
+	if err == nil && cached != nil && cached.Doc.Frontmatter.Title != "" {
+		return cached.Doc.Frontmatter.Title
+	}
+	return "Tens City"
+}
+
 // loadIndex loads and caches the document index
 func (ds *DocServer) loadIndex() (*CachedIndex, error) {
 	ds.cache.mu.RLock()
@@ -424,9 +433,9 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Blog Posts - Tens City</title>
+    <title>Blog Posts - %s</title>
     %s
-    <link rel="alternate" type="application/rss+xml" title="All Posts - Tens City" href="%s/posts.rss">
+    <link rel="alternate" type="application/rss+xml" title="All Posts - %s" href="%s/posts.rss">
     %s
     <script type="application/ld+json">
 %s
@@ -446,7 +455,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 <body>
     <h1>Blog Posts</h1>
     <ul class="doc-list">
-`, faviconLink, baseURL, GoogleAnalyticsTag(ds.googleAnalyticsID), string(cached.Data))
+`, ds.getSiteName(), faviconLink, ds.getSiteName(), baseURL, GoogleAnalyticsTag(ds.googleAnalyticsID), string(cached.Data))
 
 	for _, doc := range publicDocs {
 		escapedSlug := html.EscapeString(doc.Frontmatter.Slug)
@@ -903,7 +912,7 @@ func (ds *DocServer) HandleUserRSS(w http.ResponseWriter, r *http.Request, userN
 	}
 
 	// Generate RSS feed
-	feedData, err := rss.GenerateUserFeed(userDocs, userName, baseURL)
+	feedData, err := rss.GenerateUserFeed(userDocs, userName, baseURL, ds.getSiteName())
 	if err != nil {
 		http.Error(w, "Failed to generate RSS feed", http.StatusInternalServerError)
 		return
@@ -930,7 +939,7 @@ func (ds *DocServer) HandleSiteRSS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate site-wide RSS feed
-	feedData, err := rss.GenerateSiteFeed(docs, baseURL)
+	feedData, err := rss.GenerateSiteFeed(docs, baseURL, ds.getSiteName())
 	if err != nil {
 		http.Error(w, "Failed to generate RSS feed", http.StatusInternalServerError)
 		return
@@ -995,7 +1004,7 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>RSS Feeds - Tens City</title>
+    <title>RSS Feeds - %s</title>
     %s
     <style>
         body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
@@ -1024,13 +1033,13 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
             <h2>All Posts</h2>
             <a href="%s">%s</a>
             <div class="feed-meta">
-                Latest blog posts from all authors on Tens City
+                Latest blog posts from all authors on %s
             </div>
         </li>
     </ul>
     <h2 class="section-title">Author Feeds</h2>
     <ul class="feed-list">
-`, GoogleAnalyticsTag(ds.googleAnalyticsID), allPostsFeedURL, allPostsFeedURL)
+`, ds.getSiteName(), GoogleAnalyticsTag(ds.googleAnalyticsID), allPostsFeedURL, allPostsFeedURL, ds.getSiteName())
 
 	// Sort authors alphabetically by username for consistent ordering
 	var userNames []string
@@ -1287,7 +1296,7 @@ func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Tags - Tens City</title>
+    <title>Tags - %s</title>
     %s
     <script type="application/ld+json">
     %s
@@ -1298,7 +1307,7 @@ func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         :root {
             --primary: #2563eb;
             --primary-dark: #1e40af;
@@ -1427,7 +1436,7 @@ func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
         <a href="/" class="back-link">← Back to Home</a>
         
         <div class="tag-cloud">
-`, GoogleAnalyticsTag(ds.googleAnalyticsID), jsonldBytes)
+`, ds.getSiteName(), GoogleAnalyticsTag(ds.googleAnalyticsID), jsonldBytes)
 
 	if len(tags) == 0 {
 		fmt.Fprintf(w, `            <div class="empty-state">No tags found</div>
@@ -1529,7 +1538,7 @@ func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag s
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Tag: %s - Tens City</title>
+    <title>Tag: %s - %s</title>
     %s
     <script type="application/ld+json">
     %s
@@ -1685,7 +1694,7 @@ func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag s
         <a href="/tags" class="back-link">← All Tags</a>
         
         <ul class="post-list">
-`, escapedTag, GoogleAnalyticsTag(ds.googleAnalyticsID), jsonldBytes, escapedTag, len(filteredDocs), pluralize(len(filteredDocs)), escapedTag)
+`, escapedTag, ds.getSiteName(), GoogleAnalyticsTag(ds.googleAnalyticsID), jsonldBytes, escapedTag, len(filteredDocs), pluralize(len(filteredDocs)), escapedTag)
 
 	if len(filteredDocs) == 0 {
 		fmt.Fprintf(w, `            <div class="empty-state">No posts found with this tag</div>
@@ -1824,7 +1833,7 @@ func (ds *DocServer) HandleSearch(w http.ResponseWriter, r *http.Request) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Search - Tens City</title>
+    <title>Search - %s</title>
     %s
     <style>
         * {
@@ -2102,5 +2111,5 @@ func (ds *DocServer) HandleSearch(w http.ResponseWriter, r *http.Request) {
         }
     </script>
 </body>
-</html>`, GoogleAnalyticsTag(ds.googleAnalyticsID), string(searchDataJSON))
+</html>`, ds.getSiteName(), GoogleAnalyticsTag(ds.googleAnalyticsID), string(searchDataJSON))
 }

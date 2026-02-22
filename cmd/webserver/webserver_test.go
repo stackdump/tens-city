@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -243,7 +244,15 @@ func TestRSSListPage(t *testing.T) {
 	}
 
 	// Create a temporary content directory with test posts
-	contentDir := t.TempDir()
+	baseContentDir := t.TempDir()
+	contentDir := filepath.Join(baseContentDir, "posts")
+	if err := os.MkdirAll(contentDir, 0755); err != nil {
+		t.Fatalf("Failed to create posts directory: %v", err)
+	}
+	// Create index.md so getSiteName() returns "Tens City"
+	if err := os.WriteFile(filepath.Join(baseContentDir, "index.md"), []byte("---\ntitle: Tens City\n---\n"), 0644); err != nil {
+		t.Fatalf("Failed to create index.md: %v", err)
+	}
 
 	// Create posts from different authors
 	testPost1 := `---
@@ -562,7 +571,15 @@ func TestSiteWideRSSFeed(t *testing.T) {
 	}
 
 	// Create a temporary content directory with test posts
-	contentDir := t.TempDir()
+	baseContentDir := t.TempDir()
+	contentDir := filepath.Join(baseContentDir, "posts")
+	if err := os.MkdirAll(contentDir, 0755); err != nil {
+		t.Fatalf("Failed to create posts directory: %v", err)
+	}
+	// Create index.md so getSiteName() returns "Tens City"
+	if err := os.WriteFile(filepath.Join(baseContentDir, "index.md"), []byte("---\ntitle: Tens City\n---\n"), 0644); err != nil {
+		t.Fatalf("Failed to create index.md: %v", err)
+	}
 
 	// Create posts from different authors
 	testPost1 := `---

@@ -37,7 +37,7 @@ type Item struct {
 }
 
 // GenerateUserFeed generates an RSS feed for a user's blog posts
-func GenerateUserFeed(docs []*markdown.Document, userName, baseURL string) ([]byte, error) {
+func GenerateUserFeed(docs []*markdown.Document, userName, baseURL, siteName string) ([]byte, error) {
 	// Filter and sort documents by publication date (newest first)
 	var validDocs []*markdown.Document
 	for _, doc := range docs {
@@ -73,7 +73,7 @@ func GenerateUserFeed(docs []*markdown.Document, userName, baseURL string) ([]by
 
 	// Build RSS feed
 	channel := &Channel{
-		Title:       fmt.Sprintf("%s's Blog Posts - Tens City", html.EscapeString(userName)),
+		Title:       fmt.Sprintf("%s's Blog Posts - %s", html.EscapeString(userName), siteName),
 		Link:        fmt.Sprintf("%s/u/%s", baseURL, userName),
 		Description: fmt.Sprintf("Latest blog posts from %s", html.EscapeString(userName)),
 		Language:    "en",
@@ -114,7 +114,7 @@ func GenerateUserFeed(docs []*markdown.Document, userName, baseURL string) ([]by
 }
 
 // GenerateSiteFeed generates an RSS feed for all blog posts across all authors
-func GenerateSiteFeed(docs []*markdown.Document, baseURL string) ([]byte, error) {
+func GenerateSiteFeed(docs []*markdown.Document, baseURL, siteName string) ([]byte, error) {
 	// Filter and sort documents by publication date (newest first)
 	var validDocs []*markdown.Document
 	for _, doc := range docs {
@@ -150,9 +150,9 @@ func GenerateSiteFeed(docs []*markdown.Document, baseURL string) ([]byte, error)
 
 	// Build RSS feed
 	channel := &Channel{
-		Title:       "Tens City - All Posts",
+		Title:       fmt.Sprintf("%s - All Posts", siteName),
 		Link:        fmt.Sprintf("%s/posts", baseURL),
-		Description: "Latest blog posts from all authors on Tens City",
+		Description: fmt.Sprintf("Latest blog posts from all authors on %s", siteName),
 		Language:    "en",
 	}
 
