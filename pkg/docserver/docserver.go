@@ -616,9 +616,12 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
         .modal pre { background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }
         .modal-actions { margin-top: 1rem; }
         .modal-actions a { margin-right: 1rem; }
+        .back-link { display: inline-block; margin-bottom: 1rem; color: #0066cc; text-decoration: none; }
+        .back-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
+    <a href="/" class="back-link">← Home</a>
     <div class="post-header">`,
 		jsonldBytes)
 
