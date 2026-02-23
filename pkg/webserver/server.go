@@ -695,6 +695,13 @@ func (s *Server) handleMastodonAPI(w http.ResponseWriter, r *http.Request) {
 
 // ServeHTTP implements http.Handler
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// health check
+	if r.URL.Path == "/health" {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"status":"ok"}`))
+		return
+	}
+
 	// robots.txt
 	if r.URL.Path == "/robots.txt" {
 		s.handleRobotsTxt(w, r)
