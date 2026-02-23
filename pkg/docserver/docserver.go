@@ -718,6 +718,12 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
     </script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>mermaid.initialize({startOnLoad: true});</script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js" onload="
+        document.querySelectorAll('.math.inline').forEach(function(el) { katex.render(el.textContent, el, {throwOnError: false}); });
+        document.querySelectorAll('.math.block').forEach(function(el) { katex.render(el.textContent, el, {throwOnError: false, displayMode: true}); });
+    "></script>
 
     <!-- Fediverse Follow Modal -->
     <div id="fediModal" class="fedi-modal">

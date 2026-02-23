@@ -16,6 +16,7 @@ import (
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer/html"
+	latex "github.com/aziis98/goldmark-latex"
 	"go.abhg.dev/goldmark/mermaid"
 	"gopkg.in/yaml.v3"
 )
@@ -85,6 +86,7 @@ func ParseDocumentFromBytes(content []byte, filePath string) (*Document, error) 
 			extension.Table,
 			extension.Strikethrough,
 			&mermaid.Extender{},
+			latex.NewLatex(),
 		),
 		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
 		goldmark.WithRendererOptions(html.WithUnsafe()), // We'll sanitize after
@@ -144,6 +146,9 @@ func sanitizeHTML(html string) string {
 
 	// Allow Mermaid diagram elements - diagrams wrapped in <pre class="mermaid"> for client-side rendering
 	p.AllowAttrs("class").Matching(regexp.MustCompile(`^mermaid$`)).OnElements("pre")
+
+	// Allow math elements from goldmark-latex extension (rendered client-side by KaTeX)
+	p.AllowAttrs("class").Matching(regexp.MustCompile(`^math (inline|block)$`)).OnElements("span", "div")
 
 	// Allow SVG elements for diagrams
 	p.AllowElements("svg", "g", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text", "tspan", "defs", "use", "clipPath", "mask", "title", "desc")
