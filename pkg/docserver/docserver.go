@@ -20,6 +20,91 @@ import (
 	"github.com/stackdump/tens-city/pkg/sitemap"
 )
 
+// SEOMetaTags generates meta description, Open Graph, Twitter Card, and canonical URL tags.
+// pageType should be "article" for posts or "website" for index/listing pages.
+func SEOMetaTags(pageType, title, description, canonicalURL, image, siteName string, publishedTime, modifiedTime string) string {
+	if description == "" && title != "" {
+		description = title
+	}
+	escapedTitle := html.EscapeString(title)
+	escapedDesc := html.EscapeString(description)
+	escapedURL := html.EscapeString(canonicalURL)
+	escapedImage := html.EscapeString(image)
+	escapedSiteName := html.EscapeString(siteName)
+
+	var b strings.Builder
+
+	// Meta description
+	if escapedDesc != "" {
+		fmt.Fprintf(&b, `    <meta name="description" content="%s">
+`, escapedDesc)
+	}
+
+	// Canonical URL
+	if escapedURL != "" {
+		fmt.Fprintf(&b, `    <link rel="canonical" href="%s">
+`, escapedURL)
+	}
+
+	// Open Graph
+	fmt.Fprintf(&b, `    <meta property="og:type" content="%s">
+`, pageType)
+	if escapedTitle != "" {
+		fmt.Fprintf(&b, `    <meta property="og:title" content="%s">
+`, escapedTitle)
+	}
+	if escapedDesc != "" {
+		fmt.Fprintf(&b, `    <meta property="og:description" content="%s">
+`, escapedDesc)
+	}
+	if escapedURL != "" {
+		fmt.Fprintf(&b, `    <meta property="og:url" content="%s">
+`, escapedURL)
+	}
+	if escapedSiteName != "" {
+		fmt.Fprintf(&b, `    <meta property="og:site_name" content="%s">
+`, escapedSiteName)
+	}
+	if escapedImage != "" {
+		fmt.Fprintf(&b, `    <meta property="og:image" content="%s">
+`, escapedImage)
+	}
+
+	// Article-specific OG tags
+	if pageType == "article" {
+		if publishedTime != "" {
+			fmt.Fprintf(&b, `    <meta property="article:published_time" content="%s">
+`, html.EscapeString(publishedTime))
+		}
+		if modifiedTime != "" {
+			fmt.Fprintf(&b, `    <meta property="article:modified_time" content="%s">
+`, html.EscapeString(modifiedTime))
+		}
+	}
+
+	// Twitter Card
+	cardType := "summary"
+	if escapedImage != "" {
+		cardType = "summary_large_image"
+	}
+	fmt.Fprintf(&b, `    <meta name="twitter:card" content="%s">
+`, cardType)
+	if escapedTitle != "" {
+		fmt.Fprintf(&b, `    <meta name="twitter:title" content="%s">
+`, escapedTitle)
+	}
+	if escapedDesc != "" {
+		fmt.Fprintf(&b, `    <meta name="twitter:description" content="%s">
+`, escapedDesc)
+	}
+	if escapedImage != "" {
+		fmt.Fprintf(&b, `    <meta name="twitter:image" content="%s">
+`, escapedImage)
+	}
+
+	return b.String()
+}
+
 // GoogleAnalyticsTag returns the Google Analytics tracking code for the given ID.
 // Returns empty string if id is empty.
 func GoogleAnalyticsTag(id string) string {
@@ -428,6 +513,11 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 		faviconLink = fmt.Sprintf(`<link rel="icon" href="%s">`, faviconPath)
 	}
 
+	siteName := ds.getSiteName()
+	postsURL := fmt.Sprintf("%s/posts", baseURL)
+	indexSeoTags := SEOMetaTags("website", "Blog Posts - "+siteName,
+		"Latest blog posts from "+siteName, postsURL, "", siteName, "", "")
+
 	fmt.Fprintf(w, `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -435,7 +525,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Blog Posts - %s</title>
     %s
-    <link rel="alternate" type="application/rss+xml" title="All Posts - %s" href="%s/posts.rss">
+%s    <link rel="alternate" type="application/rss+xml" title="All Posts - %s" href="%s/posts.rss">
     %s
     <script type="application/ld+json">
 %s
@@ -455,7 +545,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 <body>
     <h1>Blog Posts</h1>
     <ul class="doc-list">
-`, ds.getSiteName(), faviconLink, ds.getSiteName(), baseURL, GoogleAnalyticsTag(ds.googleAnalyticsID), string(cached.Data))
+`, siteName, faviconLink, indexSeoTags, siteName, baseURL, GoogleAnalyticsTag(ds.googleAnalyticsID), string(cached.Data))
 
 	for _, doc := range publicDocs {
 		escapedSlug := html.EscapeString(doc.Frontmatter.Slug)
@@ -555,6 +645,11 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 		faviconLink = fmt.Sprintf(`<link rel="icon" href="%s">`, faviconPath)
 	}
 
+	postURL := fmt.Sprintf("%s/posts/%s", baseURL, html.EscapeString(doc.Frontmatter.Slug))
+	seoTags := SEOMetaTags("article", doc.Frontmatter.Title, doc.Frontmatter.Description,
+		postURL, doc.Frontmatter.Image, ds.getSiteName(),
+		doc.Frontmatter.DatePublished, doc.Frontmatter.DateModified)
+
 	fmt.Fprintf(w, `<!DOCTYPE html>
 <html lang="%s">
 <head>
@@ -562,7 +657,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>%s</title>
     %s
-    %s`, escapedLang, escapedTitle, faviconLink, GoogleAnalyticsTag(ds.googleAnalyticsID))
+%s    %s`, escapedLang, escapedTitle, faviconLink, seoTags, GoogleAnalyticsTag(ds.googleAnalyticsID))
 
 	// Add RSS autodiscovery link if we have a username
 	if userName != "" {
@@ -1299,6 +1394,11 @@ func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
 		maxCount = tags[0].Count
 	}
 
+	tagsSiteName := ds.getSiteName()
+	tagsSeoTags := SEOMetaTags("website", "Tags - "+tagsSiteName,
+		"Browse all topics and tags on "+tagsSiteName,
+		fmt.Sprintf("%s/tags", baseURL), "", tagsSiteName, "", "")
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	fmt.Fprintf(w, `<!DOCTYPE html>
 <html lang="en">
@@ -1306,7 +1406,7 @@ func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Tags - %s</title>
-    %s
+%s    %s
     <script type="application/ld+json">
     %s
     </script>
@@ -1445,7 +1545,7 @@ func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
         <a href="/" class="back-link">← Back to Home</a>
         
         <div class="tag-cloud">
-`, ds.getSiteName(), GoogleAnalyticsTag(ds.googleAnalyticsID), jsonldBytes)
+`, tagsSiteName, tagsSeoTags, GoogleAnalyticsTag(ds.googleAnalyticsID), jsonldBytes)
 
 	if len(tags) == 0 {
 		fmt.Fprintf(w, `            <div class="empty-state">No tags found</div>
@@ -1540,6 +1640,12 @@ func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag s
 	}
 
 	escapedTag := html.EscapeString(tag)
+	tagPageSiteName := ds.getSiteName()
+	tagPageSeoTags := SEOMetaTags("website",
+		fmt.Sprintf("Tag: %s - %s", tag, tagPageSiteName),
+		fmt.Sprintf("Posts tagged with %s on %s", tag, tagPageSiteName),
+		fmt.Sprintf("%s/tags/%s", baseURL, html.EscapeString(tag)),
+		"", tagPageSiteName, "", "")
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	fmt.Fprintf(w, `<!DOCTYPE html>
@@ -1548,7 +1654,7 @@ func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag s
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Tag: %s - %s</title>
-    %s
+%s    %s
     <script type="application/ld+json">
     %s
     </script>
@@ -1703,7 +1809,7 @@ func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag s
         <a href="/tags" class="back-link">← All Tags</a>
         
         <ul class="post-list">
-`, escapedTag, ds.getSiteName(), GoogleAnalyticsTag(ds.googleAnalyticsID), jsonldBytes, escapedTag, len(filteredDocs), pluralize(len(filteredDocs)), escapedTag)
+`, escapedTag, tagPageSiteName, tagPageSeoTags, GoogleAnalyticsTag(ds.googleAnalyticsID), jsonldBytes, escapedTag, len(filteredDocs), pluralize(len(filteredDocs)), escapedTag)
 
 	if len(filteredDocs) == 0 {
 		fmt.Fprintf(w, `            <div class="empty-state">No posts found with this tag</div>
@@ -1836,6 +1942,11 @@ func (ds *DocServer) HandleSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	searchSiteName := ds.getSiteName()
+	searchSeoTags := SEOMetaTags("website", "Search - "+searchSiteName,
+		"Search posts on "+searchSiteName,
+		fmt.Sprintf("%s/search", baseURL), "", searchSiteName, "", "")
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	fmt.Fprintf(w, `<!DOCTYPE html>
 <html lang="en">
@@ -1843,7 +1954,7 @@ func (ds *DocServer) HandleSearch(w http.ResponseWriter, r *http.Request) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Search - %s</title>
-    %s
+%s    %s
     <style>
         * {
             margin: 0;
@@ -2120,5 +2231,5 @@ func (ds *DocServer) HandleSearch(w http.ResponseWriter, r *http.Request) {
         }
     </script>
 </body>
-</html>`, ds.getSiteName(), GoogleAnalyticsTag(ds.googleAnalyticsID), string(searchDataJSON))
+</html>`, searchSiteName, searchSeoTags, GoogleAnalyticsTag(ds.googleAnalyticsID), string(searchDataJSON))
 }

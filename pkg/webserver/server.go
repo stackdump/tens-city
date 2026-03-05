@@ -288,6 +288,11 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 				1)
 		}
 
+		// Add SEO meta tags
+		seoTags := docserver.SEOMetaTags("website", pageTitle, pageDescription,
+			baseURL, "", pageTitle, "", "")
+		htmlContent = strings.Replace(htmlContent, "</head>", seoTags+"</head>", 1)
+
 		// Add RSS autodiscovery link
 		rssLink := fmt.Sprintf(`    <link rel="alternate" type="application/rss+xml" title="All Posts - %s" href="%s/posts.rss">
 `, escapedTitle, baseURL)
