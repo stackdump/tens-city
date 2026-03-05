@@ -26,6 +26,13 @@ func SEOMetaTags(pageType, title, description, canonicalURL, image, siteName str
 	if description == "" && title != "" {
 		description = title
 	}
+	// Make relative image URLs absolute using canonical URL's origin
+	if image != "" && !strings.HasPrefix(image, "http") && canonicalURL != "" {
+		if u, err := url.Parse(canonicalURL); err == nil {
+			image = fmt.Sprintf("%s://%s%s", u.Scheme, u.Host, image)
+		}
+	}
+
 	escapedTitle := html.EscapeString(title)
 	escapedDesc := html.EscapeString(description)
 	escapedURL := html.EscapeString(canonicalURL)
