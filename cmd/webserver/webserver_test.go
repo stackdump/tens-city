@@ -1248,13 +1248,21 @@ More test content.
 	requiredPages := []string{
 		"<loc>http://localhost:8080/</loc>",
 		"<loc>http://localhost:8080/posts</loc>",
-		"<loc>http://localhost:8080/tags</loc>",
 		"<loc>http://localhost:8080/rss</loc>",
 		"<loc>http://localhost:8080/posts/first-post</loc>",
 		"<loc>http://localhost:8080/posts/second-post</loc>",
+	}
+
+	// Tag pages should NOT be in sitemap (noindexed)
+	excludedPages := []string{
+		"<loc>http://localhost:8080/tags</loc>",
 		"<loc>http://localhost:8080/tags/test</loc>",
 		"<loc>http://localhost:8080/tags/blog</loc>",
-		"<loc>http://localhost:8080/tags/example</loc>",
+	}
+	for _, page := range excludedPages {
+		if strings.Contains(bodyStr, page) {
+			t.Errorf("Sitemap should NOT contain noindexed page %s", page)
+		}
 	}
 
 	for _, page := range requiredPages {

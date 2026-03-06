@@ -1412,6 +1412,7 @@ func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, follow">
     <title>Tags - %s</title>
 %s    %s
     <script type="application/ld+json">
@@ -1660,6 +1661,7 @@ func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag s
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, follow">
     <title>Tag: %s - %s</title>
 %s    %s
     <script type="application/ld+json">
@@ -1671,7 +1673,7 @@ func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag s
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         :root {
             --primary: #2563eb;
             --primary-dark: #1e40af;

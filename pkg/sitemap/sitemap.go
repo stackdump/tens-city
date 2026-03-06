@@ -44,12 +44,7 @@ func GenerateSitemap(docs []*markdown.Document, baseURL string) ([]byte, error) 
 		Priority:   0.9,
 	})
 
-	// Add tags page
-	urlset.URLs = append(urlset.URLs, URL{
-		Loc:        baseURL + "/tags",
-		ChangeFreq: "weekly",
-		Priority:   0.7,
-	})
+	// Tag pages are noindexed, so omit /tags from sitemap
 
 	// Add search page
 	urlset.URLs = append(urlset.URLs, URL{
@@ -65,38 +60,7 @@ func GenerateSitemap(docs []*markdown.Document, baseURL string) ([]byte, error) 
 		Priority:   0.6,
 	})
 
-	// Collect all unique tags
-	tagSet := make(map[string]struct{})
-	for _, doc := range docs {
-		if doc.Frontmatter.Draft {
-			continue
-		}
-		for _, tag := range doc.Frontmatter.Tags {
-			if tag != "" {
-				tagSet[tag] = struct{}{}
-			}
-		}
-		for _, keyword := range doc.Frontmatter.Keywords {
-			if keyword != "" {
-				tagSet[keyword] = struct{}{}
-			}
-		}
-	}
-
-	// Add tag pages
-	tags := make([]string, 0, len(tagSet))
-	for tag := range tagSet {
-		tags = append(tags, tag)
-	}
-	sort.Strings(tags)
-
-	for _, tag := range tags {
-		urlset.URLs = append(urlset.URLs, URL{
-			Loc:        fmt.Sprintf("%s/tags/%s", baseURL, tag),
-			ChangeFreq: "weekly",
-			Priority:   0.6,
-		})
-	}
+	// Tag pages are noindexed, so omit individual /tags/{tag} from sitemap
 
 	// Add individual blog posts
 	// Sort by date for consistent ordering

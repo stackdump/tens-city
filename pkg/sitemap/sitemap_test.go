@@ -68,8 +68,8 @@ func TestGenerateSitemap(t *testing.T) {
 	if !strings.Contains(xmlStr, "<loc>https://example.com/posts</loc>") {
 		t.Error("Sitemap should include posts page")
 	}
-	if !strings.Contains(xmlStr, "<loc>https://example.com/tags</loc>") {
-		t.Error("Sitemap should include tags page")
+	if strings.Contains(xmlStr, "<loc>https://example.com/tags</loc>") {
+		t.Error("Sitemap should NOT include tags page (noindexed)")
 	}
 	if !strings.Contains(xmlStr, "<loc>https://example.com/rss</loc>") {
 		t.Error("Sitemap should include RSS page")
@@ -86,15 +86,9 @@ func TestGenerateSitemap(t *testing.T) {
 		t.Error("Sitemap should not include draft post")
 	}
 
-	// Check tags
-	if !strings.Contains(xmlStr, "<loc>https://example.com/tags/test</loc>") {
-		t.Error("Sitemap should include test tag")
-	}
-	if !strings.Contains(xmlStr, "<loc>https://example.com/tags/blog</loc>") {
-		t.Error("Sitemap should include blog tag")
-	}
-	if !strings.Contains(xmlStr, "<loc>https://example.com/tags/example</loc>") {
-		t.Error("Sitemap should include example tag from keywords")
+	// Tag pages are noindexed, should NOT be in sitemap
+	if strings.Contains(xmlStr, "<loc>https://example.com/tags/test</loc>") {
+		t.Error("Sitemap should NOT include tag pages (noindexed)")
 	}
 
 	// Check lastmod dates
