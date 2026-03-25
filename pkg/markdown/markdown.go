@@ -95,8 +95,11 @@ func ParseDocumentFromBytes(content []byte, filePath string) (*Document, error) 
 		return nil, fmt.Errorf("failed to render markdown: %w", err)
 	}
 
+	// Convert .mp4 image tags to video elements before sanitization
+	rendered := convertVideoLinks(buf.String())
+
 	// Sanitize HTML
-	sanitized := sanitizeHTML(buf.String())
+	sanitized := sanitizeHTML(rendered)
 
 	return &Document{
 		Frontmatter: fm,
@@ -137,6 +140,25 @@ func ParseIndexDocument(filePath string) (*Document, error) {
 	return doc, nil
 }
 
+// videoImgRegex matches <img> tags where src ends with .mp4
+var videoImgRegex = regexp.MustCompile(`<img\s+src="([^"]+\.mp4)"\s+alt="([^"]*)"\s*/?>`)
+
+// convertVideoLinks replaces <img src="*.mp4" alt="..."> with <video> elements
+func convertVideoLinks(html string) string {
+	return videoImgRegex.ReplaceAllStringFunc(html, func(match string) string {
+		parts := videoImgRegex.FindStringSubmatch(match)
+		if len(parts) < 3 {
+			return match
+		}
+		src, alt := parts[1], parts[2]
+		attrs := `controls playsinline`
+		if alt != "" {
+			attrs += ` title="` + alt + `"`
+		}
+		return fmt.Sprintf(`<video %s><source src="%s" type="video/mp4">%s</video>`, attrs, src, alt)
+	})
+}
+
 // sanitizeHTML sanitizes HTML to prevent XSS attacks
 func sanitizeHTML(html string) string {
 	p := bluemonday.UGCPolicy()
@@ -149,6 +171,12 @@ func sanitizeHTML(html string) string {
 
 	// Allow math elements from goldmark-latex extension (rendered client-side by KaTeX)
 	p.AllowAttrs("class").Matching(regexp.MustCompile(`^math (inline|block)$`)).OnElements("span", "div")
+
+	// Allow video elements (converted from ![alt](*.mp4) markdown links)
+	p.AllowElements("video", "source")
+	p.AllowAttrs("controls", "playsinline", "width", "height", "preload", "poster", "title").OnElements("video")
+	p.AllowAttrs("src").Matching(regexp.MustCompile(`^[a-zA-Z0-9\/_\-\.]+$`)).OnElements("source")
+	p.AllowAttrs("type").Matching(regexp.MustCompile(`^video/`)).OnElements("source")
 
 	// Allow SVG elements for diagrams
 	p.AllowElements("svg", "g", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text", "tspan", "defs", "use", "clipPath", "mask", "title", "desc")
