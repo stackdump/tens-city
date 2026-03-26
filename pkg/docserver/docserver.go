@@ -258,6 +258,7 @@ func (ds *DocServer) HandleContentAsset(w http.ResponseWriter, r *http.Request, 
 		".gif":  "image/gif",
 		".svg":  "image/svg+xml",
 		".webp": "image/webp",
+		".mp4":  "video/mp4",
 	}
 
 	if ct, ok := contentTypes[ext]; ok {
