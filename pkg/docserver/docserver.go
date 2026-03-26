@@ -686,7 +686,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
         pre { background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; }
         pre code { background: none; padding: 0; }
         a { color: #0066cc; }
-        img { max-width: 100%%; height: auto; display: block; margin: 1rem 0; }
+        img, video { max-width: 100%%; height: auto; display: block; margin: 1rem 0; }
         table { border-collapse: collapse; width: 100%%; margin: 1rem 0; }
         th, td { border: 1px solid #ddd; padding: 0.5rem 0.75rem; text-align: left; }
         th { background: #f4f4f4; font-weight: 600; }
