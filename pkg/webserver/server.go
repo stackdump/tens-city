@@ -726,7 +726,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// content assets (images)
 	if s.docServer != nil {
 		ext := strings.ToLower(filepath.Ext(r.URL.Path))
-		if ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".gif" || ext == ".svg" || ext == ".webp" {
+		if ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".gif" || ext == ".svg" || ext == ".webp" || ext == ".mp4" {
 			filename := strings.TrimPrefix(r.URL.Path, "/")
 			s.docServer.HandleContentAsset(w, r, filename)
 			return
