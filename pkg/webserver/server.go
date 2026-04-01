@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"strconv"
 	"io/fs"
 	"log"
 	"net/http"
@@ -798,10 +799,14 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// Pagination: /page/N redirects to /posts?page=N
 		if strings.HasPrefix(r.URL.Path, "/page/") {
 			pageNum := strings.TrimPrefix(r.URL.Path, "/page/")
-			if pageNum == "1" || pageNum == "" {
-				http.Redirect(w, r, "/posts", http.StatusMovedPermanently)
+			if n, err := strconv.Atoi(pageNum); err == nil && n > 0 {
+				if n == 1 {
+					http.Redirect(w, r, "/posts", http.StatusMovedPermanently)
+				} else {
+					http.Redirect(w, r, fmt.Sprintf("/posts?page=%d", n), http.StatusMovedPermanently)
+				}
 			} else {
-				http.Redirect(w, r, "/posts?page="+pageNum, http.StatusMovedPermanently)
+				http.NotFound(w, r)
 			}
 			return
 		}

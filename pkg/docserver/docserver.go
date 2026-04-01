@@ -517,7 +517,8 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 	if ds.indexLimit > 0 && totalPosts > 0 {
 		totalPages = (totalPosts + ds.indexLimit - 1) / ds.indexLimit
 		if page > totalPages {
-			page = totalPages
+			http.NotFound(w, r)
+			return
 		}
 		start := (page - 1) * ds.indexLimit
 		end := start + ds.indexLimit
