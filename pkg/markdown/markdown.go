@@ -49,6 +49,9 @@ type Document struct {
 
 var frontmatterRegex = regexp.MustCompile(`(?s)^---\s*\n(.*?)\n---\s*\n(.*)$`)
 
+// firstImageRegex matches the first markdown image ![alt](src) in content
+var firstImageRegex = regexp.MustCompile(`!\[[^\]]*\]\(([^)]+)\)`)
+
 // ParseDocument parses a markdown file with YAML frontmatter
 func ParseDocument(filePath string) (*Document, error) {
 	content, err := os.ReadFile(filePath)
@@ -77,6 +80,13 @@ func ParseDocumentFromBytes(content []byte, filePath string) (*Document, error) 
 	}
 
 	markdownContent := string(matches[2])
+
+	// Auto-extract first image from markdown content if not set in frontmatter
+	if fm.Image == "" {
+		if imgMatch := firstImageRegex.FindStringSubmatch(markdownContent); len(imgMatch) >= 2 {
+			fm.Image = imgMatch[1]
+		}
+	}
 
 	// Render markdown to HTML
 	var buf bytes.Buffer
