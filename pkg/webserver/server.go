@@ -795,6 +795,16 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			s.docServer.HandleDocList(w, r)
 			return
 		}
+		// Pagination: /page/N redirects to /posts?page=N
+		if strings.HasPrefix(r.URL.Path, "/page/") {
+			pageNum := strings.TrimPrefix(r.URL.Path, "/page/")
+			if pageNum == "1" || pageNum == "" {
+				http.Redirect(w, r, "/posts", http.StatusMovedPermanently)
+			} else {
+				http.Redirect(w, r, "/posts?page="+pageNum, http.StatusMovedPermanently)
+			}
+			return
+		}
 		// Search page
 		if r.URL.Path == "/search" {
 			s.docServer.HandleSearch(w, r)

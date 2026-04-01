@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -475,7 +476,7 @@ func (ds *DocServer) loadIndex() (*CachedIndex, error) {
 	return cached, nil
 }
 
-// HandleDocList handles GET /posts - list all posts
+// HandleDocList handles GET /posts - list all posts with pagination
 func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -501,9 +502,29 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 	// Sort by DatePublished descending (newest first), then by Title ascending
 	markdown.SortDocumentsByDate(publicDocs)
 
-	// Apply limit if specified
-	if ds.indexLimit > 0 && len(publicDocs) > ds.indexLimit {
-		publicDocs = publicDocs[:ds.indexLimit]
+	totalPosts := len(publicDocs)
+
+	// Pagination: parse ?page=N (default 1)
+	page := 1
+	if p := r.URL.Query().Get("page"); p != "" {
+		if parsed, err := strconv.Atoi(p); err == nil && parsed > 0 {
+			page = parsed
+		}
+	}
+
+	// Apply pagination if limit is set
+	totalPages := 1
+	if ds.indexLimit > 0 && totalPosts > 0 {
+		totalPages = (totalPosts + ds.indexLimit - 1) / ds.indexLimit
+		if page > totalPages {
+			page = totalPages
+		}
+		start := (page - 1) * ds.indexLimit
+		end := start + ds.indexLimit
+		if end > totalPosts {
+			end = totalPosts
+		}
+		publicDocs = publicDocs[start:end]
 	}
 
 	// Load cached JSON-LD index
@@ -526,15 +547,38 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 	indexSeoTags := SEOMetaTags("website", "Blog Posts - "+siteName,
 		"Latest blog posts from "+siteName, postsURL, "", siteName, "", "")
 
+	// Build pagination rel links for SEO
+	paginationLinks := ""
+	if totalPages > 1 {
+		if page > 1 {
+			if page == 2 {
+				paginationLinks += fmt.Sprintf(`    <link rel="prev" href="%s/posts">
+`, baseURL)
+			} else {
+				paginationLinks += fmt.Sprintf(`    <link rel="prev" href="%s/posts?page=%d">
+`, baseURL, page-1)
+			}
+		}
+		if page < totalPages {
+			paginationLinks += fmt.Sprintf(`    <link rel="next" href="%s/posts?page=%d">
+`, baseURL, page+1)
+		}
+	}
+
+	titleSuffix := ""
+	if page > 1 {
+		titleSuffix = fmt.Sprintf(" - Page %d", page)
+	}
+
 	fmt.Fprintf(w, `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Blog Posts - %s</title>
+    <title>Blog Posts%s - %s</title>
     %s
 %s    <link rel="alternate" type="application/rss+xml" title="All Posts - %s" href="%s/posts.rss">
-    %s
+%s    %s
     <script type="application/ld+json">
 %s
     </script>
@@ -548,12 +592,16 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
         .doc-item a:hover { text-decoration: underline; }
         .doc-meta { color: #666; font-size: 0.9375rem; }
         .doc-description { margin-top: 0.5rem; }
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 1rem; margin: 2rem 0 1rem; padding: 1rem 0; border-top: 1px solid #ddd; }
+        .pagination a { color: #0066cc; text-decoration: none; padding: 0.5rem 1rem; border: 1px solid #ddd; border-radius: 4px; }
+        .pagination a:hover { background: #f0f0f0; text-decoration: none; }
+        .pagination .page-info { color: #666; font-size: 0.9375rem; }
     </style>
 </head>
 <body>
     <h1>Blog Posts</h1>
     <ul class="doc-list">
-`, siteName, faviconLink, indexSeoTags, siteName, baseURL, GoogleAnalyticsTag(ds.googleAnalyticsID), string(cached.Data))
+`, titleSuffix, siteName, faviconLink, indexSeoTags, siteName, baseURL, paginationLinks, GoogleAnalyticsTag(ds.googleAnalyticsID), string(cached.Data))
 
 	for _, doc := range publicDocs {
 		escapedSlug := html.EscapeString(doc.Frontmatter.Slug)
@@ -575,9 +623,34 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 `, escapedDate)
 	}
 
-	fmt.Fprintf(w, `    </ul>
+	// Render pagination controls
+	if totalPages > 1 {
+		fmt.Fprintf(w, `    </ul>
+    <nav class="pagination" aria-label="Pagination">
+`)
+		if page > 1 {
+			if page == 2 {
+				fmt.Fprintf(w, `        <a href="/posts" rel="prev">&larr; Newer</a>
+`)
+			} else {
+				fmt.Fprintf(w, `        <a href="/posts?page=%d" rel="prev">&larr; Newer</a>
+`, page-1)
+			}
+		}
+		fmt.Fprintf(w, `        <span class="page-info">Page %d of %d</span>
+`, page, totalPages)
+		if page < totalPages {
+			fmt.Fprintf(w, `        <a href="/posts?page=%d" rel="next">Older &rarr;</a>
+`, page+1)
+		}
+		fmt.Fprintf(w, `    </nav>
 </body>
 </html>`)
+	} else {
+		fmt.Fprintf(w, `    </ul>
+</body>
+</html>`)
+	}
 }
 
 // HandleDoc handles GET /posts/:slug - render a single document
