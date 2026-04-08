@@ -18,6 +18,7 @@ import (
 	"github.com/stackdump/tens-city/pkg/activitypub"
 	"github.com/stackdump/tens-city/pkg/docserver"
 	"github.com/stackdump/tens-city/pkg/httputil"
+	"github.com/stackdump/tens-city/pkg/webmention"
 	"github.com/stackdump/tens-city/pkg/markdown"
 	"github.com/stackdump/tens-city/pkg/store"
 )
@@ -63,13 +64,14 @@ type Server struct {
 	docServer         *docserver.DocServer
 	fallbackURL       string             // Fallback Base URL when headers are not available
 	googleAnalyticsID string             // Google Analytics measurement ID (empty = disabled)
-	actor             *activitypub.Actor // ActivityPub actor (nil if federation disabled)
-	contentDir        string             // Content directory for blog posts
+	actor             *activitypub.Actor           // ActivityPub actor (nil if federation disabled)
+	contentDir        string                       // Content directory for blog posts
+	mentionStore      *webmention.MentionStore     // Webmention store (nil if disabled)
 }
 
 // NewServer creates a new Server instance
-func NewServer(storage Storage, publicFS fs.FS, docServer *docserver.DocServer, fallbackURL string, googleAnalyticsID string, actor *activitypub.Actor, contentDir string) *Server {
-	return &Server{
+func NewServer(storage Storage, publicFS fs.FS, docServer *docserver.DocServer, fallbackURL string, googleAnalyticsID string, actor *activitypub.Actor, contentDir string, mentionStore ...*webmention.MentionStore) *Server {
+	s := &Server{
 		storage:           storage,
 		publicFS:          publicFS,
 		docServer:         docServer,
@@ -78,6 +80,10 @@ func NewServer(storage Storage, publicFS fs.FS, docServer *docserver.DocServer, 
 		actor:             actor,
 		contentDir:        contentDir,
 	}
+	if len(mentionStore) > 0 {
+		s.mentionStore = mentionStore[0]
+	}
+	return s
 }
 
 // Handler for /o/{cid} - get object by CID
@@ -642,11 +648,17 @@ func (s *Server) handlePublish(w http.ResponseWriter, r *http.Request) {
 					http.Error(w, fmt.Sprintf("Failed to publish: %v", err), http.StatusInternalServerError)
 					return
 				}
+				// Send webmentions for outbound links
+				var wmResults []webmention.SendResult
+				if s.mentionStore != nil && post.Content != "" {
+					wmResults = s.mentionStore.SendMentions(post.ID, post.Content)
+				}
 				w.Header().Set("Content-Type", "application/json")
 				json.NewEncoder(w).Encode(map[string]interface{}{
-					"message": fmt.Sprintf("Published: %s", post.Title),
-					"post":    post.Slug,
-					"results": results,
+					"message":      fmt.Sprintf("Published: %s", post.Title),
+					"post":         post.Slug,
+					"results":      results,
+					"webmentions":  wmResults,
 				})
 				return
 			}
@@ -763,6 +775,24 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		s.actor.HandleNodeInfo(w, r, postCount)
+		return
+	}
+
+	// Webmention endpoint
+	if r.URL.Path == "/webmention" && s.mentionStore != nil {
+		s.mentionStore.HandleWebmention(w, r)
+		return
+	}
+
+	// Webmention API (for frontend display)
+	if strings.HasPrefix(r.URL.Path, "/api/webmentions/") && s.mentionStore != nil {
+		slug := strings.TrimPrefix(r.URL.Path, "/api/webmentions/")
+		mentions := s.mentionStore.GetVerifiedMentions(slug)
+		w.Header().Set("Content-Type", "application/json")
+		if mentions == nil {
+			mentions = []webmention.Webmention{}
+		}
+		json.NewEncoder(w).Encode(mentions)
 		return
 	}
 

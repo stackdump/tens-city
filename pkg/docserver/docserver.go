@@ -729,6 +729,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 	userName := extractGitHubUsername(authorURL)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Link", fmt.Sprintf("<%s/webmention>; rel=\"webmention\"", baseURL))
 
 	// Check for favicon
 	faviconLink := ""
@@ -765,6 +766,9 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
     <link rel="alternate" type="application/rss+xml" title="%s's Posts" href="%s/u/%s/posts.rss">`,
 			escapedUserName, baseURL, escapedUserName)
 	}
+
+	fmt.Fprintf(w, `
+    <link rel="webmention" href="%s/webmention">`, baseURL)
 
 	fmt.Fprintf(w, `
     <script type="application/ld+json">
@@ -986,8 +990,36 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
             });
         })();
     </script>
+    <webmention-list data-slug="%s"></webmention-list>
+    <script>
+        class WebmentionList extends HTMLElement {
+            connectedCallback() {
+                const slug = this.dataset.slug;
+                if (!slug) return;
+                fetch('/api/webmentions/' + slug)
+                    .then(r => r.json())
+                    .then(mentions => {
+                        if (!mentions || mentions.length === 0) return;
+                        let html = '<div style="margin-top:2rem;padding-top:1rem;border-top:1px solid #eee"><h3>Mentions</h3><ul style="list-style:none;padding:0">';
+                        mentions.forEach(m => {
+                            const author = m.author_name || new URL(m.source).hostname;
+                            const link = m.author_url || m.source;
+                            html += '<li style="margin:0.5rem 0"><a href="' + link + '">' + author + '</a>';
+                            if (m.content) html += ': ' + m.content;
+                            html += '</li>';
+                        });
+                        html += '</ul></div>';
+                        this.innerHTML = html;
+                    })
+                    .catch(() => {});
+            }
+        }
+        if (!customElements.get('webmention-list')) {
+            customElements.define('webmention-list', WebmentionList);
+        }
+    </script>
 </body>
-</html>`)
+</html>`, doc.Frontmatter.Slug)
 }
 
 // HandleDocJSONLD handles GET /posts/:slug.jsonld - return JSON-LD only
