@@ -23,7 +23,8 @@ import (
 
 // SEOMetaTags generates meta description, Open Graph, Twitter Card, and canonical URL tags.
 // pageType should be "article" for posts or "website" for index/listing pages.
-func SEOMetaTags(pageType, title, description, canonicalURL, image, siteName string, publishedTime, modifiedTime string) string {
+// videoURL is optional; when non-empty, og:video tags are included.
+func SEOMetaTags(pageType, title, description, canonicalURL, image, siteName string, publishedTime, modifiedTime string, videoURL ...string) string {
 	if description == "" && title != "" {
 		description = title
 	}
@@ -76,6 +77,14 @@ func SEOMetaTags(pageType, title, description, canonicalURL, image, siteName str
 	if escapedImage != "" {
 		fmt.Fprintf(&b, `    <meta property="og:image" content="%s">
 `, escapedImage)
+	}
+
+	// Video OG tags
+	if len(videoURL) > 0 && videoURL[0] != "" {
+		escapedVideo := html.EscapeString(videoURL[0])
+		fmt.Fprintf(&b, `    <meta property="og:video" content="%s">
+    <meta property="og:video:type" content="video/mp4">
+`, escapedVideo)
 	}
 
 	// Article-specific OG tags
@@ -728,9 +737,17 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 	}
 
 	postURL := fmt.Sprintf("%s/posts/%s", baseURL, html.EscapeString(doc.Frontmatter.Slug))
+	// Extract first video URL for og:video meta tag
+	videoOG := ""
+	if videoURLs := doc.ExtractVideoURLs(); len(videoURLs) > 0 {
+		videoOG = videoURLs[0]
+		if !strings.HasPrefix(videoOG, "http") {
+			videoOG = baseURL + videoOG
+		}
+	}
 	seoTags := SEOMetaTags("article", doc.Frontmatter.Title, doc.Frontmatter.Description,
 		postURL, doc.Frontmatter.Image, ds.getSiteName(),
-		doc.Frontmatter.DatePublished, doc.Frontmatter.DateModified)
+		doc.Frontmatter.DatePublished, doc.Frontmatter.DateModified, videoOG)
 
 	fmt.Fprintf(w, `<!DOCTYPE html>
 <html lang="%s">

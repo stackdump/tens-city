@@ -106,7 +106,7 @@ func ParseDocumentFromBytes(content []byte, filePath string) (*Document, error) 
 	}
 
 	// Convert .mp4 image tags to video elements before sanitization
-	rendered := convertVideoLinks(buf.String())
+	rendered := convertVideoLinks(buf.String(), fm.Image)
 
 	// Sanitize HTML
 	sanitized := sanitizeHTML(rendered)
@@ -153,20 +153,39 @@ func ParseIndexDocument(filePath string) (*Document, error) {
 // videoImgRegex matches <img> tags where src ends with .mp4
 var videoImgRegex = regexp.MustCompile(`<img\s+src="([^"]+\.mp4)"\s+alt="([^"]*)"\s*/?>`)
 
-// convertVideoLinks replaces <img src="*.mp4" alt="..."> with <video> elements
-func convertVideoLinks(html string) string {
-	return videoImgRegex.ReplaceAllStringFunc(html, func(match string) string {
+// convertVideoLinks replaces <img src="*.mp4" alt="..."> with <video> elements.
+// If posterURL is non-empty, a poster attribute is added for thumbnail display.
+func convertVideoLinks(htmlStr string, posterURL string) string {
+	return videoImgRegex.ReplaceAllStringFunc(htmlStr, func(match string) string {
 		parts := videoImgRegex.FindStringSubmatch(match)
 		if len(parts) < 3 {
 			return match
 		}
 		src, alt := parts[1], parts[2]
 		attrs := `controls playsinline`
+		if posterURL != "" {
+			attrs += ` poster="` + posterURL + `"`
+		}
 		if alt != "" {
 			attrs += ` title="` + alt + `"`
 		}
 		return fmt.Sprintf(`<video %s><source src="%s" type="video/mp4">%s</video>`, attrs, src, alt)
 	})
+}
+
+// videoSrcRegex matches <source src="...mp4"> inside video tags in rendered HTML
+var videoSrcRegex = regexp.MustCompile(`<source\s+src="([^"]+\.mp4)"`)
+
+// ExtractVideoURLs returns all .mp4 URLs found in the document's rendered HTML
+func (d *Document) ExtractVideoURLs() []string {
+	matches := videoSrcRegex.FindAllStringSubmatch(d.HTML, -1)
+	urls := make([]string, 0, len(matches))
+	for _, m := range matches {
+		if len(m) >= 2 {
+			urls = append(urls, m[1])
+		}
+	}
+	return urls
 }
 
 // sanitizeHTML sanitizes HTML to prevent XSS attacks
@@ -271,6 +290,38 @@ func (d *Document) ToJSONLD(baseURL string) map[string]interface{} {
 			"@type": "CollectionPage",
 			"name":  fm.Collection,
 		}
+	}
+
+	// Add VideoObject for posts that embed .mp4 videos
+	videoURLs := d.ExtractVideoURLs()
+	if len(videoURLs) > 0 {
+		// Make video URLs absolute
+		for i, v := range videoURLs {
+			if !strings.HasPrefix(v, "http") && baseURL != "" {
+				videoURLs[i] = baseURL + v
+			}
+		}
+		video := map[string]interface{}{
+			"@type":      "VideoObject",
+			"contentUrl": videoURLs[0],
+		}
+		if fm.Title != "" {
+			video["name"] = fm.Title
+		}
+		if fm.Description != "" {
+			video["description"] = fm.Description
+		}
+		if fm.DatePublished != "" {
+			video["uploadDate"] = fm.DatePublished
+		}
+		if fm.Image != "" {
+			thumb := fm.Image
+			if !strings.HasPrefix(thumb, "http") && baseURL != "" {
+				thumb = baseURL + thumb
+			}
+			video["thumbnailUrl"] = thumb
+		}
+		jsonld["video"] = video
 	}
 
 	return jsonld
