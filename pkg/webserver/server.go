@@ -668,17 +668,35 @@ func (s *Server) handlePublish(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Publish all new posts
-	count, err := s.actor.PublishNewPosts(posts)
+	newlyPublished, err := s.actor.PublishNewPosts(posts)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to publish: %v", err), http.StatusInternalServerError)
 		return
 	}
 
+	// Send webmentions for outbound links on each newly-published post.
+	// Targets without a webmention endpoint are silently skipped by the sender.
+	webmentionsSent := 0
+	if s.mentionStore != nil {
+		for _, post := range newlyPublished {
+			if post.Content == "" {
+				continue
+			}
+			results := s.mentionStore.SendMentions(post.ID, post.Content)
+			for _, r := range results {
+				if r.Success {
+					webmentionsSent++
+				}
+			}
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message":   "Publish complete",
-		"published": count,
-		"total":     len(posts),
+		"message":     "Publish complete",
+		"published":   len(newlyPublished),
+		"total":       len(posts),
+		"webmentions": webmentionsSent,
 	})
 }
 

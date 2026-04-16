@@ -106,9 +106,10 @@ func (a *Actor) PublishPost(post BlogPost) ([]PublishResult, error) {
 }
 
 // PublishNewPosts checks for posts that haven't been published yet and publishes them.
-// Returns the number of posts published.
-func (a *Actor) PublishNewPosts(posts []BlogPost) (int, error) {
-	published := 0
+// Returns the posts that were newly published (callers may use this list to trigger
+// webmention sends or other side-effects tied to first publication).
+func (a *Actor) PublishNewPosts(posts []BlogPost) ([]BlogPost, error) {
+	var newlyPublished []BlogPost
 	for _, post := range posts {
 		if !a.isPostPublished(post.ID) {
 			results, err := a.PublishPost(post)
@@ -116,13 +117,12 @@ func (a *Actor) PublishNewPosts(posts []BlogPost) (int, error) {
 				log.Printf("Error publishing post %s: %v", post.Title, err)
 				continue
 			}
-			// Count as published if we attempted delivery (even if no followers)
 			if results != nil || len(a.loadFollowers()) == 0 {
-				published++
+				newlyPublished = append(newlyPublished, post)
 			}
 		}
 	}
-	return published, nil
+	return newlyPublished, nil
 }
 
 // publishedFilePath returns the path to the published posts tracking file
