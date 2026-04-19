@@ -253,8 +253,15 @@ func (ds *DocServer) HandleContentAsset(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	data, err := os.ReadFile(assetPath)
+	f, err := os.Open(assetPath)
 	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	defer f.Close()
+
+	stat, err := f.Stat()
+	if err != nil || stat.IsDir() {
 		http.NotFound(w, r)
 		return
 	}
@@ -275,7 +282,9 @@ func (ds *DocServer) HandleContentAsset(w http.ResponseWriter, r *http.Request, 
 		w.Header().Set("Content-Type", ct)
 	}
 	w.Header().Set("Cache-Control", "public, max-age=86400")
-	w.Write(data)
+	// Use ServeContent so HTTP Range requests work — iOS Safari requires
+	// 206 Partial Content responses to play <video> sources.
+	http.ServeContent(w, r, filename, stat.ModTime(), f)
 }
 
 // loadDocument loads and caches a document
