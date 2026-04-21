@@ -276,7 +276,15 @@ func (d *Document) ToJSONLD(baseURL string) map[string]interface{} {
 	}
 
 	if fm.Image != "" {
-		jsonld["image"] = fm.Image
+		// Absolute image URL — Google Search Console's Article/VideoObject
+		// indexing prefers absolute URLs; relative ones silently drop out
+		// of the "thumbnail provided" check. Matches what we already do
+		// for VideoObject.thumbnailUrl below.
+		img := fm.Image
+		if !strings.HasPrefix(img, "http") && baseURL != "" {
+			img = baseURL + img
+		}
+		jsonld["image"] = img
 	}
 
 	if len(fm.Keywords) > 0 {
