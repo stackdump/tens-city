@@ -37,6 +37,19 @@ type Frontmatter struct {
 	Keywords      []string    `yaml:"keywords,omitempty" json:"keywords,omitempty"`
 	Icon          string      `yaml:"icon,omitempty" json:"icon,omitempty"`
 	SameAs        []string    `yaml:"sameAs,omitempty" json:"sameAs,omitempty"`
+	Citations     []Citation  `yaml:"citations,omitempty" json:"citations,omitempty"`
+}
+
+// Citation describes an external work referenced by a post. Maps to
+// schema.org CreativeWork in JSON-LD output and to h-cite microformats
+// when rendered inline. All fields except URL are optional.
+type Citation struct {
+	URL           string `yaml:"url" json:"url"`
+	Name          string `yaml:"name,omitempty" json:"name,omitempty"`
+	Author        string `yaml:"author,omitempty" json:"author,omitempty"`
+	Publisher     string `yaml:"publisher,omitempty" json:"publisher,omitempty"`
+	DatePublished string `yaml:"datePublished,omitempty" json:"datePublished,omitempty"`
+	InReplyTo     bool   `yaml:"inReplyTo,omitempty" json:"inReplyTo,omitempty"`
 }
 
 // Document represents a parsed markdown document
@@ -330,6 +343,35 @@ func (d *Document) ToJSONLD(baseURL string) map[string]interface{} {
 			video["thumbnailUrl"] = thumb
 		}
 		jsonld["video"] = video
+	}
+
+	if len(fm.Citations) > 0 {
+		citations := make([]map[string]interface{}, 0, len(fm.Citations))
+		for _, c := range fm.Citations {
+			if c.URL == "" {
+				continue
+			}
+			cw := map[string]interface{}{
+				"@type": "CreativeWork",
+				"url":   c.URL,
+			}
+			if c.Name != "" {
+				cw["name"] = c.Name
+			}
+			if c.Author != "" {
+				cw["author"] = map[string]interface{}{"@type": "Person", "name": c.Author}
+			}
+			if c.Publisher != "" {
+				cw["publisher"] = map[string]interface{}{"@type": "Organization", "name": c.Publisher}
+			}
+			if c.DatePublished != "" {
+				cw["datePublished"] = c.DatePublished
+			}
+			citations = append(citations, cw)
+		}
+		if len(citations) > 0 {
+			jsonld["citation"] = citations
+		}
 	}
 
 	return jsonld
