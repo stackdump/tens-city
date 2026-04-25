@@ -240,7 +240,7 @@ func sanitizeHTML(html string) string {
 	// inline elements so posts can carry h-cite / u-in-reply-to / p-author
 	// markup that IndieWeb crawlers parse. Pattern restricts class names
 	// to the microformats2 vocabulary plus letters/digits/hyphens.
-	mfClassPattern := regexp.MustCompile(`^([hpude]-[a-z0-9\-]+)(\s+([hpude]-[a-z0-9\-]+))*$`)
+	mfClassPattern := regexp.MustCompile(`^((h|p|u|dt|e)-[a-z0-9\-]+)(\s+((h|p|u|dt|e)-[a-z0-9\-]+))*$`)
 	p.AllowAttrs("class").Matching(mfClassPattern).OnElements("span", "a", "div", "cite", "time", "p", "article", "section", "blockquote", "li", "ul", "ol")
 	p.AllowElements("time")
 	p.AllowAttrs("datetime").OnElements("time")
