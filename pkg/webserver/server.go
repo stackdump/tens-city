@@ -307,6 +307,18 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 `, escapedTitle, baseURL)
 		htmlContent = strings.Replace(htmlContent, "</head>", rssLink+"</head>", 1)
 
+		// Inject optional footer links (opt-in per site; none on the generic platform).
+		// Done by string-replace so the generic index.html template stays unchanged.
+		if links := s.docServer.FooterLinks(); len(links) > 0 {
+			var fb strings.Builder
+			for _, link := range links {
+				fmt.Fprintf(&fb, `<a href="%s" target="_blank">%s</a> &bull; `,
+					html.EscapeString(link.URL), html.EscapeString(link.Label))
+			}
+			anchor := `Built with <a href="https://github.com/stackdump/tens-city"`
+			htmlContent = strings.Replace(htmlContent, anchor, fb.String()+anchor, 1)
+		}
+
 		// Add Google Analytics tag if configured
 		if s.googleAnalyticsID != "" {
 			gaTag := docserver.GoogleAnalyticsTag(s.googleAnalyticsID) + "\n"

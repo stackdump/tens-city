@@ -145,7 +145,26 @@ type DocServer struct {
 	indexLimit        int    // Maximum number of items to show in index (0 = no limit)
 	googleAnalyticsID string // Google Analytics measurement ID (empty = disabled)
 	fediHandle        string // Fediverse handle (e.g., "@user@domain.com") for follow button
+	footerLinks       []FooterLink // Optional extra footer links (empty = none; opt-in per site)
 	cache             *DocumentCache
+}
+
+// FooterLink is an optional extra link rendered in the page footer.
+// The generic platform configures none, so default deployments show nothing
+// extra; a consumer opts in via SetFooterLinks (e.g. a link to a companion site).
+type FooterLink struct {
+	Label string
+	URL   string
+}
+
+// SetFooterLinks configures extra footer links shown on the index and post pages.
+func (ds *DocServer) SetFooterLinks(links []FooterLink) {
+	ds.footerLinks = links
+}
+
+// FooterLinks returns the configured extra footer links (nil if none).
+func (ds *DocServer) FooterLinks() []FooterLink {
+	return ds.footerLinks
 }
 
 // DocumentCache caches rendered documents
@@ -860,6 +879,14 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
             <span>•</span>
             <a href="/posts">All Posts</a>`,
 		doc.HTML)
+
+	// Optional extra footer links (opt-in per site; none on the generic platform)
+	for _, link := range ds.footerLinks {
+		fmt.Fprintf(w, `
+            <span>•</span>
+            <a href="%s" target="_blank">%s</a>`,
+			html.EscapeString(link.URL), html.EscapeString(link.Label))
+	}
 
 	// Add edit link (will be shown/hidden by JavaScript based on authorship)
 	escapedAuthorURL := html.EscapeString(authorURL)
