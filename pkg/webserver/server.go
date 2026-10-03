@@ -486,6 +486,11 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 			// Insert the script tag in the <head> section, before </head>
 			htmlContent = strings.Replace(htmlContent, "</head>", jsonldScript+"</head>", 1)
+
+			// List the latest posts for clients without JavaScript, from the same index
+			if noscript := renderNoscriptPosts(indexData, noscriptPostLimit); noscript != "" {
+				htmlContent = strings.Replace(htmlContent, postsPlaceholder, postsPlaceholder+noscript, 1)
+			}
 		}
 	}
 
