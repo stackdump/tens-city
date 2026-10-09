@@ -1558,3 +1558,86 @@ This is a published article.
 		}
 	})
 }
+
+// TestAuthorIdentityOnAllHTMLPages checks the opt-in author identity tags
+// (<meta name="author"> and <link rel="me">) on every HTML page type served through
+// the full handler, including the home page, and that nothing is emitted by default.
+func TestAuthorIdentityOnAllHTMLPages(t *testing.T) {
+	publicFS, err := static.Public()
+	if err != nil {
+		t.Fatalf("Failed to get public filesystem: %v", err)
+	}
+
+	contentDir := filepath.Join(t.TempDir(), "posts")
+	if err := os.MkdirAll(contentDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	testPost := `---
+title: Test Post
+description: A test blog post
+datePublished: 2025-11-03T00:00:00Z
+author:
+  name: Test Author
+  type: Person
+  url: https://github.com/testauthor
+tags:
+  - test
+lang: en
+slug: test-post
+draft: false
+---
+
+# Test Post
+
+This is a test post.
+`
+	if err := os.WriteFile(filepath.Join(contentDir, "test-post.md"), []byte(testPost), 0644); err != nil {
+		t.Fatalf("Failed to create test post: %v", err)
+	}
+
+	newServer := func(configure bool) *webserver.Server {
+		ds := docserver.NewDocServer(contentDir, "http://localhost:8080", 0, "", "")
+		if configure {
+			ds.SetAuthorIdentity("Test Author", []string{"https://github.com/testauthor"})
+		}
+		return webserver.NewServer(webserver.NewFSStorage(t.TempDir()), publicFS, ds, "http://localhost:8080", "", nil, contentDir)
+	}
+
+	const block = `    <meta name="author" content="Test Author">
+    <link rel="me" href="https://github.com/testauthor">
+`
+	paths := []string{"/", "/posts", "/posts/test-post", "/rss", "/tags", "/tags/test", "/search"}
+
+	configured := newServer(true)
+	plain := newServer(false)
+	for _, path := range paths {
+		t.Run(path, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			configured.ServeHTTP(w, httptest.NewRequest("GET", path, nil))
+			if w.Code != http.StatusOK {
+				t.Fatalf("Expected status 200, got %d", w.Code)
+			}
+			body := w.Body.String()
+			head := body[:strings.Index(body, "</head>")]
+			if n := strings.Count(head, block); n != 1 {
+				t.Errorf("Expected author identity block once in <head>, found %d times", n)
+			}
+			if n := strings.Count(body, `name="author"`) + strings.Count(body, `rel="me"`); n != 2 {
+				t.Errorf("Expected exactly 2 author/rel=me tags, found %d", n)
+			}
+
+			w = httptest.NewRecorder()
+			plain.ServeHTTP(w, httptest.NewRequest("GET", path, nil))
+			if b := w.Body.String(); strings.Contains(b, `name="author"`) || strings.Contains(b, `rel="me"`) {
+				t.Error("Expected no author identity tags when none are configured")
+			}
+		})
+	}
+
+	// On the home page the block still follows the meta description
+	w := httptest.NewRecorder()
+	configured.ServeHTTP(w, httptest.NewRequest("GET", "/", nil))
+	if !strings.Contains(w.Body.String(), `<meta name="description" content="Simple, elegant blog platform built on content-addressable storage">`+"\n"+block) {
+		t.Error("Expected author identity block directly after the home page meta description")
+	}
+}

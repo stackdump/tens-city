@@ -1544,3 +1544,153 @@ This is a test post.
 		t.Error("Expected HTML to contain early return for missing editLink")
 	}
 }
+
+func TestAuthorIdentityTags(t *testing.T) {
+	got := AuthorIdentityTags("Test Author", []string{"https://github.com/testauthor", "https://example.com/me?a=1&b=2"})
+	want := `    <meta name="author" content="Test Author">
+    <link rel="me" href="https://github.com/testauthor">
+    <link rel="me" href="https://example.com/me?a=1&amp;b=2">
+`
+	if got != want {
+		t.Errorf("AuthorIdentityTags mismatch\n got: %q\nwant: %q", got, want)
+	}
+
+	// Values are escaped
+	if got := AuthorIdentityTags(`A "quoted" <name>`, nil); !strings.Contains(got, `content="A &#34;quoted&#34; &lt;name&gt;"`) {
+		t.Errorf("Expected escaped author name, got %q", got)
+	}
+
+	// Empty values are skipped; nothing configured means nothing emitted
+	if got := AuthorIdentityTags("", nil); got != "" {
+		t.Errorf("Expected no tags when unconfigured, got %q", got)
+	}
+	if got := AuthorIdentityTags("", []string{""}); got != "" {
+		t.Errorf("Expected empty links to be skipped, got %q", got)
+	}
+	if got := AuthorIdentityTags("Test Author", nil); got != "    <meta name=\"author\" content=\"Test Author\">\n" {
+		t.Errorf("Expected only the author meta tag, got %q", got)
+	}
+}
+
+func TestSEOTags_AuthorIdentity(t *testing.T) {
+	ds := NewDocServer(t.TempDir(), "https://test.example.com", 0, "", "")
+	plain := SEOMetaTags("website", "Title", "Desc", "https://test.example.com/", "", "Site", "", "")
+
+	// Unconfigured: byte-identical to SEOMetaTags, so other tens-city instances are unaffected
+	if got := ds.SEOTags("website", "Title", "Desc", "https://test.example.com/", "", "Site", "", ""); got != plain {
+		t.Errorf("Expected SEOTags to equal SEOMetaTags when no author identity is configured\n got: %q\nwant: %q", got, plain)
+	}
+
+	ds.SetAuthorIdentity("Test Author", []string{"https://github.com/testauthor"})
+	got := ds.SEOTags("website", "Title", "Desc", "https://test.example.com/", "", "Site", "", "")
+
+	// Placed directly after the meta description, everything else unchanged
+	wantPrefix := `    <meta name="description" content="Desc">
+    <meta name="author" content="Test Author">
+    <link rel="me" href="https://github.com/testauthor">
+    <link rel="canonical" href="https://test.example.com/">
+`
+	if !strings.HasPrefix(got, wantPrefix) {
+		t.Errorf("Expected author tags directly after the description, got:\n%s", got)
+	}
+	if stripped := strings.Replace(got, ds.AuthorIdentityTags(), "", 1); stripped != plain {
+		t.Errorf("Expected only the author tags to be added\n got: %q\nwant: %q", stripped, plain)
+	}
+
+	// No description at all: tags are still emitted (right after <title> in the page templates)
+	if got := ds.SEOTags("website", "", "", "", "", "", "", ""); !strings.HasPrefix(got, ds.AuthorIdentityTags()) {
+		t.Errorf("Expected author tags first when there is no description, got:\n%s", got)
+	}
+}
+
+// headOf returns the part of an HTML response before </head>.
+func headOf(t *testing.T, body string) string {
+	t.Helper()
+	i := strings.Index(body, "</head>")
+	if i < 0 {
+		t.Fatalf("response has no </head>:\n%.200s", body)
+	}
+	return body[:i]
+}
+
+func TestAuthorIdentity_AllHTMLPages(t *testing.T) {
+	contentDir := filepath.Join(t.TempDir(), "posts")
+	if err := os.MkdirAll(contentDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	post := `---
+title: Test Post
+description: A test post
+datePublished: 2025-11-15T10:00:00Z
+author:
+  name: TestUser
+  type: Person
+  url: https://github.com/testuser
+tags:
+  - golang
+lang: en
+slug: test-post
+---
+
+# Test Content
+`
+	if err := os.WriteFile(filepath.Join(contentDir, "test.md"), []byte(post), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	pages := []struct {
+		name   string
+		path   string
+		handle func(ds *DocServer, w http.ResponseWriter, r *http.Request)
+	}{
+		{"posts list", "/posts", func(ds *DocServer, w http.ResponseWriter, r *http.Request) { ds.HandleDocList(w, r) }},
+		{"post", "/posts/test-post", func(ds *DocServer, w http.ResponseWriter, r *http.Request) { ds.HandleDoc(w, r, "test-post") }},
+		{"rss list", "/rss", func(ds *DocServer, w http.ResponseWriter, r *http.Request) { ds.HandleRSSList(w, r) }},
+		{"tags", "/tags", func(ds *DocServer, w http.ResponseWriter, r *http.Request) { ds.HandleTagsPage(w, r) }},
+		{"tag", "/tags/golang", func(ds *DocServer, w http.ResponseWriter, r *http.Request) { ds.HandleTagPage(w, r, "golang") }},
+		{"search", "/search", func(ds *DocServer, w http.ResponseWriter, r *http.Request) { ds.HandleSearch(w, r) }},
+	}
+
+	const block = `    <meta name="author" content="Test Author">
+    <link rel="me" href="https://github.com/testauthor">
+`
+
+	for _, p := range pages {
+		t.Run(p.name, func(t *testing.T) {
+			// Configured: the block appears exactly once, in the head, right after the
+			// description (or after <title> on the page that has no description)
+			ds := NewDocServer(contentDir, "https://test.example.com", 0, "", "")
+			ds.SetAuthorIdentity("Test Author", []string{"https://github.com/testauthor"})
+			rec := httptest.NewRecorder()
+			p.handle(ds, rec, httptest.NewRequest(http.MethodGet, p.path, nil))
+			if rec.Code != http.StatusOK {
+				t.Fatalf("Expected status 200, got %d", rec.Code)
+			}
+			body := rec.Body.String()
+			if n := strings.Count(body, block); n != 1 {
+				t.Fatalf("Expected author identity block once, found %d times", n)
+			}
+			if n := strings.Count(body, `name="author"`) + strings.Count(body, `rel="me"`); n != 2 {
+				t.Errorf("Expected exactly 2 author/rel=me tags, found %d", n)
+			}
+			head := headOf(t, body)
+			at := strings.Index(head, block)
+			if at < 0 {
+				t.Fatal("Author identity block is not in <head>")
+			}
+			prev := strings.TrimRight(head[:at], "\n")
+			prev = prev[strings.LastIndex(prev, "\n")+1:]
+			if !strings.HasPrefix(strings.TrimSpace(prev), `<meta name="description"`) && !strings.HasPrefix(strings.TrimSpace(prev), "<title>") {
+				t.Errorf("Expected block directly after the description or <title>, found %q before it", prev)
+			}
+
+			// Unconfigured: nothing is emitted
+			plain := NewDocServer(contentDir, "https://test.example.com", 0, "", "")
+			rec = httptest.NewRecorder()
+			p.handle(plain, rec, httptest.NewRequest(http.MethodGet, p.path, nil))
+			if b := rec.Body.String(); strings.Contains(b, `name="author"`) || strings.Contains(b, `rel="me"`) {
+				t.Error("Expected no author identity tags when none are configured")
+			}
+		})
+	}
+}
