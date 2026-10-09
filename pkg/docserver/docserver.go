@@ -122,6 +122,45 @@ func SEOMetaTags(pageType, title, description, canonicalURL, image, siteName str
 	return b.String()
 }
 
+// AuthorIdentityTags generates the author identity tags for a page head: a
+// <meta name="author"> tag for name and one <link rel="me"> tag per URL in me.
+// Empty values are skipped, so with no name and no links it returns an empty string.
+func AuthorIdentityTags(name string, me []string) string {
+	var b strings.Builder
+	if name != "" {
+		fmt.Fprintf(&b, `    <meta name="author" content="%s">
+`, html.EscapeString(name))
+	}
+	for _, href := range me {
+		if href == "" {
+			continue
+		}
+		fmt.Fprintf(&b, `    <link rel="me" href="%s">
+`, html.EscapeString(href))
+	}
+	return b.String()
+}
+
+// insertAfterDescription places extra directly after the <meta name="description">
+// line of tags (the first line SEOMetaTags emits). When tags has no description
+// line, extra is prepended, which keeps it right after the page <title>.
+func insertAfterDescription(tags, extra string) string {
+	if extra == "" {
+		return tags
+	}
+	const marker = `<meta name="description"`
+	i := strings.Index(tags, marker)
+	if i < 0 {
+		return extra + tags
+	}
+	end := strings.Index(tags[i:], "\n")
+	if end < 0 {
+		return tags + "\n" + extra
+	}
+	end += i + 1
+	return tags[:end] + extra + tags[end:]
+}
+
 // GoogleAnalyticsTag returns the Google Analytics tracking code for the given ID.
 // Returns empty string if id is empty.
 func GoogleAnalyticsTag(id string) string {
@@ -146,6 +185,8 @@ type DocServer struct {
 	googleAnalyticsID string // Google Analytics measurement ID (empty = disabled)
 	fediHandle        string // Fediverse handle (e.g., "@user@domain.com") for follow button
 	footerLinks       []FooterLink // Optional extra footer links (empty = none; opt-in per site)
+	authorName        string       // Optional <meta name="author"> content (empty = none; opt-in per site)
+	authorMe          []string     // Optional <link rel="me"> identity URLs (empty = none; opt-in per site)
 	cache             *DocumentCache
 }
 
@@ -165,6 +206,30 @@ func (ds *DocServer) SetFooterLinks(links []FooterLink) {
 // FooterLinks returns the configured extra footer links (nil if none).
 func (ds *DocServer) FooterLinks() []FooterLink {
 	return ds.footerLinks
+}
+
+// SetAuthorIdentity configures the author identity emitted in the <head> of every
+// HTML page: <meta name="author"> for name and a <link rel="me"> for each URL in me.
+// The generic platform configures none, so default deployments emit nothing extra;
+// a consumer opts in per site (the author is the site owner, not a post's byline).
+func (ds *DocServer) SetAuthorIdentity(name string, me []string) {
+	ds.authorName = name
+	ds.authorMe = me
+}
+
+// AuthorIdentityTags returns the configured author identity tags, ready to place in
+// a page head (empty string if none are configured).
+func (ds *DocServer) AuthorIdentityTags() string {
+	return AuthorIdentityTags(ds.authorName, ds.authorMe)
+}
+
+// SEOTags is SEOMetaTags plus the site's configured author identity tags, placed
+// directly after the meta description. Without SetAuthorIdentity it returns exactly
+// what SEOMetaTags returns.
+func (ds *DocServer) SEOTags(pageType, title, description, canonicalURL, image, siteName string, publishedTime, modifiedTime string, videoURL ...string) string {
+	return insertAfterDescription(
+		SEOMetaTags(pageType, title, description, canonicalURL, image, siteName, publishedTime, modifiedTime, videoURL...),
+		ds.AuthorIdentityTags())
 }
 
 // DocumentCache caches rendered documents
@@ -582,7 +647,7 @@ func (ds *DocServer) HandleDocList(w http.ResponseWriter, r *http.Request) {
 
 	siteName := ds.getSiteName()
 	postsURL := fmt.Sprintf("%s/posts", baseURL)
-	indexSeoTags := SEOMetaTags("website", "Blog Posts - "+siteName,
+	indexSeoTags := ds.SEOTags("website", "Blog Posts - "+siteName,
 		"Latest blog posts from "+siteName, postsURL, "", siteName, "", "")
 
 	// Build pagination rel links for SEO
@@ -774,7 +839,7 @@ func (ds *DocServer) HandleDoc(w http.ResponseWriter, r *http.Request, slug stri
 			videoOG = baseURL + videoOG
 		}
 	}
-	seoTags := SEOMetaTags("article", doc.Frontmatter.Title, doc.Frontmatter.Description,
+	seoTags := ds.SEOTags("article", doc.Frontmatter.Title, doc.Frontmatter.Description,
 		postURL, doc.Frontmatter.Image, ds.getSiteName(),
 		doc.Frontmatter.DatePublished, doc.Frontmatter.DateModified, videoOG)
 
@@ -1276,7 +1341,7 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>RSS Feeds - %s</title>
-    %s
+%s    %s
     <style>
         body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
         h1 { color: #333; margin-bottom: 1rem; }
@@ -1310,7 +1375,7 @@ func (ds *DocServer) HandleRSSList(w http.ResponseWriter, r *http.Request) {
     </ul>
     <h2 class="section-title">Author Feeds</h2>
     <ul class="feed-list">
-`, ds.getSiteName(), GoogleAnalyticsTag(ds.googleAnalyticsID), allPostsFeedURL, allPostsFeedURL, ds.getSiteName())
+`, ds.getSiteName(), ds.AuthorIdentityTags(), GoogleAnalyticsTag(ds.googleAnalyticsID), allPostsFeedURL, allPostsFeedURL, ds.getSiteName())
 
 	// Sort authors alphabetically by username for consistent ordering
 	var userNames []string
@@ -1562,7 +1627,7 @@ func (ds *DocServer) HandleTagsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tagsSiteName := ds.getSiteName()
-	tagsSeoTags := SEOMetaTags("website", "Tags - "+tagsSiteName,
+	tagsSeoTags := ds.SEOTags("website", "Tags - "+tagsSiteName,
 		"Browse all topics and tags on "+tagsSiteName,
 		fmt.Sprintf("%s/tags", baseURL), "", tagsSiteName, "", "")
 
@@ -1809,7 +1874,7 @@ func (ds *DocServer) HandleTagPage(w http.ResponseWriter, r *http.Request, tag s
 
 	escapedTag := html.EscapeString(tag)
 	tagPageSiteName := ds.getSiteName()
-	tagPageSeoTags := SEOMetaTags("website",
+	tagPageSeoTags := ds.SEOTags("website",
 		fmt.Sprintf("Tag: %s - %s", tag, tagPageSiteName),
 		fmt.Sprintf("Posts tagged with %s on %s", tag, tagPageSiteName),
 		fmt.Sprintf("%s/tags/%s", baseURL, html.EscapeString(tag)),
@@ -2112,7 +2177,7 @@ func (ds *DocServer) HandleSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	searchSiteName := ds.getSiteName()
-	searchSeoTags := SEOMetaTags("website", "Search - "+searchSiteName,
+	searchSeoTags := ds.SEOTags("website", "Search - "+searchSiteName,
 		"Search posts on "+searchSiteName,
 		fmt.Sprintf("%s/search", baseURL), "", searchSiteName, "", "")
 
