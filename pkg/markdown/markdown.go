@@ -16,7 +16,6 @@ import (
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer/html"
-	latex "github.com/aziis98/goldmark-latex"
 	"go.abhg.dev/goldmark/mermaid"
 	"gopkg.in/yaml.v3"
 )
@@ -109,7 +108,7 @@ func ParseDocumentFromBytes(content []byte, filePath string) (*Document, error) 
 			extension.Table,
 			extension.Strikethrough,
 			&mermaid.Extender{},
-			latex.NewLatex(),
+			newSafeLatex(), // goldmark-latex with its inline parser guarded (latex.go)
 		),
 		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
 		goldmark.WithRendererOptions(html.WithUnsafe()), // We'll sanitize after
